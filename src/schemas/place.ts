@@ -23,17 +23,17 @@ export const placeDocumentSchema = z.object({
   name: z.string().min(1),
   nickname: z.string().optional(),
   formatted_address: z.string().optional(),
-  address_components: z.array(z.record(z.unknown())).optional(),
+  address_components: z.array(z.record(z.string(), z.unknown())).optional(),
   geometry: z.object({
     location: z.object({ lat: z.number(), lng: z.number() }),
-    viewport: z.record(z.unknown()).optional(),
+    viewport: z.record(z.string(), z.unknown()).optional(),
   }),
   types: z.array(z.string()).default([]),
   business_status: z.string().optional(),
   editorial_summary: z
     .object({ language: z.string(), overview: z.string() })
     .optional(),
-  opening_hours: z.record(z.unknown()).optional(),
+  opening_hours: z.record(z.string(), z.unknown()).optional(),
   formatted_phone_number: z.string().optional(),
   international_phone_number: z.string().optional(),
   website: z.string().optional(),

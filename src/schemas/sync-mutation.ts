@@ -12,7 +12,7 @@ export const syncMutationDocumentSchema = z.object({
   userId: objectIdSchema,
   mutationType: mutationTypeSchema,
   resultStatus: mutationResultStatusSchema,
-  resultPayload: z.record(z.unknown()).default({}),
+  resultPayload: z.record(z.string(), z.unknown()).default({}),
   processedAt: isoDateTimeSchema,
 });
 
