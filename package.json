@@ -1,0 +1,11 @@
+{
+  "name": "zanzar-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zanzar API — base do projeto (Express + Mongoose + MongoDB + JWT)",
+  "type": "module",
+  "scripts": {},
+  "engines": {
+    "node": ">=20"
+  }
+}
