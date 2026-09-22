@@ -6,34 +6,7 @@ Stack planejada: Express · Mongoose · MongoDB · JWT · TypeScript
 
 ## Estrutura
 
-```text
-ZanzarBackend/
-├── data/
-│   └── lugares.json       # dados de lugares (Google Places + campos futuros)
-├── src/
-│   ├── config/            # env, conexão MongoDB
-│   ├── models/            # schemas Mongoose (8 collections)
-│   ├── routes/            # endpoints REST
-│   ├── services/          # regras de negócio
-│   ├── middleware/        # auth JWT, validação
-│   ├── scripts/           # seed, migrations
-│   ├── types/             # tipos compartilhados
-│   └── utils/             # helpers (geofence, categorias…)
-├── .env.example
-├── tsconfig.json
-└── package.json
-```
-
-## Collections previstas
-
-- `users`
-- `places`
-- `stamps`
-- `itinerary_templates`
-- `user_itineraries`
-- `checkins`
-- `reactions`
-- `user_stamps`
+A especificar 🤔
 
 ## Próximos passos (quando for implementar)
 
