@@ -5,9 +5,11 @@ import helmet from "helmet";
 import { rateLimit } from 'express-rate-limit'
 import type { Express } from "express";
 import { logger } from "./utils/logger";
+import { connectDatabase } from "./config/database";
 
 // Routes import
 import { healthRouter } from "./routes/health.routes";
+import { userRouter } from "./routes/user.routes";
 
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
@@ -32,8 +34,11 @@ app.use(cors());
 app.use(helmet())
 
 // Routes
-app.use("/api", healthRouter);
+app.use(healthRouter);
+app.use(userRouter);
 
-app.listen(PORT, (): void => {
-  logger.info(`Server is running on port ${PORT}`);
+connectDatabase().then(() => {
+  app.listen(PORT, (): void => {
+    logger.info(`Server is running on port ${PORT}`);
+  });
 });
