@@ -18,7 +18,7 @@ const collections = [
   'stamp_catalog',
   'itineraries',
   'checkins',
-  'impressions',
+  'rating',
   'sync_mutations',
 ];
 
@@ -68,9 +68,9 @@ safeIndex('checkins', { userId: 1, placeId: 1 }, { unique: true, name: 'checkins
 safeIndex('checkins', { clientMutationId: 1 }, { unique: true, name: 'checkins_clientMutationId_unique' });
 safeIndex('checkins', { userId: 1, datetime: -1 }, { name: 'checkins_user_datetime' });
 
-// impressions (Rating / Reações no diagrama)
-safeIndex('impressions', { userId: 1, checkinId: 1 }, { unique: true, name: 'impressions_user_checkin_unique' });
-safeIndex('impressions', { placeId: 1, impressionTag: 1 }, { name: 'impressions_place_tag' });
+// rating (Rating / Reações no diagrama)
+safeIndex('rating', { userId: 1, placeId: 1 }, { unique: true, name: 'rating_user_place_unique' });
+safeIndex('rating', { placeId: 1, impressionTag: 1 }, { name: 'rating_place_tag' });
 
 // sync_mutations (idempotência offline)
 safeIndex('sync_mutations', { clientMutationId: 1 }, { unique: true, name: 'sync_mutations_clientMutationId_unique' });
