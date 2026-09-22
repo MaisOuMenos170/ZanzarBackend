@@ -6,12 +6,22 @@
     "build": "npx tsc",
     "start": "npx tsc && node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup:collections": "bash scripts/setup-zanzardb-collections.sh",
+    "seed": "bash scripts/seed-zanzardb.sh",
+    "sync:lugares": "bash scripts/sync-lugares-from-github.sh",
+    "atlas:ip": "bash scripts/atlas-ip.sh",
+    "db:init": "bash scripts/setup-zanzardb-collections.sh || true; bash scripts/seed-zanzardb.sh",
+    "db:validate": "bash scripts/apply-zanzardb-validation.sh",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.6",
     "@types/cors": "^2.8.19",
