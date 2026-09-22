@@ -23,10 +23,7 @@ export const placeDocumentSchema = z.object({
   name: z.string().min(1),
   nickname: z.string().optional(),
   formatted_address: z.string().optional(),
-<<<<<<< HEAD
-=======
   address_components: z.array(z.record(z.string(), z.unknown())).optional(),
->>>>>>> 2c317a0 (fix: alinhar package-lock com main e compatibilidade Zod 4)
   geometry: z.object({
     location: z.object({ lat: z.number(), lng: z.number() }),
     viewport: z.record(z.string(), z.unknown()).optional(),
