@@ -4,7 +4,12 @@
   "private": true,
   "description": "Zanzar API — base do projeto (Express + Mongoose + MongoDB + JWT)",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "setup:collections": "bash scripts/setup-zanzardb-collections.sh",
+    "seed": "bash scripts/seed-zanzardb.sh",
+    "atlas:ip": "bash scripts/atlas-ip.sh",
+    "db:init": "bash scripts/setup-zanzardb-collections.sh || true; bash scripts/seed-zanzardb.sh"
+  },
   "engines": {
     "node": ">=20"
   }
