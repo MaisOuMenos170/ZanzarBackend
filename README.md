@@ -35,7 +35,7 @@ Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados).
 | `stamp_catalog` | Stamp | Catálogo curado (1 selo por categoria) |
 | `itineraries` | Itinerary (geral) | Templates de roteiros curados |
 | `checkins` | CheckIns | Visita; dispara selo e contadores |
-| `impressions` | Rating / Reações | Emoji pós-visita (`impressionTag`) |
+| `rating` | Rating / Reações | Reação pós-visita (`impressionTag`) |
 | `sync_mutations` | — | Idempotência do sync offline |
 
 Roteiros do usuário ficam **embed** em `users` (não há collection `user_itineraries`).
@@ -45,7 +45,9 @@ Roteiros do usuário ficam **embed** em `users` (não há collection `user_itine
 ```bash
 npm run db:init      # setup + seed (recomendado na 1ª vez)
 npm run setup:collections
-npm run seed         # stamp_catalog + 17 places de data/lugares.json
+npm run seed         # stamp_catalog + places (data/lugares.json local)
+npm run sync:lugares # baixa GitHub CacheGoogleMaps → upsert no Atlas
+npm run db:validate  # JSON Schema na aba Validation do Atlas + rename impressions→rating
 ```
 
 Alternativa: Atlas → **ClusterZanzar** → **Browse Collections** → `_MONGOSH` → colar os `.js` de `scripts/`.
@@ -55,10 +57,11 @@ Alternativa: Atlas → **ClusterZanzar** → **Browse Collections** → `_MONGOS
 | Etapa | Comando / artefato | Status típico |
 |-------|-------------------|---------------|
 | 1. Collections + índices | `npm run setup:collections` | ✅ feito |
-| 2. Seed selos + lugares | `npm run seed` | próximo passo |
-| 3. Roteiros curados | seed manual em `itineraries` | conteúdo editorial |
-| 4. Backend (Mongoose + API) | `src/models`, `src/routes` | código |
-| 5. Lógica de negócio | transações check-in/impression | código |
+| 2. Seed selos + lugares | `npm run seed` | ✅ feito |
+| 3. Validation JSON Schema | `npm run db:validate` | próximo passo |
+| 4. Roteiros curados | seed manual em `itineraries` | conteúdo editorial |
+| 5. Backend (Mongoose + API) | `src/models`, `src/routes` | código |
+| 6. Lógica de negócio | transações check-in/rating | código |
 
 ## Próximos passos (quando for implementar)
 

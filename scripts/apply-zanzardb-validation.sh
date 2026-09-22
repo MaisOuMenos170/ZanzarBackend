@@ -5,6 +5,5 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck disable=SC1091
 source "$ROOT_DIR/scripts/mongosh-run.sh"
 
-export SEED_ROOT_DIR="$ROOT_DIR"
-export LUGARES_LIB_PATH="$ROOT_DIR/scripts/lugares-lib.js"
-mongosh_run "$ROOT_DIR" "$ROOT_DIR/scripts/seed-zanzardb.js"
+export ZANZAR_VALIDATORS_PATH="$ROOT_DIR/scripts/zanzardb-validators.js"
+mongosh_run "$ROOT_DIR" "$ROOT_DIR/scripts/apply-zanzardb-validation.js"
