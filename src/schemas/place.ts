@@ -23,7 +23,6 @@ export const placeDocumentSchema = z.object({
   name: z.string().min(1),
   nickname: z.string().optional(),
   formatted_address: z.string().optional(),
-  address_components: z.array(z.record(z.string(), z.unknown())).optional(),
   geometry: z.object({
     location: z.object({ lat: z.number(), lng: z.number() }),
     viewport: z.record(z.string(), z.unknown()).optional(),
