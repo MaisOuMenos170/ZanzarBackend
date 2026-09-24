@@ -27,7 +27,6 @@ const limiter = rateLimit({
 })
 
 app.use(limiter);
-app.use(errorHandler);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
@@ -36,6 +35,9 @@ app.use(helmet())
 // Routes
 app.use(healthRouter);
 app.use(userRouter);
+
+// Error handler must be registered after the routes
+app.use(errorHandler);
 
 connectDatabase().then(() => {
   app.listen(PORT, (): void => {
