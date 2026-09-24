@@ -7,7 +7,8 @@ source "$ROOT_DIR/scripts/mongosh-run.sh"
 
 LUGARES_URL="${LUGARES_URL:-https://raw.githubusercontent.com/MaisOuMenos170/CacheGoogleMaps/main/data/lugares.json}"
 LOCAL_CACHE="${ROOT_DIR}/data/lugares.json"
-TMP_JSON="$(mktemp "${TMPDIR:-/tmp}/lugares-sync.XXXXXX.json")"
+# macOS exige que XXXXXX seja o sufixo do template (sem .json depois).
+TMP_JSON="$(mktemp "${TMPDIR:-/tmp}/lugares-sync.XXXXXX")"
 
 cleanup() {
   rm -f "$TMP_JSON"
