@@ -11,7 +11,7 @@ function normalizeError(err: any): { statusCode: number; message: string; detail
         };
     }
     // Duplicate key (unique index)
-    if (err?.code === 11000) {
+    if (err?.code === 11000 || err?.code === 11001) {
         return {
             statusCode: 409,
             message: `Duplicate value for: ${Object.keys(err.keyPattern ?? {}).join(', ') || 'unique field'}`,
@@ -22,7 +22,7 @@ function normalizeError(err: any): { statusCode: number; message: string; detail
         return { statusCode: 400, message: err.message };
     }
     return {
-        statusCode: err.statusCode || 500,
+        statusCode: err.statusCode ?? err.status ?? 500,
         message: err.message || 'Internal Server Error',
     };
 }
