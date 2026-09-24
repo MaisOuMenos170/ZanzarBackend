@@ -7,4 +7,3 @@ export const userRouter: Router = express.Router();
 
 userRouter.get("/user/:id", getUser);
 userRouter.post("/user", validateCreateUser, createUser);
-userRouter.use(userRouter);

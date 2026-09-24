@@ -8,5 +8,3 @@ healthRouter.get("/health", (req, res) => {
     logger.info("Health check endpoint called");
     res.status(200).json({ status: "ok" });
 });
-
-healthRouter.use(healthRouter);
