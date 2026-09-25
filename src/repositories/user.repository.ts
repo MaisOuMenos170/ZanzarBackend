@@ -1,5 +1,6 @@
 import { UserModel, User } from "../models/user.model";
 import { CreateUserInput } from "../schema/createUserSchema";
+import { hashPassword } from "../utils/bcrypt";
 
 
 export const userRepository = {
@@ -12,7 +13,13 @@ export const userRepository = {
     },
 
     async create(data: CreateUserInput): Promise<User> {
-        const doc = await UserModel.create(data);
-        return doc.toObject() as User;
+        const { password, ...rest } = data;
+        const passwordHash = await hashPassword(password);
+
+        const model = await UserModel.create({
+            passwordHash: passwordHash,
+            ...rest
+        });
+        return model.toObject() as User;
     },
 };

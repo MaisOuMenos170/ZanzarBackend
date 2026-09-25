@@ -6,5 +6,5 @@ export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 30;
 
 /** Mínimo 8 chars, pelo menos 1 letra e 1 número. */
-export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MIN_LENGTH = 6;
 export const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
