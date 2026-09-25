@@ -8,5 +8,6 @@ export const getUser: RequestHandler = async (req, res) => {
 
 export const createUser: RequestHandler = async (req, res) => {
     const user = await userService.create(req.body);
-    res.status(201).json(user);
+    const { passwordHash, ...userWithoutPassword } = user;
+    res.status(201).json(userWithoutPassword);
 };

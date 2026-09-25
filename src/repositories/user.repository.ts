@@ -13,10 +13,12 @@ export const userRepository = {
     },
 
     async create(data: CreateUserInput): Promise<User> {
-        const passwordHash = await hashPassword(data.password)
+        const { password, ...rest } = data;
+        const passwordHash = await hashPassword(password);
+
         const model = await UserModel.create({
             passwordHash: passwordHash,
-            ...data
+            ...rest
         });
         return model.toObject() as User;
     },
