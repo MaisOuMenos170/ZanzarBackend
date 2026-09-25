@@ -47,7 +47,7 @@ npm run db:init      # setup + seed (recomendado na 1ª vez)
 npm run setup:collections
 npm run seed         # stamp_catalog + places (data/lugares.json local)
 npm run sync:lugares # baixa GitHub CacheGoogleMaps → upsert no Atlas
-npm run db:validate  # JSON Schema na aba Validation do Atlas + rename impressions→rating
+npm run db:validate  # gera o $jsonSchema dos models Mongoose e aplica no Atlas (+ rename impressions→rating); use db:validate:dry para só imprimir
 ```
 
 Alternativa: Atlas → **ClusterZanzar** → **Browse Collections** → `_MONGOSH` → colar os `.js` de `scripts/`.

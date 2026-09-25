@@ -12,7 +12,8 @@
     "sync:lugares": "bash scripts/sync-lugares-from-github.sh",
     "atlas:ip": "bash scripts/atlas-ip.sh",
     "db:init": "bash scripts/setup-zanzardb-collections.sh || true; bash scripts/seed-zanzardb.sh",
-    "db:validate": "bash scripts/apply-zanzardb-validation.sh",
+    "db:validate": "tsx src/scripts/apply-validators.ts",
+    "db:validate:dry": "tsx src/scripts/apply-validators.ts --dry-run",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.6",
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.2",
@@ -33,6 +35,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.3",
     "express": "^5.2.1",
