@@ -14,7 +14,8 @@
     "db:init": "bash scripts/setup-zanzardb-collections.sh || true; bash scripts/seed-zanzardb.sh",
     "db:validate": "tsx src/scripts/apply-validators.ts",
     "db:validate:dry": "tsx src/scripts/apply-validators.ts --dry-run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:migrate:geo": "bash scripts/migrate-places-geolocation.sh"
   },
   "keywords": [],
   "author": "",

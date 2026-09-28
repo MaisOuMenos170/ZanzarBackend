@@ -18,6 +18,17 @@ export const placePhotoSchema = z.object({
   width: z.number().int().positive(),
 });
 
+export const geoPointSchema = z.object({
+  type: z.literal('Point'),
+  coordinates: z.tuple([z.number(), z.number()]),
+});
+
+export const getPlacesQuerySchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+  limit: z.coerce.number().int().positive().optional(),
+});
+
 export const placeDocumentSchema = z.object({
   place_id: z.string().min(1),
   name: z.string().min(1),
@@ -43,9 +54,16 @@ export const placeDocumentSchema = z.object({
   price_level: z.number().int().min(0).max(4).optional(),
   photos: z.array(placePhotoSchema).default([]),
   zanzar: zanzarExtensionSchema,
+  geoLocation: geoPointSchema.optional(),
   added_at: isoDateTimeSchema,
   updated_at: isoDateTimeSchema,
 });
 
+export const placeNearbySchema = placeDocumentSchema.extend({
+  distanceMeters: z.number().nonnegative(),
+});
+
 export type PlaceDocument = z.infer<typeof placeDocumentSchema>;
+export type PlaceNearbyDocument = z.infer<typeof placeNearbySchema>;
+export type GetPlacesQuery = z.infer<typeof getPlacesQuerySchema>;
 export type ZanzarExtension = z.infer<typeof zanzarExtensionSchema>;

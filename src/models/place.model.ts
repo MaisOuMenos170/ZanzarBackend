@@ -1,5 +1,12 @@
-import { Schema, model, InferSchemaType, Types } from "mongoose";
+import { Schema, model, InferSchemaType, Types, type HydratedDocument } from "mongoose";
 import { STAMP_IDS, ZANZAR_CATEGORIES } from "../constants/zanzar-categories";
+
+function geoLocationFromLatLng(lat: number, lng: number) {
+    return {
+        type: "Point" as const,
+        coordinates: [lng, lat] as [number, number],
+    };
+}
 
 const zanzarSchema = new Schema(
     {
@@ -56,6 +63,17 @@ const placeSchema = new Schema(
         price_level: { type: Number, min: 0, max: 4 },
         photos: { type: [photoSchema], default: [] },
         zanzar: { type: zanzarSchema, required: true },
+        geoLocation: {
+            type: {
+                type: String,
+                enum: ["Point"],
+                required: true,
+            },
+            coordinates: {
+                type: [Number],
+                required: true,
+            },
+        },
     },
     {
         // O documento vem do Google Places e aceita campos extras (additionalProperties: true).
@@ -70,6 +88,14 @@ placeSchema.index({ place_id: 1 }, { unique: true, name: "places_place_id_unique
 placeSchema.index({ updated_at: 1 }, { name: "places_updated_at" });
 placeSchema.index({ "zanzar.category": 1 }, { name: "places_zanzar_category" });
 placeSchema.index({ "zanzar.tags": 1 }, { name: "places_zanzar_tags" });
+placeSchema.index({ geoLocation: "2dsphere" }, { name: "places_geoLocation_2dsphere" });
 
 export type Place = InferSchemaType<typeof placeSchema> & { _id: Types.ObjectId };
+
+placeSchema.pre("save", function (this: HydratedDocument<Place>) {
+    const lat = this.geometry?.location?.lat;
+    const lng = this.geometry?.location?.lng;
+    if (lat == null || lng == null) return;
+    this.geoLocation = geoLocationFromLatLng(lat, lng);
+});
 export const PlaceModel = model("Place", placeSchema);

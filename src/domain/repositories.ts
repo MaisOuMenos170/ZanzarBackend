@@ -1,6 +1,6 @@
 import type { CheckinDocument } from '../schemas/checkin.js';
 import type { RatingDocument } from '../schemas/rating.js';
-import type { PlaceDocument } from '../schemas/place.js';
+import type { PlaceDocument, PlaceNearbyDocument } from '../schemas/place.js';
 import type { UserDocument, UserItineraryEmbed, UserStamp } from '../schemas/user.js';
 import type { ItineraryDocument } from '../schemas/itinerary.js';
 
@@ -21,6 +21,7 @@ export interface UserRepository {
 
 export interface PlaceRepository {
   findByPlaceId(placeId: string): Promise<PlaceDocument | null>;
+  findNearby(lat: number, lng: number, limit?: number): Promise<PlaceNearbyDocument[]>;
   incrementCheckInCount(placeId: string): Promise<void>;
   incrementImpressionCount(placeId: string, tag: string): Promise<void>;
 }
