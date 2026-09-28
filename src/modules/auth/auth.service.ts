@@ -3,6 +3,7 @@ import { userRepository } from "../users/user.repository";
 import { CreateUserInput } from "../users/schema/createUserSchema";
 import { LoginUserInput } from "./schema/loginAuthSchema";
 import { comparePassword } from "../../utils/bcrypt";
+import { JWT_EXPIRATION } from "../../constants/auth";
 import jwt from "jsonwebtoken";
 
 export const authService = {
@@ -17,7 +18,7 @@ export const authService = {
         const { email, password } = data;
 
         const user = await userRepository.findByEmail(email);
-        if (!user) throw new AppError("User not found", 404);
+        if (!user) throw new AppError("Invalid credentials", 401);
 
         const isMatch = await comparePassword(password, user.passwordHash);
         if (!isMatch) throw new AppError("Invalid credentials", 401);
@@ -25,7 +26,7 @@ export const authService = {
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET as string,
-            { expiresIn: "7d" },
+            { expiresIn: JWT_EXPIRATION },
         )
 
         return token;

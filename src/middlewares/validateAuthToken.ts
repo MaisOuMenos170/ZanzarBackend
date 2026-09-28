@@ -7,12 +7,12 @@ export const validateAuthToken: RequestHandler = (req, res, next) => {
     const token = authHeader && authHeader.split(" ")[1];
 
     if (!token) {
-        throw new AppError("Access denied", 401);
+        return next(new AppError("Access denied", 401));
     }
 
     jwt.verify(token, process.env.JWT_SECRET as string, (err, user) => {
-        if (err) {
-            throw new AppError("Invalid JWT token", 403);
+        if (err || !user || typeof user === "string") {
+            return next(new AppError("Invalid JWT token", 401));
         }
         req.user = user;
         next();
