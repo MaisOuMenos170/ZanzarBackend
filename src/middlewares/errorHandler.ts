@@ -2,6 +2,9 @@ import type { Request, Response, NextFunction } from 'express';
 
 // Maps known database errors to client-facing status codes and messages.
 function normalizeError(err: any): { statusCode: number; message: string; details?: unknown } {
+    if (err?.name === 'AppError' && err?.statusCode) {
+        return { statusCode: err.statusCode, message: err.message };
+    }
     // MongoDB "Document failed validation" (schema validator on the collection)
     if (err?.code === 121) {
         return {

@@ -49,11 +49,11 @@ function safeIndex(coll, keys, options = {}) {
 safeIndex('users', { email: 1 }, { unique: true, name: 'users_email_unique' });
 safeIndex('users', { username: 1 }, { unique: true, name: 'users_username_unique' });
 
-// places — geo 2dsphere fica para quando migrarmos geometry para GeoJSON
 safeIndex('places', { place_id: 1 }, { unique: true, name: 'places_place_id_unique' });
 safeIndex('places', { updated_at: 1 }, { name: 'places_updated_at' });
 safeIndex('places', { 'zanzar.category': 1 }, { name: 'places_zanzar_category' });
 safeIndex('places', { 'zanzar.tags': 1 }, { name: 'places_zanzar_tags' });
+safeIndex('places', { geoLocation: '2dsphere' }, { name: 'places_geoLocation_2dsphere' });
 
 // stamp_catalog
 safeIndex('stamp_catalog', { stampType: 1 }, { unique: true, name: 'stamp_catalog_stampType_unique' });

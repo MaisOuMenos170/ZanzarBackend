@@ -11,6 +11,7 @@ import { connectDatabase } from "./config/database";
 import { healthRouter } from "./modules/health/health.routes";
 import { userRouter } from "./modules/users/user.routes";
 import { authRouter } from "./modules/auth/auth.routes";
+import { placeRouter } from "./modules/places/place.routes";
 
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
@@ -38,6 +39,7 @@ app.use(helmet())
 app.use(healthRouter);
 app.use(authRouter);
 app.use(validateAuthToken, userRouter);
+app.use(placeRouter);
 
 // Error handler must be registered after the routes
 app.use(errorHandler);

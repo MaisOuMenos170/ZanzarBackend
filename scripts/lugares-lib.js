@@ -22,6 +22,13 @@ function inferZanzar(types) {
   return { category: 'tourist', stampId: 'stamp_tourist' };
 }
 
+function buildGeoLocation(raw) {
+  const lat = raw?.geometry?.location?.lat;
+  const lng = raw?.geometry?.location?.lng;
+  if (lat == null || lng == null) return undefined;
+  return { type: 'Point', coordinates: [lng, lat] };
+}
+
 function stripProxyUrl(photos) {
   if (!Array.isArray(photos)) return photos;
   return photos.map(({ proxy_url, ...photo }) => photo);
@@ -43,6 +50,7 @@ function buildPlaceDocument(raw, existing) {
   const updatedAt = raw.updated_at ? new Date(raw.updated_at) : now;
 
   const existingZanzar = existing?.zanzar;
+  const geoLocation = buildGeoLocation(raw);
 
   return {
     ...raw,
@@ -56,6 +64,7 @@ function buildPlaceDocument(raw, existing) {
     },
     added_at: addedAt,
     updated_at: updatedAt,
+    ...(geoLocation ? { geoLocation } : {}),
   };
 }
 
