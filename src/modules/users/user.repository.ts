@@ -1,6 +1,6 @@
-import { UserModel, User } from "../models/user.model";
-import { CreateUserInput } from "../schema/createUserSchema";
-import { hashPassword } from "../utils/bcrypt";
+import { UserModel, User } from "../../models/user.model";
+import { CreateUserInput } from "./schema/createUserSchema";
+import { hashPassword } from "../../utils/bcrypt";
 
 
 export const userRepository = {
