@@ -8,11 +8,13 @@ import { logger } from "./utils/logger";
 import { connectDatabase } from "./config/database";
 
 // Routes import
-import { healthRouter } from "./routes/health.routes";
-import { userRouter } from "./routes/user.routes";
+import { healthRouter } from "./modules/health/health.routes";
+import { userRouter } from "./modules/users/user.routes";
+import { authRouter } from "./modules/auth/auth.routes";
 
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
+import { validateAuthToken } from "./middlewares/validateAuthToken";
 
 const PORT = process.env.PORT || 8000;
 const app: Express = express();
@@ -34,7 +36,8 @@ app.use(helmet())
 
 // Routes
 app.use(healthRouter);
-app.use(userRouter);
+app.use(authRouter);
+app.use(validateAuthToken, userRouter);
 
 // Error handler must be registered after the routes
 app.use(errorHandler);

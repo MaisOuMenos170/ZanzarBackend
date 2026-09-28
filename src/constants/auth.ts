@@ -1,6 +1,7 @@
 /** Access token: 15 min · Refresh token: 7 dias (decisão MVP). */
 export const JWT_ACCESS_TTL_SECONDS = 15 * 60;
 export const JWT_REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60;
+export const JWT_EXPIRATION = "7d";
 
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 30;
