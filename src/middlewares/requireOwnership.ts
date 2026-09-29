@@ -15,3 +15,11 @@ export const requireOwnershipFromBody = (param = "id"): RequestHandler => (req, 
     }
     next();
 };
+
+
+export const requireOwnershipFromQuery = (param = "id"): RequestHandler => (req, _res, next) => {
+    if (!req.user || req.user.id !== req.query[param]) {
+        return next(new AppError("Forbidden", 403));
+    }
+    next();
+};

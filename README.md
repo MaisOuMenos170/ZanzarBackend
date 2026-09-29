@@ -34,9 +34,15 @@ Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados).
 | `places` | Places | Google Places + extensão `zanzar` |
 | `stamp_catalog` | Stamp | Catálogo curado (1 selo por categoria) |
 | `itineraries` | Itinerary (geral) | Templates de roteiros curados |
-| `checkins` | CheckIns | Visita; dispara selo e contadores |
+| `checkins` | CheckIns | Visita (`userId`, `placeId`, `datetime`); selo e contadores via Atlas trigger |
 | `rating` | Rating / Reações | Reação pós-visita (`impressionTag`) |
 | `sync_mutations` | — | Idempotência do sync offline |
+
+### Trigger de check-in (Atlas)
+
+O `POST /checkIn` só insere o documento em `checkins`. Contadores (`users.checkInCount`, `places.zanzar.checkInCount`), selo em `users.stamps` e progresso do roteiro são aplicados por um Database Trigger em `scripts/triggers/on-checkin-created.js`.
+
+Deploy manual: Atlas → App Services → Triggers → Database → collection `checkins`, operation **Insert**, **Full Document** ligado, colar a função. Sem o trigger publicado, check-ins não atualizam contadores nem selos.
 
 Roteiros do usuário ficam **embed** em `users` (não há collection `user_itineraries`).
 
