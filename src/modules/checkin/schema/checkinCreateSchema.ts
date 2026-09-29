@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { isoDateTimeSchema, objectIdSchema } from "../../../schemas/common";
+import { googlePlaceIdSchema, isoDateTimeSchema, objectIdSchema } from "../../../schemas/common";
 
 export const checkInCreateSchema = z.object({
     userId: objectIdSchema,
-    placeId: z.string().min(1).max(512),
+    placeId: googlePlaceIdSchema,
     datetime: isoDateTimeSchema.optional(),
 });
 
