@@ -18,6 +18,19 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { validateAuthToken } from "./middlewares/validateAuthToken";
 
 const PORT = process.env.PORT || 8000;
+
+function requireEnv(name: string): string {
+    const value = process.env[name]?.trim();
+    if (!value) {
+        logger.error(`Missing required environment variable: ${name}`);
+        process.exit(1);
+    }
+    return value;
+}
+
+requireEnv("JWT_SECRET");
+requireEnv("MONGODB_URI");
+
 const app: Express = express();
 
 app.set("trust proxy", 1);
