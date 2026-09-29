@@ -5,6 +5,7 @@ const checkinSchema = new Schema(
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
         placeId: { type: String, required: true },
         datetime: { type: Date, required: true },
+        clientMutationId: { type: String, required: true },
     },
     { collection: "checkins" },
 );

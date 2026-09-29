@@ -1,11 +1,16 @@
-import { CheckinModel } from "../../models"
+import { CheckinModel } from "../../models";
 
 export const checkInRepository = {
-    async checkIn(placeId: string, userId: string, datetime: Date): Promise<void> {
-        await CheckinModel.create({ placeId, userId, datetime });
+    async checkIn(
+        placeId: string,
+        userId: string,
+        datetime: Date,
+        clientMutationId: string,
+    ): Promise<void> {
+        await CheckinModel.create({ placeId, userId, datetime, clientMutationId });
     },
 
-    async getCheckInByUserAndPlace(placeId: string, userId: string): Promise<any> {
-        return await CheckinModel.findOne({ placeId, userId }).lean();
-    }
-}
+    async getCheckInByUserAndPlace(placeId: string, userId: string) {
+        return CheckinModel.findOne({ placeId, userId }).lean();
+    },
+};

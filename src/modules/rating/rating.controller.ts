@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { AppError } from "../../errors/appError";
+import { googlePlaceIdSchema } from "../../schemas/common.js";
 import { ratingService } from "./rating.service";
 
 export const createRating: RequestHandler = async (req, res) => {
@@ -21,13 +22,12 @@ export const getRatingByUserAndPlace: RequestHandler = async (req, res) => {
         throw new AppError("Access denied", 401);
     }
 
-    const placeId = req.query.placeId;
-    if (typeof placeId !== "string") {
-        res.status(400).json({ success: false, message: "Invalid place id" });
-        return;
+    const placeIdResult = googlePlaceIdSchema.safeParse(req.query.placeId);
+    if (!placeIdResult.success) {
+        throw new AppError("Invalid place id", 400);
     }
 
-    const rating = await ratingService.getRatingByUserAndPlace(userId, placeId);
+    const rating = await ratingService.getRatingByUserAndPlace(userId, placeIdResult.data);
     if (!rating) {
         throw new AppError("Resource not found", 404);
     }
