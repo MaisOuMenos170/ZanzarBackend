@@ -24,7 +24,7 @@ mongosh_run() {
   fi
 
   local uri
-  uri="$(python3 "$root_dir/scripts/resolve-mongo-uri.py" "$raw_uri")"
+  uri="$(python3 "$root_dir/scripts/lib/resolve-mongo-uri.py" "$raw_uri")"
 
   if [[ "$raw_uri" == mongodb+srv://* ]]; then
     echo "Usando URI standard (evita querySrv EBADRESP no DNS local)." >&2

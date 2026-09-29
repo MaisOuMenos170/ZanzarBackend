@@ -2,7 +2,7 @@
  * Cria collections e índices do MVP Zanzar no database Zanzardb.
  *
  * Rodar com:
- *   mongosh "$MONGODB_URI" --file scripts/setup-zanzardb-collections.js
+ *   mongosh "$MONGODB_URI" --file scripts/setup/setup-collections.js
  *
  * Ou colar no Atlas → ClusterZanzar → Browse Collections → _MONGOSH.
  *
@@ -65,7 +65,6 @@ safeIndex('itineraries', { isPublished: 1, category: 1 }, { name: 'itineraries_p
 
 // checkins
 safeIndex('checkins', { userId: 1, placeId: 1 }, { unique: true, name: 'checkins_user_place_unique' });
-safeIndex('checkins', { clientMutationId: 1 }, { unique: true, name: 'checkins_clientMutationId_unique' });
 safeIndex('checkins', { userId: 1, datetime: -1 }, { name: 'checkins_user_datetime' });
 
 // rating (Rating / Reações no diagrama)

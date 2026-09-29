@@ -2,7 +2,7 @@
  * Backfill geoLocation a partir de geometry.location (Google Places → GeoJSON Point).
  *
  * Rodar com:
- *   mongosh "$MONGODB_URI" --file scripts/migrate-places-geolocation.js
+ *   mongosh "$MONGODB_URI" --file scripts/migrations/migrate-places-geolocation.js
  */
 
 const dbName = 'Zanzardb';

@@ -2,7 +2,7 @@
 
 Base do backend — **só estrutura de pastas e config mínima**. Sem código implementado ainda.
 
-Stack planejada: Express · Mongoose · MongoDB · JWT · TypeScript
+Stack planejada: Express · Mongoose · MongoDB · JWT · TypeScript.
 
 ## Estrutura
 
@@ -10,13 +10,13 @@ Stack planejada: Express · Mongoose · MongoDB · JWT · TypeScript
 ZanzarBackend/
 ├── data/
 │   └── lugares.json       # dados de lugares (Google Places + campos futuros)
+├── scripts/               # seed, setup, migrations, triggers, dev (ver scripts/README.md)
 ├── src/
 │   ├── config/            # env, conexão MongoDB
 │   ├── models/            # schemas Mongoose (8 collections)
 │   ├── routes/            # endpoints REST
 │   ├── services/          # regras de negócio
 │   ├── middleware/        # auth JWT, validação
-│   ├── scripts/           # seed, migrations
 │   ├── types/             # tipos compartilhados
 │   └── utils/             # helpers (geofence, categorias…)
 ├── .env.example
@@ -34,9 +34,15 @@ Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados).
 | `places` | Places | Google Places + extensão `zanzar` |
 | `stamp_catalog` | Stamp | Catálogo curado (1 selo por categoria) |
 | `itineraries` | Itinerary (geral) | Templates de roteiros curados |
-| `checkins` | CheckIns | Visita; dispara selo e contadores |
+| `checkins` | CheckIns | Visita (`userId`, `placeId`, `datetime`); selo e contadores via Atlas trigger |
 | `rating` | Rating / Reações | Reação pós-visita (`impressionTag`) |
 | `sync_mutations` | — | Idempotência do sync offline |
+
+### Trigger de check-in (Atlas)
+
+O `POST /checkIn` só insere o documento em `checkins`. Contadores (`users.checkInCount`, `places.zanzar.checkInCount`), selo em `users.stamps` e progresso do roteiro são aplicados por um Database Trigger em [`scripts/triggers/on-checkin-created.js`](scripts/triggers/README.md).
+
+Deploy manual: Atlas → App Services → Triggers → Database → collection `checkins`, operation **Insert**, **Full Document** ligado, colar a função. Sem o trigger publicado, check-ins não atualizam contadores nem selos.
 
 Roteiros do usuário ficam **embed** em `users` (não há collection `user_itineraries`).
 
@@ -50,7 +56,9 @@ npm run sync:lugares # baixa GitHub CacheGoogleMaps → upsert no Atlas
 npm run db:validate  # gera o $jsonSchema dos models Mongoose e aplica no Atlas (+ rename impressions→rating); use db:validate:dry para só imprimir
 ```
 
-Alternativa: Atlas → **ClusterZanzar** → **Browse Collections** → `_MONGOSH` → colar os `.js` de `scripts/`.
+Cada tema de `scripts/` tem README próprio ([índice](scripts/README.md)).
+
+Alternativa: Atlas → **ClusterZanzar** → **Browse Collections** → `_MONGOSH` → colar os `.js` de `scripts/setup/`.
 
 ### Checklist até o banco MVP ficar 100%
 
@@ -103,7 +111,7 @@ curl http://127.0.0.1:3000/health
 Com o backend rodando, em **outro terminal**:
 
 ```bash
-./scripts/dev-tunnel.sh
+npm run tunnel
 ```
 
 O script:
@@ -138,7 +146,7 @@ cd ../Zanzar
 ### Observações
 
 - **URL efêmera** — toda vez que o `cloudflared` reinicia, a URL muda. Rode `dev-tunnel.sh` (ou o script do app) de novo.
-- **Porta customizada** — `PORT=4000 ./scripts/dev-tunnel.sh` aponta o túnel para outra porta.
+- **Porta customizada** — `PORT=4000 npm run tunnel` aponta o túnel para outra porta.
 - **Só Debug no app** — a URL de túnel é gravada apenas na configuração Debug do Xcode; Release usa URL de produção.
 
 ## Próximos passos (quando for implementar)

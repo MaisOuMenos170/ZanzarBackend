@@ -3,7 +3,7 @@
 # Requires: cloudflared, backend running on PORT (default 3000).
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 ZANZAR_ROOT="$(cd "$ROOT_DIR/.." && pwd)/Zanzar"
 PORT="${PORT:-3000}"
 LOG_FILE="$(mktemp -t zanzar-cloudflared.XXXXXX.log)"

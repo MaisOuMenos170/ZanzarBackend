@@ -4,7 +4,7 @@ export const objectIdSchema = z
   .string()
   .regex(/^[a-f\d]{24}$/i, 'ObjectId inválido');
 
-export const uuidSchema = z.string().uuid('UUID inválido');
+export const uuidSchema = z.uuid('UUID inválido');
 
 export const isoDateTimeSchema = z.coerce.date();
 
