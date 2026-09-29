@@ -20,6 +20,8 @@ import { validateAuthToken } from "./middlewares/validateAuthToken";
 const PORT = process.env.PORT || 8000;
 const app: Express = express();
 
+app.set("trust proxy", 1);
+
 // Config
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
