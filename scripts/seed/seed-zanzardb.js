@@ -4,7 +4,7 @@
  * Rodar: npm run seed
  */
 
-load(process.env.LUGARES_LIB_PATH || `${process.env.SEED_ROOT_DIR || '.'}/scripts/lugares-lib.js`);
+load(process.env.LUGARES_LIB_PATH || `${process.env.SEED_ROOT_DIR || '.'}/scripts/seed/lugares-lib.js`);
 
 const dbName = 'Zanzardb';
 const dbx = db.getSiblingDB(dbName);

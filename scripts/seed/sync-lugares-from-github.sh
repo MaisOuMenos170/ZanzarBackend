@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck disable=SC1091
-source "$ROOT_DIR/scripts/mongosh-run.sh"
+source "$ROOT_DIR/scripts/lib/mongosh-run.sh"
 
 LUGARES_URL="${LUGARES_URL:-https://raw.githubusercontent.com/MaisOuMenos170/CacheGoogleMaps/main/data/lugares.json}"
 LOCAL_CACHE="${ROOT_DIR}/data/lugares.json"
@@ -32,7 +32,7 @@ cp "$TMP_JSON" "$LOCAL_CACHE"
 echo "Cache local atualizado: data/lugares.json" >&2
 
 export LUGARES_JSON_PATH="$TMP_JSON"
-export LUGARES_LIB_PATH="$ROOT_DIR/scripts/lugares-lib.js"
+export LUGARES_LIB_PATH="$ROOT_DIR/scripts/seed/lugares-lib.js"
 export LUGARES_SOURCE_URL="$LUGARES_URL"
 
-mongosh_run "$ROOT_DIR" "$ROOT_DIR/scripts/sync-lugares-from-github.js"
+mongosh_run "$ROOT_DIR" "$ROOT_DIR/scripts/seed/sync-lugares-from-github.js"

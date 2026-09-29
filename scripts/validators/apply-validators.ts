@@ -1,7 +1,7 @@
 import "dotenv/config";
 import mongoose, { Model } from "mongoose";
-import * as models from "../models";
-import { schemaToJsonSchema } from "../db/mongoose-to-jsonschema";
+import * as models from "../../src/models";
+import { schemaToJsonSchema } from "../../src/db/mongoose-to-jsonschema";
 
 /**
  * Gera o $jsonSchema de cada model Mongoose e aplica como validador no Atlas.

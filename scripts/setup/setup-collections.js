@@ -2,7 +2,7 @@
  * Cria collections e índices do MVP Zanzar no database Zanzardb.
  *
  * Rodar com:
- *   mongosh "$MONGODB_URI" --file scripts/setup-zanzardb-collections.js
+ *   mongosh "$MONGODB_URI" --file scripts/setup/setup-collections.js
  *
  * Ou colar no Atlas → ClusterZanzar → Browse Collections → _MONGOSH.
  *
