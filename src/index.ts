@@ -38,6 +38,7 @@ app.use(helmet())
 // Routes
 app.use(healthRouter);
 app.use(authRouter);
+app.use(placeRouter);
 app.use(validateAuthToken, userRouter);
 app.use(placeRouter);
 
