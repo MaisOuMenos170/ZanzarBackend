@@ -2,7 +2,7 @@
 
 Base do backend — **só estrutura de pastas e config mínima**. Sem código implementado ainda.
 
-Stack planejada: Express · Mongoose · MongoDB · JWT · TypeScript
+Stack planejada: Express · Mongoose · MongoDB · JWT · TypeScript.
 
 ## Estrutura
 
