@@ -65,7 +65,6 @@ safeIndex('itineraries', { isPublished: 1, category: 1 }, { name: 'itineraries_p
 
 // checkins
 safeIndex('checkins', { userId: 1, placeId: 1 }, { unique: true, name: 'checkins_user_place_unique' });
-safeIndex('checkins', { clientMutationId: 1 }, { unique: true, name: 'checkins_clientMutationId_unique' });
 safeIndex('checkins', { userId: 1, datetime: -1 }, { name: 'checkins_user_datetime' });
 
 // rating (Rating / Reações no diagrama)
