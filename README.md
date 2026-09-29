@@ -69,3 +69,5 @@ Alternativa: Atlas → **ClusterZanzar** → **Browse Collections** → `_MONGOS
 2. Copiar `.env.example` → `.env`
 3. Escrever models em `src/models/`
 4. Seed a partir de `data/lugares.json`
+
+oi amigo
