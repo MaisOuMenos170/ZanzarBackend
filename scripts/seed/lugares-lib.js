@@ -3,11 +3,16 @@
  * Usado por seed e sync-from-github (mongosh load()).
  */
 
+// A primeira regra que casar vence; quem não casar com nenhuma cai em `tourist`.
+// `curiosity` não tem um tipo Google equivalente claro: só casa com os tipos abaixo,
+// o restante deve ser atribuído manualmente.
 const categoryRules = [
+  { types: ['night_club', 'event_venue', 'casino'], category: 'party', stampId: 'stamp_party' },
+  { types: ['zoo', 'aquarium'], category: 'curiosity', stampId: 'stamp_curiosity' },
   { types: ['museum'], category: 'museum', stampId: 'stamp_museum' },
   { types: ['park', 'amusement_park'], category: 'park', stampId: 'stamp_park' },
   { types: ['restaurant'], category: 'restaurant', stampId: 'stamp_restaurant' },
-  { types: ['bar', 'night_club'], category: 'bar', stampId: 'stamp_bar' },
+  { types: ['bar'], category: 'bar', stampId: 'stamp_bar' },
   { types: ['cafe', 'bakery'], category: 'cafe', stampId: 'stamp_cafe' },
   { types: ['historic', 'church', 'place_of_worship'], category: 'historic', stampId: 'stamp_historic' },
 ];
