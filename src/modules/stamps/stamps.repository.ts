@@ -4,6 +4,6 @@ import type { StampCatalogDocument } from "../../schemas/stamp-catalog";
 
 export const stampsRepository = {
     async findByStampId(stampId: StampId): Promise<StampCatalogDocument | null> {
-        return StampCatalogModel.findOne({ stampId }).lean<StampCatalogDocument>();
+        return StampCatalogModel.findOne({ stampId, isActive: true }).lean<StampCatalogDocument>();
     },
 };
