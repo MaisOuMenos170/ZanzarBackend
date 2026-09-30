@@ -11,13 +11,15 @@ const dbx = db.getSiblingDB(dbName);
 const rootDir = process.env.SEED_ROOT_DIR || '.';
 
 const stampCatalog = [
-  { stampId: 'stamp_museum', stampType: 'museum', label: 'Museu', imageUrl: '/assets/stamps/museum.png', sortOrder: 1, isActive: true },
-  { stampId: 'stamp_park', stampType: 'park', label: 'Parque', imageUrl: '/assets/stamps/park.png', sortOrder: 2, isActive: true },
-  { stampId: 'stamp_restaurant', stampType: 'restaurant', label: 'Restaurante', imageUrl: '/assets/stamps/restaurant.png', sortOrder: 3, isActive: true },
-  { stampId: 'stamp_bar', stampType: 'bar', label: 'Bar', imageUrl: '/assets/stamps/bar.png', sortOrder: 4, isActive: true },
-  { stampId: 'stamp_cafe', stampType: 'cafe', label: 'Café', imageUrl: '/assets/stamps/cafe.png', sortOrder: 5, isActive: true },
-  { stampId: 'stamp_historic', stampType: 'historic', label: 'Histórico', imageUrl: '/assets/stamps/historic.png', sortOrder: 6, isActive: true },
-  { stampId: 'stamp_tourist', stampType: 'tourist', label: 'Turismo', imageUrl: '/assets/stamps/tourist.png', sortOrder: 7, isActive: true },
+  { stampId: 'stamp_restaurant', stampType: 'restaurant', label: 'Restaurante', imageUrl: '/assets/stamps/restaurant.png', sortOrder: 1, isActive: true },
+  { stampId: 'stamp_bar', stampType: 'bar', label: 'Bar', imageUrl: '/assets/stamps/bar.png', sortOrder: 2, isActive: true },
+  { stampId: 'stamp_cafe', stampType: 'cafe', label: 'Café', imageUrl: '/assets/stamps/cafe.png', sortOrder: 3, isActive: true },
+  { stampId: 'stamp_museum', stampType: 'museum', label: 'Museu', imageUrl: '/assets/stamps/museum.png', sortOrder: 4, isActive: true },
+  { stampId: 'stamp_park', stampType: 'park', label: 'Parque', imageUrl: '/assets/stamps/park.png', sortOrder: 5, isActive: true },
+  { stampId: 'stamp_tourist', stampType: 'tourist', label: 'Ponto Turístico', imageUrl: '/assets/stamps/tourist.png', sortOrder: 6, isActive: true },
+  { stampId: 'stamp_historic', stampType: 'historic', label: 'Histórico', imageUrl: '/assets/stamps/historic.png', sortOrder: 7, isActive: true },
+  { stampId: 'stamp_curiosity', stampType: 'curiosity', label: 'Curiosidade', imageUrl: '/assets/stamps/curiosity.png', sortOrder: 8, isActive: true },
+  { stampId: 'stamp_party', stampType: 'party', label: 'Festas', imageUrl: '/assets/stamps/party.png', sortOrder: 9, isActive: true },
 ];
 
 const stampResults = stampCatalog.map((stamp) =>
