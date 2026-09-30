@@ -1,19 +1,22 @@
 import type { RequestHandler } from "express";
 import { AppError } from "../../errors/appError";
 import { googlePlaceIdSchema } from "../../schemas/common.js";
-import { checkInService } from "./checkin.service";
+import { ratingService } from "./rating.service";
 
-export const checkIn: RequestHandler = async (req, res) => {
+export const createRating: RequestHandler = async (req, res) => {
     const userId = req.user?.id;
     if (typeof userId !== "string") {
         throw new AppError("Access denied", 401);
     }
 
-    await checkInService.checkIn(userId, req.body);
-    res.status(201).json({ message: "Check-in registered successfully" });
+    const rating = await ratingService.createRating(userId, req.body);
+    res.status(201).json({
+        impressionTag: rating.impressionTag,
+        placeId: rating.placeId,
+    });
 };
 
-export const getCheckInByUserAndPlace: RequestHandler = async (req, res) => {
+export const getRatingByUserAndPlace: RequestHandler = async (req, res) => {
     const userId = req.user?.id;
     if (typeof userId !== "string") {
         throw new AppError("Access denied", 401);
@@ -24,13 +27,10 @@ export const getCheckInByUserAndPlace: RequestHandler = async (req, res) => {
         throw new AppError("Invalid place id", 400);
     }
 
-    const checkInRecord = await checkInService.getCheckInByUserAndPlace(
-        placeIdResult.data,
-        userId,
-    );
-    if (!checkInRecord) {
+    const rating = await ratingService.getRatingByUserAndPlace(userId, placeIdResult.data);
+    if (!rating) {
         throw new AppError("Resource not found", 404);
     }
 
-    res.status(200).json(checkInRecord);
+    res.status(200).json(rating);
 };

@@ -13,6 +13,7 @@ import { userRouter } from "./modules/users/user.routes";
 import { authRouter } from "./modules/auth/auth.routes";
 import { placeRouter } from "./modules/places/place.routes";
 import { checkInRouter } from "./modules/checkin/checkin.routes";
+import { ratingRouter } from "./modules/rating/rating.routes";
 
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
@@ -57,6 +58,7 @@ app.use(authRouter);
 app.use(placeRouter);
 app.use(validateAuthToken, userRouter);
 app.use(validateAuthToken, checkInRouter);
+app.use(validateAuthToken, ratingRouter);
 
 // Error handler must be registered after the routes
 app.use(errorHandler);
