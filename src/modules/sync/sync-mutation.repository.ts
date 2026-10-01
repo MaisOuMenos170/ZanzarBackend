@@ -1,8 +1,22 @@
 import { SyncMutationModel } from "../../models/sync-mutation.model";
+import { logger } from "../../utils/logger";
+
+const log = logger.child({ module: "sync", layer: "repository" });
 
 export const syncMutationRepository = {
     async findByClientMutationId(clientMutationId: string) {
-        return SyncMutationModel.findOne({ clientMutationId }).lean();
+        log.debug({ clientMutationId }, "Fetching sync mutation by client mutation id");
+        try {
+            const mutation = await SyncMutationModel.findOne({ clientMutationId }).lean();
+            log.debug(
+                { clientMutationId, found: !!mutation, resultStatus: mutation?.resultStatus },
+                "Fetched sync mutation by client mutation id",
+            );
+            return mutation;
+        } catch (err) {
+            log.error({ err, clientMutationId }, "Failed to fetch sync mutation by client mutation id");
+            throw err;
+        }
     },
 
     async record(entry: {
@@ -13,6 +27,19 @@ export const syncMutationRepository = {
         resultPayload: Record<string, unknown>;
         processedAt: Date;
     }): Promise<void> {
-        await SyncMutationModel.create(entry);
+        const context = {
+            clientMutationId: entry.clientMutationId,
+            userId: entry.userId,
+            mutationType: entry.mutationType,
+            resultStatus: entry.resultStatus,
+        };
+        log.debug(context, "Recording sync mutation");
+        try {
+            await SyncMutationModel.create(entry);
+            log.debug(context, "Recorded sync mutation");
+        } catch (err) {
+            log.error({ err, ...context }, "Failed to record sync mutation");
+            throw err;
+        }
     },
 };
