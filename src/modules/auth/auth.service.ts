@@ -25,16 +25,15 @@ export const authService = {
 
         log.info("Login attempt");
 
-        // The client always gets a generic "Invalid credentials"; the real reason is only logged.
         const user = await userRepository.findByEmail(email);
         if (!user) {
-            log.warn({ reason: "user_not_found" }, "Login failed");
+            log.warn({ reason: "invalid_credentials" }, "Login failed");
             throw new AppError("Invalid credentials", 401);
         }
 
         const isMatch = await comparePassword(password, user.passwordHash);
         if (!isMatch) {
-            log.warn({ userId: user._id, reason: "bad_password" }, "Login failed");
+            log.warn({ reason: "invalid_credentials" }, "Login failed");
             throw new AppError("Invalid credentials", 401);
         }
 
