@@ -23,6 +23,7 @@ import { requestLogger } from "./middlewares/requestLogger";
 import { rateLimitHandler } from "./middlewares/rateLimiters";
 
 const PORT = process.env.PORT || 8000;
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
@@ -83,6 +84,8 @@ connectDatabase()
     for (const signal of ["SIGTERM", "SIGINT"] as const) {
       process.once(signal, () => {
         logger.info({ signal }, "Shutting down: finishing in-flight requests, then closing MongoDB");
+        // Don't hang until the orchestrator's SIGKILL if a request never finishes.
+        setTimeout(() => process.exit(1), SHUTDOWN_TIMEOUT_MS).unref();
         server.close(async () => {
           await disconnectDatabase();
           process.exit(0);

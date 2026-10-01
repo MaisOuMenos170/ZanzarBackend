@@ -181,7 +181,7 @@ LOG_LEVEL=debug npm run dev     # só para esta execução
 
 Ou fixe no `.env`: `LOG_LEVEL="debug"`. O nível é lido na inicialização, então reinicie o servidor após mudar.
 
-Shutdown: `SIGTERM`/`SIGINT` terminam os requests em andamento e fecham o servidor e a conexão com o Mongo. Um segundo `Ctrl+C` encerra o processo na hora.
+Shutdown: `SIGTERM`/`SIGINT` terminam os requests em andamento e fecham o servidor e a conexão com o Mongo. Se não terminar em 10 s, ou com um segundo `Ctrl+C`, o processo sai na hora.
 
 Também:
 
@@ -224,8 +224,9 @@ Todo log traz `service`, `pid` e `hostname`, para distinguir instâncias quando 
 - Erros inesperados/de banco são logados no repository (com operação + ids) e relançados; o `errorHandler` loga o resultado final com o mesmo `reqId`.
 - Coordenadas (`lat`/`lng`) de busca de lugares **não** são logadas (localização do usuário).
 - Violação de índice único (race de check-in/rating/e-mail duplicado) é logada como `warn` no repository, não `error`: vira 409 para o cliente.
-- Dados sensíveis são mascarados como `[REDACTED]` (`authorization`, `password`, `passwordHash`, `token`). A URI do MongoDB nunca é logada (contém credenciais no Atlas); só host e nome do banco.
-- Falhas de login logam o motivo real (`user_not_found` / `bad_password`), mas o cliente recebe sempre "Invalid credentials". E-mail não é logado.
+- Dados sensíveis são mascarados como `[REDACTED]` (`authorization`, `cookie`, `email`, `password`, `passwordHash`, `token`, `refreshToken`, em até um nível de aninhamento). A URI do MongoDB nunca é logada (contém credenciais no Atlas); só host e nome do banco.
+- Falhas de login logam sempre o mesmo motivo (`invalid_credentials`), sem `userId` e sem e-mail: nem a resposta HTTP nem os logs permitem descobrir quais e-mails existem.
+- Erros são serializados por `serializeError` (`src/utils/logger.ts`): erros de chave duplicada (E11000) e de validação/cast do Mongoose logam só o tipo e os **nomes** dos campos, nunca os valores enviados (o erro bruto do Mongo inclui `keyValue` com o e-mail).
 
 ## Próximos passos (quando for implementar)
 
