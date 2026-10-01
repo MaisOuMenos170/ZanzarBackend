@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '../errors/appError';
 import { logger } from '../utils/logger';
+import { getRequestPath } from '../utils/httpLog';
 
 const log = logger.child({ module: 'errorHandler' });
 
@@ -40,7 +41,7 @@ export function errorHandler(
     const { statusCode, message, details } = normalizeError(err);
     const isProduction = process.env.NODE_ENV === 'production';
 
-    const fields = { statusCode, method: req.method, path: req.originalUrl.split('?')[0] };
+    const fields = { statusCode, method: req.method, path: getRequestPath(req) };
     if (statusCode >= 500) {
         log.error({ ...fields, err }, `Request failed: ${err?.message ?? 'unknown error'}`);
     } else {

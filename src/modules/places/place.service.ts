@@ -7,7 +7,8 @@ const log = logger.child({ module: "places", layer: "service" });
 
 export const placeService = {
     async getNearby(query: GetPlacesQuery) {
-        log.info({ lat: query.lat, lng: query.lng, limit: query.limit }, "Fetching nearby places");
+        // Coordinates are user location data, so they are deliberately not logged.
+        log.info({ limit: query.limit }, "Fetching nearby places");
         const places = await placeRepository.findNearby(query.lat, query.lng, query.limit);
         log.info({ count: places.length }, "Fetched nearby places successfully");
         return places;

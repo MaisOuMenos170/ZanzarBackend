@@ -5,6 +5,7 @@ import { syncMutationRepository } from "../sync/sync-mutation.repository";
 import { ratingRepository } from "./rating.repository";
 import type { CreateRatingBody } from "../../schemas/rating";
 import { logger } from "../../utils/logger";
+import { isDuplicateKeyError } from "../../utils/mongoErrors";
 
 const log = logger.child({ module: "rating", layer: "service" });
 
@@ -78,12 +79,3 @@ export const ratingService = {
         return ratingRepository.findByUserAndPlace(userId, placeId);
     },
 };
-
-function isDuplicateKeyError(error: unknown): boolean {
-    return (
-        typeof error === "object"
-        && error !== null
-        && "code" in error
-        && (error.code === 11000 || error.code === 11001)
-    );
-}

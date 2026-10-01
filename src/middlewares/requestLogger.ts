@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { RequestHandler } from "express";
 import { logger } from "../utils/logger";
+import { getRequestPath } from "../utils/httpLog";
 import { runWithContext, type RequestContext } from "../utils/requestContext";
 
 const log = logger.child({ module: "http" });
@@ -12,28 +13,33 @@ const SKIPPED_PATHS = new Set(["/health"]);
 export const requestLogger: RequestHandler = (req, res, next) => {
     const context: RequestContext = { reqId: randomUUID() };
     const startedAt = process.hrtime.bigint();
-    const path = req.originalUrl.split("?")[0];
+    const path = getRequestPath(req);
+    // Read up front: req.ip can be gone once the socket of an aborted request is destroyed.
+    const ip = req.ip;
 
     res.setHeader("X-Request-Id", context.reqId);
 
-    res.on("finish", () => {
-        if (SKIPPED_PATHS.has(path)) return;
+    // "close" fires for every request, including ones the client aborted or that were cut off before "finish".
+    res.on("close", () => {
+        if (SKIPPED_PATHS.has(path.replace(/\/+$/, "") || "/")) return;
 
+        const aborted = !res.writableFinished;
         const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
         const fields = {
-            // Set explicitly: the "finish" event does not always run inside the request's async context.
+            // Set explicitly: this event does not always run inside the request's async context.
             reqId: context.reqId,
             userId: context.userId,
             method: req.method,
             path,
             statusCode: res.statusCode,
             durationMs: Math.round(durationMs),
-            ip: req.ip,
+            ip,
+            ...(aborted && { aborted }),
         };
-        const message = `${req.method} ${path} ${res.statusCode}`;
 
-        if (res.statusCode >= 500) log.error(fields, message);
-        else log.info(fields, message);
+        if (aborted) log.warn(fields, `${req.method} ${path} aborted before the response completed`);
+        else if (res.statusCode >= 500) log.error(fields, `${req.method} ${path} ${res.statusCode}`);
+        else log.info(fields, `${req.method} ${path} ${res.statusCode}`);
     });
 
     runWithContext(context, next);

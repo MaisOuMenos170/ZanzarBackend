@@ -5,7 +5,7 @@ import helmet from "helmet";
 import { rateLimit } from 'express-rate-limit'
 import type { Express } from "express";
 import { logger } from "./utils/logger";
-import { connectDatabase } from "./config/database";
+import { connectDatabase, disconnectDatabase } from "./config/database";
 
 // Routes import
 import { healthRouter } from "./modules/health/health.routes";
@@ -25,12 +25,12 @@ import { rateLimitHandler } from "./middlewares/rateLimiters";
 const PORT = process.env.PORT || 8000;
 
 function requireEnv(name: string): string {
-    const value = process.env[name]?.trim();
-    if (!value) {
-        logger.fatal({ variable: name }, "Missing required environment variable");
-        process.exit(1);
-    }
-    return value;
+  const value = process.env[name]?.trim();
+  if (!value) {
+    logger.fatal({ variable: name }, "Missing required environment variable");
+    process.exit(1);
+  }
+  return value;
 }
 
 requireEnv("JWT_SECRET");
@@ -72,14 +72,22 @@ app.use(errorHandler);
 
 connectDatabase()
   .then(() => {
-    const server = app.listen(PORT, (): void => {
+    const server = app.listen(PORT, (err?: Error): void => {
+      if (err) {
+        logger.fatal({ err, port: PORT }, "Failed to bind server port");
+        process.exit(1);
+      }
       logger.info({ port: PORT, env: process.env.NODE_ENV }, "Server is running");
     });
 
     for (const signal of ["SIGTERM", "SIGINT"] as const) {
-      process.on(signal, () => {
-        logger.info({ signal }, "Shutdown signal received, closing server");
-        server.close(() => process.exit(0));
+      process.once(signal, () => {
+        logger.info({ signal }, "Shutting down: finishing in-flight requests, then closing MongoDB");
+        server.close(async () => {
+          await disconnectDatabase();
+          process.exit(0);
+        });
+        server.closeIdleConnections();
       });
     }
   })

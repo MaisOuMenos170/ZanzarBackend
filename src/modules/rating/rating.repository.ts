@@ -1,6 +1,7 @@
 import { RatingModel } from "../../models/rating.model";
 import type { CreateRatingBody } from "../../schemas/rating";
 import { logger } from "../../utils/logger";
+import { isDuplicateKeyError } from "../../utils/mongoErrors";
 
 const log = logger.child({ module: "rating", layer: "repository" });
 
@@ -38,7 +39,9 @@ export const ratingRepository = {
             log.debug({ ...context, ratingId: rating._id }, "Created rating");
             return rating;
         } catch (err) {
-            log.error({ err, ...context }, "Failed to create rating");
+            // A unique-index hit is an expected race the service turns into a 409, not a server error.
+            const level = isDuplicateKeyError(err) ? "warn" : "error";
+            log[level]({ err, ...context }, "Failed to create rating");
             throw err;
         }
     },

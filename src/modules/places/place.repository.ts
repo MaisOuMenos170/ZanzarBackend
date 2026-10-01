@@ -23,7 +23,8 @@ export const placeRepository = {
         lng: number,
         limit?: number,
     ): Promise<PlaceNearbyDocument[]> {
-        log.debug({ lat, lng, limit }, "Fetching nearby places");
+        // Coordinates are user location data, so they are deliberately not logged.
+        log.debug({ limit }, "Fetching nearby places");
         try {
             const pipeline: PipelineStage[] = [
                 {
@@ -41,10 +42,10 @@ export const placeRepository = {
             }
 
             const places = await PlaceModel.aggregate<PlaceNearbyDocument>(pipeline);
-            log.debug({ lat, lng, limit, count: places.length }, "Fetched nearby places");
+            log.debug({ limit, count: places.length }, "Fetched nearby places");
             return places;
         } catch (err) {
-            log.error({ err, lat, lng, limit }, "Failed to fetch nearby places");
+            log.error({ err, limit }, "Failed to fetch nearby places");
             throw err;
         }
     },

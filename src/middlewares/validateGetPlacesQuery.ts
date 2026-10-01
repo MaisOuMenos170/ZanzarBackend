@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { z } from "zod";
 import { getPlacesQuerySchema, type GetPlacesQuery } from "../schemas/place";
 import { logger } from "../utils/logger";
+import { getRequestPath, summarizeIssues } from "../utils/httpLog";
 
 const log = logger.child({ module: "validation", layer: "middleware" });
 
@@ -16,9 +17,8 @@ export const validateGetPlacesQuery: RequestHandler = (req, res, next) => {
     if (!result.success) {
         log.warn(
             {
-                path: req.originalUrl.split("?")[0],
-                // Field paths and codes only: never log the submitted values.
-                issues: result.error.issues.map((issue) => ({ path: issue.path.join("."), code: issue.code })),
+                path: getRequestPath(req),
+                issues: summarizeIssues(result.error),
             },
             "Places query failed validation",
         );

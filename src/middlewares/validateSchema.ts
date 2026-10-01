@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import { z } from "zod";
 import { logger } from "../utils/logger";
+import { getRequestPath, summarizeIssues } from "../utils/httpLog";
 
 const log = logger.child({ module: "validation", layer: "middleware" });
 
@@ -12,9 +13,8 @@ export const validateSchema =
             log.warn(
                 {
                     method: req.method,
-                    path: req.originalUrl.split("?")[0],
-                    // Field paths and codes only: never log the submitted values.
-                    issues: result.error.issues.map((issue) => ({ path: issue.path.join("."), code: issue.code })),
+                    path: getRequestPath(req),
+                    issues: summarizeIssues(result.error),
                 },
                 "Request body failed validation",
             );
