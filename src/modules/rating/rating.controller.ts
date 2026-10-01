@@ -9,10 +9,11 @@ export const createRating: RequestHandler = async (req, res) => {
         throw new AppError("Access denied", 401);
     }
 
-    const rating = await ratingService.createRating(userId, req.body);
+    const { rating, impressionCounts } = await ratingService.createRating(userId, req.body);
     res.status(201).json({
         impressionTag: rating.impressionTag,
         placeId: rating.placeId,
+        impressionCounts,
     });
 };
 

@@ -2,7 +2,8 @@ import type { RequestHandler } from "express";
 import { placeService } from "./place.service";
 
 export const getPlaces: RequestHandler = async (req, res) => {
-    const places = await placeService.getNearby(res.locals.placesQuery!);
+    const userId = typeof req.user?.id === "string" ? req.user.id : undefined;
+    const places = await placeService.getNearby(res.locals.placesQuery!, userId);
     res.json(places);
 };
 

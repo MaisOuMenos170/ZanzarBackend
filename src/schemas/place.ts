@@ -60,11 +60,18 @@ export const placeDocumentSchema = z.object({
   updated_at: isoDateTimeSchema,
 });
 
+export const placeUserContextSchema = z.object({
+  hasCheckedIn: z.boolean(),
+  isInActiveItinerary: z.boolean(),
+});
+
 export const placeNearbySchema = placeDocumentSchema.extend({
   distanceMeters: z.number().nonnegative(),
+  userContext: placeUserContextSchema.optional(),
 });
 
 export type PlaceDocument = z.infer<typeof placeDocumentSchema>;
 export type PlaceNearbyDocument = z.infer<typeof placeNearbySchema>;
+export type PlaceUserContext = z.infer<typeof placeUserContextSchema>;
 export type GetPlacesQuery = z.infer<typeof getPlacesQuerySchema>;
 export type ZanzarExtension = z.infer<typeof zanzarExtensionSchema>;

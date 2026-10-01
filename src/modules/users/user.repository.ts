@@ -12,6 +12,17 @@ export const userRepository = {
         return UserModel.findOne({ email }).lean<User>();
     },
 
+    async findActiveItineraryIncompletePlaceIds(userId: string): Promise<string[]> {
+        const user = await UserModel.findById(userId).select("activeItinerary").lean<User>();
+        if (!user?.activeItinerary) {
+            return [];
+        }
+
+        return user.activeItinerary.places
+            .filter((place) => !place.isCompleted)
+            .map((place) => place.placeId);
+    },
+
     async create(data: CreateUserInput): Promise<User> {
         const { password, ...rest } = data;
         const passwordHash = await hashPassword(password);

@@ -13,7 +13,11 @@ export const ratingService = {
         if (existingSync?.resultStatus === "accepted") {
             const existingRating = await ratingRepository.findByUserAndPlace(userId, body.placeId);
             if (existingRating) {
-                return existingRating;
+                const place = await placeRepository.findByPlaceId(body.placeId);
+                return {
+                    rating: existingRating,
+                    impressionCounts: place?.zanzar.impressionCounts ?? {},
+                };
             }
         }
 
@@ -43,6 +47,8 @@ export const ratingService = {
 
         await placeRepository.incrementImpressionCount(body.placeId, body.impressionTag);
 
+        const updatedPlace = await placeRepository.findByPlaceId(body.placeId);
+
         await syncMutationRepository.record({
             clientMutationId: body.clientMutationId,
             userId,
@@ -55,7 +61,10 @@ export const ratingService = {
             processedAt: new Date(),
         });
 
-        return rating;
+        return {
+            rating,
+            impressionCounts: updatedPlace?.zanzar.impressionCounts ?? {},
+        };
     },
 
     async getRatingByUserAndPlace(userId: string, placeId: string) {
