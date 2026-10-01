@@ -103,6 +103,17 @@ export const userRepository = {
         }
     },
 
+    async findActiveItineraryIncompletePlaceIds(userId: string): Promise<string[]> {
+        const user = await UserModel.findById(userId).select("activeItinerary").lean<User>();
+        if (!user?.activeItinerary) {
+            return [];
+        }
+
+        return user.activeItinerary.places
+            .filter((place) => !place.isCompleted)
+            .map((place) => place.placeId);
+    },
+
     async create(data: CreateUserInput): Promise<User> {
         log.debug("Creating user");
         try {
