@@ -19,13 +19,15 @@ import { stampsRouter } from "./modules/stamps/stamps.routes";
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
 import { validateAuthToken } from "./middlewares/validateAuthToken";
+import { requestLogger } from "./middlewares/requestLogger";
+import { rateLimitHandler } from "./middlewares/rateLimiters";
 
 const PORT = process.env.PORT || 8000;
 
 function requireEnv(name: string): string {
     const value = process.env[name]?.trim();
     if (!value) {
-        logger.error(`Missing required environment variable: ${name}`);
+        logger.fatal({ variable: name }, "Missing required environment variable");
         process.exit(1);
     }
     return value;
@@ -45,8 +47,11 @@ const limiter = rateLimit({
   standardHeaders: 'draft-8', // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
   ipv6Subnet: 56, // Set to 60 or 64 to be less aggressive, or 52 or 48 to be more aggressive
+  handler: rateLimitHandler("global"),
 })
 
+// Must be first so every request (including rate-limited ones) gets a request id and an access log line
+app.use(requestLogger);
 app.use(limiter);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -65,8 +70,30 @@ app.use(validateAuthToken, stampsRouter);
 // Error handler must be registered after the routes
 app.use(errorHandler);
 
-connectDatabase().then(() => {
-  app.listen(PORT, (): void => {
-    logger.info(`Server is running on port ${PORT}`);
+connectDatabase()
+  .then(() => {
+    const server = app.listen(PORT, (): void => {
+      logger.info({ port: PORT, env: process.env.NODE_ENV }, "Server is running");
+    });
+
+    for (const signal of ["SIGTERM", "SIGINT"] as const) {
+      process.on(signal, () => {
+        logger.info({ signal }, "Shutdown signal received, closing server");
+        server.close(() => process.exit(0));
+      });
+    }
+  })
+  .catch((err) => {
+    logger.fatal({ err }, "Failed to start server");
+    process.exit(1);
   });
+
+process.on("unhandledRejection", (reason) => {
+  logger.fatal({ err: reason }, "Unhandled promise rejection");
+  process.exit(1); // keep Node's default behavior of crashing on unhandled rejections
+});
+
+process.on("uncaughtException", (err) => {
+  logger.fatal({ err }, "Uncaught exception");
+  process.exit(1);
 });

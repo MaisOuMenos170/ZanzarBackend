@@ -4,15 +4,27 @@ import { checkInRepository } from "../checkin/checkin.repository";
 import { syncMutationRepository } from "../sync/sync-mutation.repository";
 import { ratingRepository } from "./rating.repository";
 import type { CreateRatingBody } from "../../schemas/rating";
+import { logger } from "../../utils/logger";
+
+const log = logger.child({ module: "rating", layer: "service" });
 
 export const ratingService = {
     async createRating(userId: string, body: CreateRatingBody) {
+        const context = {
+            userId,
+            placeId: body.placeId,
+            impressionTag: body.impressionTag,
+            clientMutationId: body.clientMutationId,
+        };
+        log.info(context, "Creating rating");
+
         const existingSync = await syncMutationRepository.findByClientMutationId(
             body.clientMutationId,
         );
         if (existingSync?.resultStatus === "accepted") {
             const existingRating = await ratingRepository.findByUserAndPlace(userId, body.placeId);
             if (existingRating) {
+                log.info(context, "Rating already accepted for this mutation, returning existing (idempotent replay)");
                 return existingRating;
             }
         }
@@ -28,6 +40,7 @@ export const ratingService = {
 
         const checkinId = checkin._id?.toString();
         if (!checkinId) {
+            log.error(context, "Check-in document has no _id, cannot link rating");
             throw new AppError("Check-in is missing an identifier", 500);
         }
 
@@ -36,6 +49,7 @@ export const ratingService = {
             rating = await ratingRepository.create(userId, body, checkinId);
         } catch (error: unknown) {
             if (isDuplicateKeyError(error)) {
+                log.warn(context, "Duplicate rating rejected by unique index (concurrent request)");
                 throw new AppError("User has already rated this place", 409);
             }
             throw error;
@@ -55,10 +69,12 @@ export const ratingService = {
             processedAt: new Date(),
         });
 
+        log.info(context, "Rating created successfully");
         return rating;
     },
 
     async getRatingByUserAndPlace(userId: string, placeId: string) {
+        log.info({ userId, placeId }, "Fetching rating for user and place");
         return ratingRepository.findByUserAndPlace(userId, placeId);
     },
 };
