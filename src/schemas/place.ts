@@ -27,6 +27,7 @@ export const getPlacesQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
   limit: z.coerce.number().int().positive().optional(),
+  excludePlaceId: z.string().min(1).optional(),
 });
 
 export const placeDocumentSchema = z.object({

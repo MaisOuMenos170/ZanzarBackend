@@ -29,6 +29,30 @@ const stampResults = stampCatalog.map((stamp) =>
 const rawPlaces = JSON.parse(fs.readFileSync(`${rootDir}/data/lugares.json`, 'utf8'));
 const placeResults = upsertPlaces(dbx, rawPlaces);
 
+// Demo stats so nearby cards and place detail previews match design expectations.
+const demoZanzarStatsByPlaceId = {
+  ChIJp1_LiN_j3JQRUx7PRRpC7WQ: {
+    checkInCount: 21,
+    impressionCounts: { delighted: 3, happy: 5, nauseated: 2, sad: 4, sleepy: 7 },
+  },
+  ChIJNWbp1QDl3JQRVFbc_cVeLRo: {
+    checkInCount: 14,
+    impressionCounts: { delighted: 2, happy: 4, nauseated: 1, sad: 3, sleepy: 4 },
+  },
+};
+
+const demoStatsResults = Object.entries(demoZanzarStatsByPlaceId).map(([placeId, stats]) =>
+  dbx.places.updateOne(
+    { place_id: placeId },
+    {
+      $set: {
+        'zanzar.checkInCount': stats.checkInCount,
+        'zanzar.impressionCounts': stats.impressionCounts,
+      },
+    },
+  ),
+);
+
 print(JSON.stringify({
   database: dbName,
   stampCatalog: {
@@ -37,6 +61,10 @@ print(JSON.stringify({
     modified: stampResults.filter((r) => r.modifiedCount === 1).length,
   },
   places: placeResults,
+  demoZanzarStats: {
+    configured: Object.keys(demoZanzarStatsByPlaceId).length,
+    matched: demoStatsResults.filter((result) => result.matchedCount === 1).length,
+  },
   counts: {
     stamp_catalog: dbx.stamp_catalog.countDocuments(),
     places: dbx.places.countDocuments(),
