@@ -4,6 +4,7 @@ import { placeRepository } from "../places/place.repository";
 import { syncMutationRepository } from "../sync/sync-mutation.repository";
 import { checkInRepository } from "./checkin.repository";
 import { logger } from "../../utils/logger";
+import { isDuplicateKeyError } from "../../utils/mongoErrors";
 
 const log = logger.child({ module: "checkin", layer: "service" });
 
@@ -61,12 +62,3 @@ export const checkInService = {
         return checkInRepository.getCheckInByUserAndPlace(placeId, userId);
     },
 };
-
-function isDuplicateKeyError(error: unknown): boolean {
-    return (
-        typeof error === "object"
-        && error !== null
-        && "code" in error
-        && (error.code === 11000 || error.code === 11001)
-    );
-}

@@ -1,5 +1,6 @@
 import { rateLimit, type RateLimitExceededEventHandler } from "express-rate-limit";
 import { logger } from "../utils/logger";
+import { getRequestPath } from "../utils/httpLog";
 
 const log = logger.child({ module: "rateLimit", layer: "middleware" });
 
@@ -7,7 +8,7 @@ const log = logger.child({ module: "rateLimit", layer: "middleware" });
 export const rateLimitHandler = (limiter: string): RateLimitExceededEventHandler =>
     (req, res, _next, options) => {
         log.warn(
-            { limiter, ip: req.ip, method: req.method, path: req.originalUrl.split("?")[0] },
+            { limiter, ip: req.ip, method: req.method, path: getRequestPath(req) },
             "Rate limit exceeded",
         );
         res.status(options.statusCode).send(options.message);

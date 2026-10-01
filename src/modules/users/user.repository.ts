@@ -2,6 +2,7 @@ import { UserModel, User } from "../../models/user.model";
 import { CreateUserInput } from "./schema/createUserSchema";
 import { hashPassword } from "../../utils/bcrypt";
 import { logger } from "../../utils/logger";
+import { isDuplicateKeyError } from "../../utils/mongoErrors";
 
 const log = logger.child({ module: "users", layer: "repository" });
 
@@ -44,7 +45,9 @@ export const userRepository = {
             log.debug({ userId: model._id }, "Created user");
             return model.toObject() as User;
         } catch (err) {
-            log.error({ err }, "Failed to create user");
+            // A duplicate email (race with the service's pre-check) maps to a 409, not a server error.
+            const level = isDuplicateKeyError(err) ? "warn" : "error";
+            log[level]({ err }, "Failed to create user");
             throw err;
         }
     },

@@ -164,7 +164,7 @@ log.error({ err, userId, placeId }, "Failed to create check-in");
 
 ### Controlar o nível de log
 
-O nível é definido pela variável `LOG_LEVEL` no `.env` (padrão: `info`). Só aparecem logs do nível escolhido **e dos mais severos**:
+O nível é definido pela variável `LOG_LEVEL` no `.env` (padrão: `info`; maiúsculas/minúsculas tanto faz — `DEBUG` funciona). Um valor inválido não derruba o servidor: ele usa `info` e registra um aviso. Só aparecem logs do nível escolhido **e dos mais severos**:
 
 | `LOG_LEVEL` | O que aparece | Quando usar |
 |---|---|---|
@@ -172,7 +172,7 @@ O nível é definido pela variável `LOG_LEVEL` no `.env` (padrão: `info`). Só
 | `info` *(padrão)* | uma linha por request, operações de negócio ("Fetching…", "Check-in registered…"), startup | uso normal / produção |
 | `warn` | requests rejeitados (401, 403, 400, 409, 404), rate limit, falhas de login, desconexão do banco | só o que merece atenção |
 | `error` | falhas inesperadas (5xx) e erros de banco | só problemas reais |
-| `fatal` | o servidor não conseguiu subir / crash | — |
+| `fatal` | o servidor não conseguiu subir (Mongo, porta em uso) / crash | — |
 | `silent` | nada | testes |
 
 ```bash
@@ -180,6 +180,8 @@ LOG_LEVEL=debug npm run dev     # só para esta execução
 ```
 
 Ou fixe no `.env`: `LOG_LEVEL="debug"`. O nível é lido na inicialização, então reinicie o servidor após mudar.
+
+Shutdown: `SIGTERM`/`SIGINT` terminam os requests em andamento e fecham o servidor e a conexão com o Mongo. Um segundo `Ctrl+C` encerra o processo na hora.
 
 Também:
 
@@ -196,7 +198,7 @@ Cada camada tem uma função diferente:
 | Middlewares de auth, validação, ownership e rate limit | o motivo da rejeição (token ausente/inválido, campos que falharam no zod, 403, 429) | warn |
 | Services | operações de negócio com ids, replays idempotentes, corridas de chave duplicada, login ok/falho | info / warn |
 | Repositories | cada chamada ao banco (antes e depois) e erros com operação + ids, que são relançados | debug / error |
-| Startup (`index.ts`, `database.ts`) | conexão com o Mongo (host e nome do banco), porta, SIGTERM/SIGINT, erros fatais | info / fatal |
+| Startup / shutdown (`index.ts`, `database.ts`) | conexão com o Mongo (host e nome do banco), porta (ou falha ao abrir a porta), SIGTERM/SIGINT, erros fatais | info / fatal |
 
 Controllers não logam: o log de request e os logs dos services já cobrem.
 
@@ -209,14 +211,19 @@ Todo request recebe um `reqId` (UUID), devolvido no header `X-Request-Id`. Esse 
 npm start | grep '"reqId":"<id-do-header-x-request-id>"'
 ```
 
-`/health` não gera log de request (probes encheriam o log); a chamada aparece só em `debug`.
+`/health` não gera log de request (probes encheriam o log); a chamada aparece só em `debug`. Requests abortados pelo cliente (ou cortados por timeout de proxy) geram uma linha `warn` com `aborted: true`.
+
+Todo log traz `service`, `pid` e `hostname`, para distinguir instâncias quando houver mais de uma.
 
 ### Convenções
 
+- Helpers em `src/utils/httpLog.ts` (`getRequestPath`, `summarizeIssues`) e `src/utils/mongoErrors.ts` (`isDuplicateKeyError`).
 - Use `logger.child({ module, layer })` por arquivo e **campos estruturados** (`{ userId, placeId }`).
 - Logue só ids e contagens — nunca body, token, senha ou documentos inteiros.
 - Erros esperados (`AppError` lançado no service) **não** são logados onde são lançados: o `errorHandler` loga uma vez, com o contexto do request.
 - Erros inesperados/de banco são logados no repository (com operação + ids) e relançados; o `errorHandler` loga o resultado final com o mesmo `reqId`.
+- Coordenadas (`lat`/`lng`) de busca de lugares **não** são logadas (localização do usuário).
+- Violação de índice único (race de check-in/rating/e-mail duplicado) é logada como `warn` no repository, não `error`: vira 409 para o cliente.
 - Dados sensíveis são mascarados como `[REDACTED]` (`authorization`, `password`, `passwordHash`, `token`). A URI do MongoDB nunca é logada (contém credenciais no Atlas); só host e nome do banco.
 - Falhas de login logam o motivo real (`user_not_found` / `bad_password`), mas o cliente recebe sempre "Invalid credentials". E-mail não é logado.
 

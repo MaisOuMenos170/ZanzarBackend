@@ -1,5 +1,6 @@
 import { CheckinModel } from "../../models";
 import { logger } from "../../utils/logger";
+import { isDuplicateKeyError } from "../../utils/mongoErrors";
 
 const log = logger.child({ module: "checkin", layer: "repository" });
 
@@ -15,7 +16,9 @@ export const checkInRepository = {
             await CheckinModel.create({ placeId, userId, datetime, clientMutationId });
             log.debug({ placeId, userId, clientMutationId }, "Created check-in");
         } catch (err) {
-            log.error({ err, placeId, userId, clientMutationId }, "Failed to create check-in");
+            // A unique-index hit is an expected race the service turns into a 409, not a server error.
+            const level = isDuplicateKeyError(err) ? "warn" : "error";
+            log[level]({ err, placeId, userId, clientMutationId }, "Failed to create check-in");
             throw err;
         }
     },
