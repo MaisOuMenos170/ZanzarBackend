@@ -149,6 +149,77 @@ cd ../Zanzar
 - **Porta customizada** — `PORT=4000 npm run tunnel` aponta o túnel para outra porta.
 - **Só Debug no app** — a URL de túnel é gravada apenas na configuração Debug do Xcode; Release usa URL de produção.
 
+## Logging
+
+Logs estruturados com [pino](https://getpino.io) (`src/utils/logger.ts`). Importe `logger` e use campos estruturados em vez de interpolar strings:
+
+```ts
+import { logger } from "../../utils/logger";
+
+const log = logger.child({ module: "checkin", layer: "service" });
+
+log.info({ userId, placeId }, "Checking in user at place");
+log.error({ err, userId, placeId }, "Failed to create check-in");
+```
+
+### Controlar o nível de log
+
+O nível é definido pela variável `LOG_LEVEL` no `.env` (padrão: `info`). Só aparecem logs do nível escolhido **e dos mais severos**:
+
+| `LOG_LEVEL` | O que aparece | Quando usar |
+|---|---|---|
+| `debug` | tudo: chamadas ao banco (antes/depois de cada query), além dos níveis abaixo | investigar um bug |
+| `info` *(padrão)* | uma linha por request, operações de negócio ("Fetching…", "Check-in registered…"), startup | uso normal / produção |
+| `warn` | requests rejeitados (401, 403, 400, 409, 404), rate limit, falhas de login, desconexão do banco | só o que merece atenção |
+| `error` | falhas inesperadas (5xx) e erros de banco | só problemas reais |
+| `fatal` | o servidor não conseguiu subir / crash | — |
+| `silent` | nada | testes |
+
+```bash
+LOG_LEVEL=debug npm run dev     # só para esta execução
+```
+
+Ou fixe no `.env`: `LOG_LEVEL="debug"`. O nível é lido na inicialização, então reinicie o servidor após mudar.
+
+Também:
+
+- `NODE_ENV=production` imprime **JSON** (uma linha por log, ideal para agregadores); qualquer outro valor usa `pino-pretty`, legível no terminal.
+- `NODE_ENV=test` silencia os logs automaticamente.
+
+### O que é logado e onde
+
+Cada camada tem uma função diferente:
+
+| Camada | O que loga | Nível |
+|---|---|---|
+| Middleware de request (`requestLogger`) + `errorHandler` | uma linha por request (`método`, `path`, `status`, `durationMs`, `ip`) e a causa de toda falha | info / warn / error |
+| Middlewares de auth, validação, ownership e rate limit | o motivo da rejeição (token ausente/inválido, campos que falharam no zod, 403, 429) | warn |
+| Services | operações de negócio com ids, replays idempotentes, corridas de chave duplicada, login ok/falho | info / warn |
+| Repositories | cada chamada ao banco (antes e depois) e erros com operação + ids, que são relançados | debug / error |
+| Startup (`index.ts`, `database.ts`) | conexão com o Mongo (host e nome do banco), porta, SIGTERM/SIGINT, erros fatais | info / fatal |
+
+Controllers não logam: o log de request e os logs dos services já cobrem.
+
+### Rastreando um request
+
+Todo request recebe um `reqId` (UUID), devolvido no header `X-Request-Id`. Esse `reqId` — e o `userId`, depois da autenticação — é adicionado automaticamente a **todas** as linhas de log daquele request (middleware → service → repository → `errorHandler`), via `AsyncLocalStorage` (`src/utils/requestContext.ts`). Para ver o caminho completo de um request que falhou, filtre pelo `reqId`:
+
+```bash
+# em produção (JSON)
+npm start | grep '"reqId":"<id-do-header-x-request-id>"'
+```
+
+`/health` não gera log de request (probes encheriam o log); a chamada aparece só em `debug`.
+
+### Convenções
+
+- Use `logger.child({ module, layer })` por arquivo e **campos estruturados** (`{ userId, placeId }`).
+- Logue só ids e contagens — nunca body, token, senha ou documentos inteiros.
+- Erros esperados (`AppError` lançado no service) **não** são logados onde são lançados: o `errorHandler` loga uma vez, com o contexto do request.
+- Erros inesperados/de banco são logados no repository (com operação + ids) e relançados; o `errorHandler` loga o resultado final com o mesmo `reqId`.
+- Dados sensíveis são mascarados como `[REDACTED]` (`authorization`, `password`, `passwordHash`, `token`). A URI do MongoDB nunca é logada (contém credenciais no Atlas); só host e nome do banco.
+- Falhas de login logam o motivo real (`user_not_found` / `bad_password`), mas o cliente recebe sempre "Invalid credentials". E-mail não é logado.
+
 ## Próximos passos (quando for implementar)
 
 1. `npm init` / instalar dependências (express, mongoose, jsonwebtoken, zod…)
