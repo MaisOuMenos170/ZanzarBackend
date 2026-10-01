@@ -11,6 +11,7 @@ export const placeRepository = {
         lat: number,
         lng: number,
         limit?: number,
+        excludePlaceId?: string,
     ): Promise<PlaceNearbyDocument[]> {
         const pipeline: PipelineStage[] = [
             {
@@ -22,6 +23,10 @@ export const placeRepository = {
                 },
             },
         ];
+
+        if (excludePlaceId != null) {
+            pipeline.push({ $match: { place_id: { $ne: excludePlaceId } } });
+        }
 
         if (limit != null) {
             pipeline.push({ $limit: limit });

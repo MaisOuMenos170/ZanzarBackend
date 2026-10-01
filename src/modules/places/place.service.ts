@@ -4,7 +4,12 @@ import type { GetPlacesQuery } from "../../schemas/place";
 
 export const placeService = {
     async getNearby(query: GetPlacesQuery) {
-        return placeRepository.findNearby(query.lat, query.lng, query.limit);
+        return placeRepository.findNearby(
+            query.lat,
+            query.lng,
+            query.limit,
+            query.excludePlaceId,
+        );
     },
 
     async getByPlaceId(placeId: string) {
