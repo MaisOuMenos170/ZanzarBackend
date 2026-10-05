@@ -26,8 +26,16 @@ export const ratingService = {
             const existingRating = await ratingRepository.findByUserAndPlace(userId, body.placeId);
             if (existingRating) {
                 log.info(context, "Rating already accepted for this mutation, returning existing (idempotent replay)");
-                return existingRating;
+                const place = await placeRepository.findByPlaceId(body.placeId);
+                return {
+                    rating: existingRating,
+                    impressionCounts: place?.zanzar.impressionCounts ?? {},
+                };
             }
+            log.warn(
+                context,
+                "Accepted sync mutation has no rating document; continuing with create flow",
+            );
         }
 
         if (await ratingRepository.findByUserAndPlace(userId, body.placeId)) {
@@ -56,7 +64,10 @@ export const ratingService = {
             throw error;
         }
 
-        await placeRepository.incrementImpressionCount(body.placeId, body.impressionTag);
+        const impressionCounts = await placeRepository.incrementImpressionCount(
+            body.placeId,
+            body.impressionTag,
+        );
 
         await syncMutationRepository.record({
             clientMutationId: body.clientMutationId,
@@ -71,7 +82,10 @@ export const ratingService = {
         });
 
         log.info(context, "Rating created successfully");
-        return rating;
+        return {
+            rating,
+            impressionCounts,
+        };
     },
 
     async getRatingByUserAndPlace(userId: string, placeId: string) {

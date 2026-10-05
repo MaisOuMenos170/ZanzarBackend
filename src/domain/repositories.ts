@@ -23,7 +23,7 @@ export interface PlaceRepository {
   findByPlaceId(placeId: string): Promise<PlaceDocument | null>;
   findNearby(lat: number, lng: number, limit?: number): Promise<PlaceNearbyDocument[]>;
   incrementCheckInCount(placeId: string): Promise<void>;
-  incrementImpressionCount(placeId: string, tag: string): Promise<void>;
+  incrementImpressionCount(placeId: string, tag: string): Promise<Record<string, number>>;
 }
 
 export interface CheckinRepository {

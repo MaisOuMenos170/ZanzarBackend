@@ -1,8 +1,18 @@
-import type { RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
+import { Types } from "mongoose";
 import { placeService } from "./place.service";
 
+function resolveAuthenticatedUserId(req: Request): string | undefined {
+    const id = req.user?.id;
+    if (typeof id !== "string" || !Types.ObjectId.isValid(id)) {
+        return undefined;
+    }
+    return id;
+}
+
 export const getPlaces: RequestHandler = async (req, res) => {
-    const places = await placeService.getNearby(res.locals.placesQuery!);
+    const userId = resolveAuthenticatedUserId(req);
+    const places = await placeService.getNearby(res.locals.placesQuery!, userId);
     res.json(places);
 };
 
@@ -12,6 +22,7 @@ export const getPlaceById: RequestHandler = async (req, res) => {
         res.status(400).json({ success: false, message: "Invalid place id" });
         return;
     }
-    const place = await placeService.getByPlaceId(placeId);
+    const userId = resolveAuthenticatedUserId(req);
+    const place = await placeService.getByPlaceId(placeId, userId);
     res.json(place);
 };

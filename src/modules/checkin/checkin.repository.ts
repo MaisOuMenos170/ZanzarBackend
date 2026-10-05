@@ -34,4 +34,21 @@ export const checkInRepository = {
             throw err;
         }
     },
+
+    async listPlaceIdsByUser(userId: string, placeIds: string[]): Promise<string[]> {
+        if (placeIds.length === 0) {
+            return [];
+        }
+
+        log.debug({ userId, placeIdCount: placeIds.length }, "Listing check-in place ids for user");
+        try {
+            const checkins = await CheckinModel.find({ userId, placeId: { $in: placeIds } })
+                .select("placeId")
+                .lean();
+            return checkins.map((checkin) => checkin.placeId);
+        } catch (err) {
+            log.error({ err, userId }, "Failed to list check-in place ids for user");
+            throw err;
+        }
+    },
 };

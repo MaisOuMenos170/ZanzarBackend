@@ -1,9 +1,9 @@
 import { RequestHandler } from "express";
-import jwt from "jsonwebtoken";
 import { AppError } from "../errors/appError";
 import { logger } from "../utils/logger";
 import { setContextUserId } from "../utils/requestContext";
 import { getRequestPath } from "../utils/httpLog";
+import { verifyJwtToken } from "../utils/jwt";
 
 const log = logger.child({ module: "auth", layer: "middleware" });
 
@@ -16,7 +16,7 @@ export const validateAuthToken: RequestHandler = (req, res, next) => {
         return next(new AppError("Access denied", 401));
     }
 
-    jwt.verify(token, process.env.JWT_SECRET as string, (err, user) => {
+    verifyJwtToken(token, (err, user) => {
         if (err || !user || typeof user === "string") {
             log.warn(
                 { method: req.method, path: getRequestPath(req), reason: err?.name ?? "invalid payload" },
@@ -27,5 +27,5 @@ export const validateAuthToken: RequestHandler = (req, res, next) => {
         req.user = user;
         setContextUserId(String(user.id));
         next();
-    })
+    });
 };

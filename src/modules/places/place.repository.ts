@@ -2,6 +2,7 @@ import type { PipelineStage } from "mongoose";
 import { PlaceModel } from "../../models/place.model";
 import type { PlaceDocument, PlaceNearbyDocument } from "../../schemas/place";
 import { logger } from "../../utils/logger";
+import { AppError } from "../../errors/appError";
 
 const log = logger.child({ module: "places", layer: "repository" });
 
@@ -58,26 +59,44 @@ export const placeRepository = {
     async incrementCheckInCount(placeId: string): Promise<void> {
         log.debug({ placeId }, "Incrementing place check-in count");
         try {
-            await PlaceModel.updateOne(
+            const result = await PlaceModel.updateOne(
                 { place_id: placeId },
                 { $inc: { "zanzar.checkInCount": 1 } },
             );
+            if (result.matchedCount === 0) {
+                log.error({ placeId }, "Place not found while incrementing check-in count");
+                throw new AppError("Place not found", 404);
+            }
             log.debug({ placeId }, "Incremented place check-in count");
         } catch (err) {
+            if (err instanceof AppError) {
+                throw err;
+            }
             log.error({ err, placeId }, "Failed to increment place check-in count");
             throw err;
         }
     },
 
-    async incrementImpressionCount(placeId: string, tag: string): Promise<void> {
+    async incrementImpressionCount(placeId: string, tag: string): Promise<Record<string, number>> {
         log.debug({ placeId, tag }, "Incrementing place impression count");
         try {
-            await PlaceModel.updateOne(
+            const updated = await PlaceModel.findOneAndUpdate(
                 { place_id: placeId },
                 { $inc: { [`zanzar.impressionCounts.${tag}`]: 1 } },
-            );
+                { new: true, lean: true },
+            ).select("zanzar.impressionCounts");
+
+            if (!updated) {
+                log.error({ placeId, tag }, "Place not found while incrementing impression count");
+                throw new AppError("Place not found", 404);
+            }
+
             log.debug({ placeId, tag }, "Incremented place impression count");
+            return updated.zanzar?.impressionCounts ?? {};
         } catch (err) {
+            if (err instanceof AppError) {
+                throw err;
+            }
             log.error({ err, placeId, tag }, "Failed to increment place impression count");
             throw err;
         }
