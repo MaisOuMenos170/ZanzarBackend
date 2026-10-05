@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express";
-import jwt from "jsonwebtoken";
+import { decodeJwtPayload } from "../utils/jwt";
 
 /** Attaches `req.user` when a valid Bearer token is present; otherwise continues anonymously. */
 export const optionalAuthToken: RequestHandler = (req, _res, next) => {
@@ -11,10 +11,9 @@ export const optionalAuthToken: RequestHandler = (req, _res, next) => {
         return;
     }
 
-    jwt.verify(token, process.env.JWT_SECRET as string, { algorithms: ["HS256"] }, (err, user) => {
-        if (!err && user && typeof user !== "string") {
-            req.user = user;
-        }
-        next();
-    });
+    const user = decodeJwtPayload(token);
+    if (user) {
+        req.user = user;
+    }
+    next();
 };

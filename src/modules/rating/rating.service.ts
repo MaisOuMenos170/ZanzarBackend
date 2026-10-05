@@ -32,6 +32,10 @@ export const ratingService = {
                     impressionCounts: place?.zanzar.impressionCounts ?? {},
                 };
             }
+            log.warn(
+                context,
+                "Accepted sync mutation has no rating document; continuing with create flow",
+            );
         }
 
         if (await ratingRepository.findByUserAndPlace(userId, body.placeId)) {
@@ -60,9 +64,10 @@ export const ratingService = {
             throw error;
         }
 
-        await placeRepository.incrementImpressionCount(body.placeId, body.impressionTag);
-
-        const updatedPlace = await placeRepository.findByPlaceId(body.placeId);
+        const impressionCounts = await placeRepository.incrementImpressionCount(
+            body.placeId,
+            body.impressionTag,
+        );
 
         await syncMutationRepository.record({
             clientMutationId: body.clientMutationId,
@@ -79,7 +84,7 @@ export const ratingService = {
         log.info(context, "Rating created successfully");
         return {
             rating,
-            impressionCounts: updatedPlace?.zanzar.impressionCounts ?? {},
+            impressionCounts,
         };
     },
 

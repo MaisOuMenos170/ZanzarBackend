@@ -67,7 +67,7 @@ export const placeUserContextSchema = z.object({
 
 export const placeNearbySchema = placeDocumentSchema.extend({
   distanceMeters: z.number().nonnegative(),
-  userContext: placeUserContextSchema.optional(),
+  userContext: placeUserContextSchema.nullable(),
 });
 
 export type PlaceDocument = z.infer<typeof placeDocumentSchema>;

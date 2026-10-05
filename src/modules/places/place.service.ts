@@ -7,7 +7,7 @@ import type { GetPlacesQuery, PlaceDocument, PlaceNearbyDocument, PlaceUserConte
 
 const log = logger.child({ module: "places", layer: "service" });
 
-export type PlaceWithUserContext = PlaceDocument & { userContext?: PlaceUserContext };
+export type PlaceWithUserContext = PlaceDocument & { userContext: PlaceUserContext | null };
 
 export const placeService = {
     async getNearby(query: GetPlacesQuery, userId?: string): Promise<PlaceNearbyDocument[]> {
@@ -21,8 +21,9 @@ export const placeService = {
         );
 
         if (!userId) {
-            log.info({ count: places.length }, "Fetched nearby places successfully");
-            return places;
+            const anonymous = places.map((place) => ({ ...place, userContext: null }));
+            log.info({ count: anonymous.length }, "Fetched nearby places successfully");
+            return anonymous;
         }
 
         const placeIds = places.map((place) => place.place_id);
@@ -51,7 +52,7 @@ export const placeService = {
 
         if (!userId) {
             log.info({ placeId }, "Fetched place successfully");
-            return place;
+            return { ...place, userContext: null };
         }
 
         const [checkedInPlaceIds, itineraryPlaceIds] = await Promise.all([
