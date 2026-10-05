@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 import { stampIdSchema } from './stamp-id.js';
 import { impressionTagFieldSchema } from './impression-tag.js';
-import { isoDateTimeSchema } from './common.js';
+import { googlePlaceIdSchema, isoDateTimeSchema } from './common.js';
 
 export const zanzarExtensionSchema = z.object({
   category: z.enum(ZANZAR_CATEGORIES),
@@ -27,7 +27,7 @@ export const getPlacesQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
   limit: z.coerce.number().int().positive().optional(),
-  excludePlaceId: z.string().min(1).optional(),
+  excludePlaceId: googlePlaceIdSchema.optional(),
 });
 
 export const placeDocumentSchema = z.object({

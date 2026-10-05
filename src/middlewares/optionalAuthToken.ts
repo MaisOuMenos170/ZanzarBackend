@@ -11,7 +11,7 @@ export const optionalAuthToken: RequestHandler = (req, _res, next) => {
         return;
     }
 
-    jwt.verify(token, process.env.JWT_SECRET as string, (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET as string, { algorithms: ["HS256"] }, (err, user) => {
         if (!err && user && typeof user !== "string") {
             req.user = user;
         }

@@ -43,7 +43,13 @@ const demoZanzarStatsByPlaceId = {
 
 const demoStatsResults = Object.entries(demoZanzarStatsByPlaceId).map(([placeId, stats]) =>
   dbx.places.updateOne(
-    { place_id: placeId },
+    {
+      place_id: placeId,
+      $or: [
+        { 'zanzar.checkInCount': { $exists: false } },
+        { 'zanzar.checkInCount': 0 },
+      ],
+    },
     {
       $set: {
         'zanzar.checkInCount': stats.checkInCount,

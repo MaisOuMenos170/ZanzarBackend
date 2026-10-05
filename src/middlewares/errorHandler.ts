@@ -1,8 +1,13 @@
 import type { Request, Response, NextFunction } from 'express';
+import { AppError } from '../errors/appError';
+import { logger } from '../utils/logger';
+import { getRequestPath } from '../utils/httpLog';
+
+const log = logger.child({ module: 'errorHandler' });
 
 // Maps known database errors to client-facing status codes and messages.
 function normalizeError(err: any): { statusCode: number; message: string; details?: unknown } {
-    if (err?.name === 'AppError' && err?.statusCode) {
+    if (err instanceof AppError) {
         return { statusCode: err.statusCode, message: err.message };
     }
     // MongoDB "Document failed validation" (schema validator on the collection)
@@ -35,6 +40,13 @@ export function errorHandler(
 ) {
     const { statusCode, message, details } = normalizeError(err);
     const isProduction = process.env.NODE_ENV === 'production';
+
+    const fields = { statusCode, method: req.method, path: getRequestPath(req) };
+    if (statusCode >= 500) {
+        log.error({ ...fields, err }, `Request failed: ${err?.message ?? 'unknown error'}`);
+    } else {
+        log.warn({ ...fields, errorName: err?.name }, `Request rejected: ${message}`);
+    }
 
     res.status(statusCode).json({
         success: false,

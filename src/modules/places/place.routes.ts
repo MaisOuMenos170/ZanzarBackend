@@ -7,4 +7,4 @@ import { validateGetPlacesQuery } from "../../middlewares/validateGetPlacesQuery
 export const placeRouter: Router = express.Router();
 
 placeRouter.get("/places", optionalAuthToken, validateGetPlacesQuery, getPlaces);
-placeRouter.get("/places/:placeId", getPlaceById);
+placeRouter.get("/places/:placeId", optionalAuthToken, getPlaceById);
