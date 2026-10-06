@@ -1,10 +1,13 @@
 import type { DomainRepositories, ItineraryActivatedResult } from '../../domain/repositories.js';
-import type { UserDocument, UserItineraryEmbed } from '../../schemas/user.js';
+import type { UserItineraryEmbed } from '../../schemas/user.js';
 import { DomainError } from '../../domain/errors.js';
 
 /**
  * Trigger: usuário ativa um roteiro template.
- * Regra: apenas 1 activeItinerary — o atual vai para inactiveItineraries.
+ * Regra de domínio legada: apenas 1 activeItinerary — o atual vai para inactiveItineraries.
+ *
+ * A REST API (`POST /itineraries/:slug/activate`) retorna 409 se já houver roteiro ativo
+ * em vez de arquivar automaticamente; use abandon explícito antes de trocar de roteiro.
  */
 export async function onItineraryActivated(
   repos: DomainRepositories,
@@ -29,18 +32,34 @@ export async function onItineraryActivated(
     user.inactiveItineraries.push(user.activeItinerary);
   }
 
-  const activeItinerary: UserItineraryEmbed = {
+  const base = {
     itineraryTemplateId,
+    slug: template.slug,
     name: template.name,
     description: template.description,
     category: template.category,
+    routeType: template.routeType,
     objectives: template.objectives,
     startedAt: now,
-    places: template.placeIds.map((placeId) => ({
-      placeId,
-      isCompleted: false,
-    })),
   };
+
+  const activeItinerary: UserItineraryEmbed =
+    template.routeType === 'free'
+      ? {
+          ...base,
+          targetCategory: template.targetCategory!,
+          targetCount: template.targetCount!,
+          places: Array.from({ length: template.targetCount! }, () => ({
+            isCompleted: false,
+          })),
+        }
+      : {
+          ...base,
+          places: template.placeIds.map((placeId) => ({
+            placeId,
+            isCompleted: false,
+          })),
+        };
 
   user.activeItinerary = activeItinerary;
   user.updatedAt = now;

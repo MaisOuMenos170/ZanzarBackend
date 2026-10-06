@@ -1,5 +1,6 @@
 import { Schema, model, InferSchemaType, Types } from "mongoose";
-import { STAMP_IDS } from "../constants/zanzar-categories";
+import { ITINERARY_ROUTE_TYPES } from "../constants/itinerary-route-type";
+import { STAMP_IDS, ZANZAR_CATEGORIES } from "../constants/zanzar-categories";
 import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "../constants/auth";
 import { nonEmptyArray } from "./helpers";
 
@@ -17,7 +18,7 @@ const stampSchema = new Schema(
 
 const itineraryPlaceSchema = new Schema(
     {
-        placeId: { type: String, required: true },
+        placeId: { type: String },
         isCompleted: { type: Boolean, required: true },
         datetime: { type: Date },
         stamp: { type: String, enum: STAMP_IDS },
@@ -27,9 +28,13 @@ const itineraryPlaceSchema = new Schema(
 
 const itineraryFields = {
     itineraryTemplateId: { type: Schema.Types.ObjectId, required: true },
+    slug: { type: String, required: true },
     name: { type: String, required: true },
     description: { type: String, required: true },
     category: { type: String, required: true },
+    routeType: { type: String, enum: ITINERARY_ROUTE_TYPES, required: true },
+    targetCategory: { type: String, enum: ZANZAR_CATEGORIES },
+    targetCount: { type: Number, min: 1 },
     objectives: { type: [String], required: true },
     startedAt: { type: Date, required: true },
     places: { type: [itineraryPlaceSchema], required: true, validate: nonEmptyArray },

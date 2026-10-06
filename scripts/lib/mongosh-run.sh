@@ -30,16 +30,26 @@ mongosh_run() {
     echo "Usando URI standard (evita querySrv EBADRESP no DNS local)." >&2
   fi
 
-  if ! mongosh "$uri" "$@" --file "$js_file"; then
-    local ip=""
-    ip="$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || true)"
+  local mongosh_out
+  mongosh_out="$(mktemp)"
+  if ! mongosh "$uri" "$@" --file "$js_file" 2>&1 | tee "$mongosh_out"; then
     echo "" >&2
-    echo "Falha ao conectar no Atlas." >&2
-    if [[ -n "$ip" ]]; then
-      echo "Seu IP público agora: $ip" >&2
-      echo "Adicione em Atlas → Network Access → Add IP Address." >&2
+    if grep -q "Document failed validation" "$mongosh_out"; then
+      echo "Documento rejeitado pelo \$jsonSchema do Atlas (validador desatualizado)." >&2
+      echo "Rode: npm run db:validate   # atualiza validators a partir dos models Mongoose" >&2
+      echo "Depois: npm run seed" >&2
+    else
+      local ip=""
+      ip="$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || true)"
+      echo "Falha ao conectar no Atlas." >&2
+      if [[ -n "$ip" ]]; then
+        echo "Seu IP público agora: $ip" >&2
+        echo "Adicione em Atlas → Network Access → Add IP Address." >&2
+      fi
+      echo "Se collections já existem, rode só: npm run seed" >&2
     fi
-    echo "Se collections já existem, rode só: npm run seed" >&2
+    rm -f "$mongosh_out"
     return 1
   fi
+  rm -f "$mongosh_out"
 }

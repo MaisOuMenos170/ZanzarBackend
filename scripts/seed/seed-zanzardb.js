@@ -41,6 +41,44 @@ const demoZanzarStatsByPlaceId = {
   },
 };
 
+const itineraryTemplates = [
+  {
+    slug: 'visitando-parques',
+    name: 'Visitando parques',
+    description:
+      'Conheça os diferentes parques da cidade. Faça check-in em qualquer local da categoria Parque e complete o seu passaporte com carimbos exclusivos desse roteiro!',
+    category: 'park',
+    routeType: 'free',
+    targetCategory: 'park',
+    targetCount: 4,
+    objectives: ['Parque', 'Rota Livre'],
+    placeIds: [],
+    completedCount: 40,
+    isPublished: true,
+  },
+  {
+    slug: 'centro-historico',
+    name: 'Bora passear no centro histórico?',
+    description:
+      'Que tal um roteiro prático para aproveitar o fim de semana com atividades diferentes durante o passeio? Nesse roteiro você conhece um pouco mais do centro histórico de Curitiba, e encerra o dia com um cafézinho.',
+    category: 'historic',
+    routeType: 'fixed',
+    objectives: ['Histórico', 'Museu', 'Café'],
+    placeIds: [
+      'ChIJJxOyglvl3JQRijqeBfsu42Y',
+      'ChIJZ2aeCRLk3JQRvDAX1BUsBJo',
+      'ChIJKWpDaRLk3JQRSaxCYmuUspc',
+      'ChIJbyW3HRLk3JQR9Od-AJCxkmQ',
+    ],
+    completedCount: 20,
+    isPublished: true,
+  },
+];
+
+const itineraryResults = itineraryTemplates.map((template) =>
+  dbx.itineraries.updateOne({ slug: template.slug }, { $set: template }, { upsert: true }),
+);
+
 const demoStatsResults = Object.entries(demoZanzarStatsByPlaceId).map(([placeId, stats]) =>
   dbx.places.updateOne(
     {
@@ -67,6 +105,11 @@ print(JSON.stringify({
     modified: stampResults.filter((r) => r.modifiedCount === 1).length,
   },
   places: placeResults,
+  itineraries: {
+    total: itineraryTemplates.length,
+    upserted: itineraryResults.filter((r) => r.upsertedCount === 1).length,
+    modified: itineraryResults.filter((r) => r.modifiedCount === 1).length,
+  },
   demoZanzarStats: {
     configured: Object.keys(demoZanzarStatsByPlaceId).length,
     matched: demoStatsResults.filter((result) => result.matchedCount === 1).length,

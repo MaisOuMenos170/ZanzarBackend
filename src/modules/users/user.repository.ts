@@ -1,5 +1,8 @@
 import { Types } from "mongoose";
 import { UserModel, User } from "../../models/user.model";
+import type { ItineraryRouteType } from "../../constants/itinerary-route-type";
+import type { ZanzarCategory } from "../../constants/zanzar-categories";
+import type { StampId } from "../../constants/zanzar-categories";
 import type { ProfileSummary } from "../../schemas/user";
 import { AppError } from "../../errors/appError";
 import { CreateUserInput } from "./schema/createUserSchema";
@@ -8,6 +11,29 @@ import { logger } from "../../utils/logger";
 import { isDuplicateKeyError } from "../../utils/mongoErrors";
 
 const log = logger.child({ module: "users", layer: "repository" });
+
+export type ActiveItineraryPlaceContext =
+    | { routeType: "fixed"; incompletePlaceIds: string[] }
+    | { routeType: "free"; targetCategory: ZanzarCategory };
+
+export type ActiveItineraryEmbedInput = {
+    itineraryTemplateId: Types.ObjectId;
+    slug: string;
+    name: string;
+    description: string;
+    category: string;
+    routeType: ItineraryRouteType;
+    targetCategory?: ZanzarCategory;
+    targetCount?: number;
+    objectives: string[];
+    startedAt: Date;
+    places: {
+        placeId?: string;
+        isCompleted: boolean;
+        datetime?: Date;
+        stamp?: StampId;
+    }[];
+};
 
 // Emails are PII, so lookups by email are logged without the address.
 export const userRepository = {
@@ -35,15 +61,90 @@ export const userRepository = {
         }
     },
 
-    async findActiveItineraryIncompletePlaceIds(userId: string): Promise<string[]> {
+    async findActiveItineraryPlaceContext(userId: string): Promise<ActiveItineraryPlaceContext | null> {
         const user = await UserModel.findById(userId).select("activeItinerary").lean<User>();
-        if (!user?.activeItinerary) {
-            return [];
+        const active = user?.activeItinerary;
+        if (!active) {
+            return null;
         }
 
-        return user.activeItinerary.places
-            .filter((place) => !place.isCompleted)
-            .map((place) => place.placeId);
+        const hasOpenSlots = active.places.some((place) => !place.isCompleted);
+        if (!hasOpenSlots) {
+            return null;
+        }
+
+        if (active.routeType === "free") {
+            if (!active.targetCategory) {
+                return null;
+            }
+            return { routeType: "free", targetCategory: active.targetCategory };
+        }
+
+        return {
+            routeType: "fixed",
+            incompletePlaceIds: active.places
+                .filter((place) => !place.isCompleted && place.placeId)
+                .map((place) => place.placeId as string),
+        };
+    },
+
+    async setActiveItinerary(
+        userId: string,
+        activeItinerary: ActiveItineraryEmbedInput,
+    ): Promise<NonNullable<User["activeItinerary"]>> {
+        log.debug({ userId }, "Setting active itinerary");
+        try {
+            const updated = await UserModel.findOneAndUpdate(
+                { _id: userId, activeItinerary: null },
+                { $set: { activeItinerary } },
+                { new: true, lean: true, projection: { activeItinerary: 1 } },
+            ).lean<Pick<User, "activeItinerary">>();
+
+            if (!updated?.activeItinerary) {
+                throw new AppError("User already has an active itinerary", 409);
+            }
+
+            log.debug({ userId }, "Set active itinerary");
+            return updated.activeItinerary;
+        } catch (err) {
+            if (err instanceof AppError) {
+                throw err;
+            }
+            log.error({ err, userId }, "Failed to set active itinerary");
+            throw err;
+        }
+    },
+
+    async abandonActiveItinerary(userId: string): Promise<void> {
+        log.debug({ userId }, "Abandoning active itinerary");
+        try {
+            const result = await UserModel.updateOne(
+                { _id: userId, activeItinerary: { $ne: null } },
+                [
+                    {
+                        $set: {
+                            inactiveItineraries: {
+                                $concatArrays: [
+                                    { $ifNull: ["$inactiveItineraries", []] },
+                                    ["$activeItinerary"],
+                                ],
+                            },
+                            activeItinerary: null,
+                        },
+                    },
+                ],
+            );
+            if (result.matchedCount === 0) {
+                throw new AppError("No active itinerary", 404);
+            }
+            log.debug({ userId }, "Abandoned active itinerary");
+        } catch (err) {
+            if (err instanceof AppError) {
+                throw err;
+            }
+            log.error({ err, userId }, "Failed to abandon active itinerary");
+            throw err;
+        }
     },
 
     async findProfileSummaryById(userId: string): Promise<ProfileSummary | null> {

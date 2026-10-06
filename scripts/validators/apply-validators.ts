@@ -1,6 +1,7 @@
 import "dotenv/config";
 import mongoose, { Model } from "mongoose";
 import * as models from "../../src/models";
+import { resolveMongoUri } from "../../src/config/resolve-mongo-uri";
 import { schemaToJsonSchema } from "../../src/db/mongoose-to-jsonschema";
 
 /**
@@ -54,10 +55,10 @@ async function main() {
         return;
     }
 
-    const uri = process.env.MONGODB_URI;
-    if (!uri) throw new Error("Defina MONGODB_URI.");
+    const rawUri = process.env.MONGODB_URI;
+    if (!rawUri) throw new Error("Defina MONGODB_URI.");
 
-    await mongoose.connect(uri, { dbName: DB_NAME });
+    await mongoose.connect(resolveMongoUri(rawUri), { dbName: DB_NAME });
     const db = mongoose.connection.db;
     if (!db) throw new Error("Sem conexão com o banco.");
 
