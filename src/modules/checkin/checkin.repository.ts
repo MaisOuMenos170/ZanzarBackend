@@ -51,4 +51,20 @@ export const checkInRepository = {
             throw err;
         }
     },
+
+    async listLatestByUser(userId: string, limit: number): Promise<{ placeId: string; datetime: Date }[]> {
+        log.debug({ userId, limit }, "Listing latest check-ins for user");
+        try {
+            const checkins = await CheckinModel.find({ userId })
+                .sort({ datetime: -1 })
+                .limit(limit)
+                .select("placeId datetime")
+                .lean();
+            log.debug({ userId, count: checkins.length }, "Listed latest check-ins for user");
+            return checkins.map(({ placeId, datetime }) => ({ placeId, datetime }));
+        } catch (err) {
+            log.error({ err, userId }, "Failed to list latest check-ins for user");
+            throw err;
+        }
+    },
 };

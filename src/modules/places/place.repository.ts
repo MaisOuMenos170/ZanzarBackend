@@ -6,6 +6,10 @@ import { AppError } from "../../errors/appError";
 
 const log = logger.child({ module: "places", layer: "repository" });
 
+export type PlaceSummaryDocument = Pick<PlaceDocument, "place_id" | "name" | "photos"> & {
+    zanzar?: Pick<PlaceDocument["zanzar"], "stampId">;
+};
+
 export const placeRepository = {
     async findByPlaceId(placeId: string): Promise<PlaceDocument | null> {
         log.debug({ placeId }, "Fetching place by id");
@@ -15,6 +19,24 @@ export const placeRepository = {
             return place;
         } catch (err) {
             log.error({ err, placeId }, "Failed to fetch place by id");
+            throw err;
+        }
+    },
+
+    async findByPlaceIds(placeIds: string[]): Promise<PlaceSummaryDocument[]> {
+        if (placeIds.length === 0) {
+            return [];
+        }
+
+        log.debug({ placeIdCount: placeIds.length }, "Fetching places by ids");
+        try {
+            const places = await PlaceModel.find({ place_id: { $in: placeIds } })
+                .select("place_id name photos zanzar.stampId")
+                .lean<PlaceSummaryDocument[]>();
+            log.debug({ placeIdCount: placeIds.length, count: places.length }, "Fetched places by ids");
+            return places;
+        } catch (err) {
+            log.error({ err, placeIdCount: placeIds.length }, "Failed to fetch places by ids");
             throw err;
         }
     },

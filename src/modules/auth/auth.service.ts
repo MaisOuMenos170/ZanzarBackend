@@ -38,12 +38,18 @@ export const authService = {
         }
 
         const token = jwt.sign(
-            { id: user._id, email: user.email },
+            { id: user._id, email: user.email, tokenVersion: user.tokenVersion ?? 0 },
             process.env.JWT_SECRET as string,
             { expiresIn: JWT_EXPIRATION },
         )
 
         log.info({ userId: user._id }, "Login succeeded");
         return token;
+    },
+
+    async logout(userId: string): Promise<void> {
+        log.info({ userId }, "Logout");
+        await userRepository.incrementTokenVersion(userId);
+        log.info({ userId }, "Logout succeeded, tokens revoked");
     }
 };

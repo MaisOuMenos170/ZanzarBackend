@@ -1,6 +1,10 @@
 import { AppError } from "../../errors/appError";
 import { logger } from "../../utils/logger";
 import { userRepository } from "./user.repository";
+import { checkInRepository } from "../checkin/checkin.repository";
+import { placeRepository } from "../places/place.repository";
+import { stampsRepository } from "../stamps/stamps.repository";
+import type { RecentCheckIn, UserProfile } from "../../schemas/user";
 
 const log = logger.child({ module: "users", layer: "service" });
 
@@ -11,5 +15,34 @@ export const userService = {
         if (!user) throw new AppError("User not found", 404);
         log.info({ userId: id }, "Fetched user successfully");
         return user;
-    }
+    },
+
+    async getProfile(userId: string, limit: number): Promise<UserProfile> {
+        log.info({ userId, limit }, "Fetching user profile");
+        const summary = await userRepository.findProfileSummaryById(userId);
+        if (!summary) throw new AppError("User not found", 404);
+
+        const checkIns = await checkInRepository.listLatestByUser(userId, limit);
+        const places = await placeRepository.findByPlaceIds(checkIns.map((checkIn) => checkIn.placeId));
+        const placesById = new Map(places.map((place) => [place.place_id, place]));
+
+        const stampIds = [...new Set(places.flatMap((place) => (place.zanzar ? [place.zanzar.stampId] : [])))];
+        const stamps = await stampsRepository.findByStampIds(stampIds);
+        const stampsById = new Map(stamps.map((stamp) => [stamp.stampId, stamp]));
+
+        const recentCheckIns: RecentCheckIn[] = checkIns.map(({ placeId, datetime }) => {
+            const place = placesById.get(placeId);
+            const stamp = place?.zanzar ? stampsById.get(place.zanzar.stampId) : undefined;
+            return {
+                placeId,
+                placeName: place?.name ?? null,
+                datetime,
+                photoReference: place?.photos?.[0]?.photo_reference ?? null,
+                stamp: stamp ? { stampId: stamp.stampId, imageUrl: stamp.imageUrl } : null,
+            };
+        });
+
+        log.info({ userId, recentCheckInCount: recentCheckIns.length }, "Fetched user profile successfully");
+        return { ...summary, recentCheckIns };
+    },
 };

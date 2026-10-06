@@ -1,7 +1,8 @@
 import type { RequestHandler } from "express";
 import { decodeJwtPayload } from "../utils/jwt";
+import { isTokenRevoked } from "../utils/tokenRevocation";
 
-/** Attaches `req.user` when a valid Bearer token is present; otherwise continues anonymously. */
+/** Attaches `req.user` when a valid, non-revoked Bearer token is present; otherwise continues anonymously. */
 export const optionalAuthToken: RequestHandler = (req, _res, next) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1];
@@ -12,8 +13,17 @@ export const optionalAuthToken: RequestHandler = (req, _res, next) => {
     }
 
     const user = decodeJwtPayload(token);
-    if (user) {
-        req.user = user;
+    if (!user) {
+        next();
+        return;
     }
-    next();
+
+    isTokenRevoked(user)
+        .then((revoked) => {
+            if (!revoked) {
+                req.user = user;
+            }
+            next();
+        })
+        .catch(next);
 };

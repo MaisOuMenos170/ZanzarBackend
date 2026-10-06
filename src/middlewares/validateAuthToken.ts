@@ -4,6 +4,7 @@ import { logger } from "../utils/logger";
 import { setContextUserId } from "../utils/requestContext";
 import { getRequestPath } from "../utils/httpLog";
 import { verifyJwtToken } from "../utils/jwt";
+import { isTokenRevoked } from "../utils/tokenRevocation";
 
 const log = logger.child({ module: "auth", layer: "middleware" });
 
@@ -24,8 +25,20 @@ export const validateAuthToken: RequestHandler = (req, res, next) => {
             );
             return next(new AppError("Invalid JWT token", 401));
         }
-        req.user = user;
-        setContextUserId(String(user.id));
-        next();
+
+        isTokenRevoked(user)
+            .then((revoked) => {
+                if (revoked) {
+                    log.warn(
+                        { method: req.method, path: getRequestPath(req), reason: "token_revoked" },
+                        "Auth rejected: revoked JWT token",
+                    );
+                    return next(new AppError("Invalid JWT token", 401));
+                }
+                req.user = user;
+                setContextUserId(String(user.id));
+                next();
+            })
+            .catch(next);
     });
 };
