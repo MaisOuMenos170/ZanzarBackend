@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { resolveMongoUri } from "./resolve-mongo-uri";
 import { logger } from "../utils/logger";
 
 const log = logger.child({ module: "database" });
@@ -25,11 +26,15 @@ export async function disconnectDatabase() {
 }
 
 export async function connectDatabase() {
-    const uri = process.env.MONGODB_URI || "mongodb:";
+    const rawUri = process.env.MONGODB_URI || "mongodb:";
+    const uri = resolveMongoUri(rawUri);
 
     registerConnectionListeners();
     // The URI is never logged: for Atlas it contains the credentials.
     log.info("Connecting to MongoDB");
+    if (rawUri.startsWith("mongodb+srv://") && uri.startsWith("mongodb://")) {
+        log.info("Using standard MongoDB URI (avoids querySrv EBADRESP on local DNS)");
+    }
 
     try {
         await mongoose.connect(uri);

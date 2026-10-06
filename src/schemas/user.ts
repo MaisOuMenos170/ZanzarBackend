@@ -1,6 +1,8 @@
 import { z } from 'zod';
-import { objectIdSchema, isoDateTimeSchema } from './common.js';
+import { objectIdSchema, isoDateTimeSchema, slugSchema } from './common.js';
 import { stampIdSchema } from './stamp-id.js';
+import { itineraryRouteTypeSchema } from './itinerary.js';
+import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 
 export const userStampSchema = z.object({
   stampId: stampIdSchema,
@@ -12,7 +14,7 @@ export const userStampSchema = z.object({
 });
 
 export const itineraryPlaceProgressSchema = z.object({
-  placeId: z.string().min(1),
+  placeId: z.string().min(1).optional(),
   isCompleted: z.boolean().default(false),
   datetime: isoDateTimeSchema.optional(),
   stamp: stampIdSchema.optional(),
@@ -20,9 +22,13 @@ export const itineraryPlaceProgressSchema = z.object({
 
 export const userItineraryEmbedSchema = z.object({
   itineraryTemplateId: objectIdSchema,
+  slug: slugSchema,
   name: z.string().min(1),
   description: z.string().default(''),
   category: z.string().min(1),
+  routeType: itineraryRouteTypeSchema,
+  targetCategory: z.enum(ZANZAR_CATEGORIES).optional(),
+  targetCount: z.number().int().min(1).optional(),
   objectives: z.array(z.string()),
   startedAt: isoDateTimeSchema,
   places: z.array(itineraryPlaceProgressSchema).min(1),

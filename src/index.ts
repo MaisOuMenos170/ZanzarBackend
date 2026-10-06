@@ -15,6 +15,7 @@ import { placeRouter } from "./modules/places/place.routes";
 import { checkInRouter } from "./modules/checkin/checkin.routes";
 import { ratingRouter } from "./modules/rating/rating.routes";
 import { stampsRouter } from "./modules/stamps/stamps.routes";
+import { itineraryRouter } from "./modules/itineraries/itinerary.routes";
 
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
@@ -63,6 +64,7 @@ app.use(helmet())
 app.use(healthRouter);
 app.use(authRouter);
 app.use(placeRouter);
+app.use(validateAuthToken, itineraryRouter);
 app.use(validateAuthToken, userRouter);
 app.use(validateAuthToken, checkInRouter);
 app.use(validateAuthToken, ratingRouter);

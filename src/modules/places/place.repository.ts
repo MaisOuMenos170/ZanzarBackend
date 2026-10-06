@@ -23,6 +23,45 @@ export const placeRepository = {
         }
     },
 
+    async findLocationsByPlaceIds(
+        placeIds: string[],
+    ): Promise<Array<{ place_id: string; name: string; lat: number; lng: number }>> {
+        if (placeIds.length === 0) {
+            return [];
+        }
+
+        log.debug({ placeIdCount: placeIds.length }, "Fetching place locations by ids");
+        try {
+            const places = await PlaceModel.find({ place_id: { $in: placeIds } })
+                .select("place_id name geometry.location")
+                .lean<Array<{ place_id: string; name: string; geometry?: { location?: { lat: number; lng: number } } }>>();
+
+            return places
+                .filter((place) => place.geometry?.location != null)
+                .map((place) => ({
+                    place_id: place.place_id,
+                    name: place.name,
+                    lat: place.geometry!.location!.lat,
+                    lng: place.geometry!.location!.lng,
+                }));
+        } catch (err) {
+            log.error({ err, placeIdCount: placeIds.length }, "Failed to fetch place locations by ids");
+            throw err;
+        }
+    },
+
+    async findNamesByPlaceIds(placeIds: string[]): Promise<Map<string, string>> {
+        if (placeIds.length === 0) {
+            return new Map();
+        }
+
+        const places = await PlaceModel.find({ place_id: { $in: placeIds } })
+            .select("place_id name")
+            .lean<Array<{ place_id: string; name: string }>>();
+
+        return new Map(places.map((place) => [place.place_id, place.name]));
+    },
+
     async findByPlaceIds(placeIds: string[]): Promise<PlaceSummaryDocument[]> {
         if (placeIds.length === 0) {
             return [];
