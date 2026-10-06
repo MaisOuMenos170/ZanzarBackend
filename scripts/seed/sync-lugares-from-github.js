@@ -24,7 +24,7 @@ if (!Array.isArray(rawPlaces)) {
   throw new Error('lugares.json deve ser um array JSON');
 }
 
-const placeResults = upsertPlaces(dbx, rawPlaces);
+const placeResults = syncPlaces(dbx, rawPlaces);
 
 print(JSON.stringify({
   database: dbName,

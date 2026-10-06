@@ -6,7 +6,7 @@
     "build": "npx tsc",
     "start": "npx tsc && node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node scripts/seed/lugares-inference.test.js",
     "setup:collections": "bash scripts/setup/setup-collections.sh",
     "seed": "bash scripts/seed/seed-zanzardb.sh",
     "sync:lugares": "bash scripts/seed/sync-lugares-from-github.sh",
