@@ -1,4 +1,5 @@
 import type { Itinerary } from "../../models/itinerary.model";
+import type { User } from "../../models/user.model";
 import { AppError } from "../../errors/appError";
 import { logger } from "../../utils/logger";
 import type {
@@ -14,6 +15,35 @@ const log = logger.child({ module: "itineraries", layer: "service" });
 
 function placesCountFor(template: Itinerary): number {
     return template.routeType === "free" ? template.targetCount! : template.placeIds.length;
+}
+
+type ActiveItineraryEmbed = NonNullable<User["activeItinerary"]>;
+
+async function enrichActiveItineraryEmbed(active: ActiveItineraryEmbed): Promise<ActiveItinerary> {
+    const placeIds = active.places
+        .map((place) => place.placeId)
+        .filter((placeId): placeId is string => Boolean(placeId));
+    const namesById = await placeRepository.findNamesByPlaceIds(placeIds);
+
+    return {
+        itineraryTemplateId: active.itineraryTemplateId.toString(),
+        slug: active.slug,
+        name: active.name,
+        description: active.description,
+        category: active.category,
+        routeType: active.routeType,
+        objectives: active.objectives,
+        startedAt: active.startedAt,
+        ...(active.targetCategory ? { targetCategory: active.targetCategory } : {}),
+        ...(active.targetCount ? { targetCount: active.targetCount } : {}),
+        places: active.places.map((place) => ({
+            ...(place.placeId ? { placeId: place.placeId } : {}),
+            placeName: place.placeId ? namesById.get(place.placeId) ?? null : null,
+            isCompleted: place.isCompleted,
+            ...(place.datetime ? { datetime: place.datetime } : {}),
+            ...(place.stamp ? { stamp: place.stamp } : {}),
+        })),
+    };
 }
 
 function buildActiveItineraryEmbed(template: Itinerary, now: Date): ActiveItineraryEmbedInput {
@@ -87,6 +117,13 @@ export const itineraryService = {
                     location: { lat: place.lat, lng: place.lng },
                 }];
             });
+
+            if (places.length !== template.placeIds.length) {
+                log.warn(
+                    { slug, expected: template.placeIds.length, resolved: places.length },
+                    "Published fixed itinerary has missing places in database",
+                );
+            }
         }
 
         const detail: ItineraryDetail = {
@@ -96,7 +133,7 @@ export const itineraryService = {
             category: template.category,
             routeType: template.routeType,
             objectives: template.objectives,
-            placesCount: placesCountFor(template),
+            placesCount: template.routeType === "fixed" ? places.length : placesCountFor(template),
             completedCount: template.completedCount,
             coverImageUrl: template.coverImageUrl ?? undefined,
             places,
@@ -125,11 +162,10 @@ export const itineraryService = {
         }
 
         const activeItinerary = buildActiveItineraryEmbed(template, new Date());
-        await userRepository.setActiveItinerary(userId, activeItinerary);
-
-        const enriched = await this.getActiveItinerary(userId);
+        const saved = await userRepository.setActiveItinerary(userId, activeItinerary);
+        const enriched = await enrichActiveItineraryEmbed(saved);
         log.info({ userId, slug }, "Activated itinerary successfully");
-        return enriched!;
+        return enriched;
     },
 
     async abandon(userId: string): Promise<void> {
@@ -151,31 +187,7 @@ export const itineraryService = {
             return null;
         }
 
-        const placeIds = active.places
-            .map((place) => place.placeId)
-            .filter((placeId): placeId is string => Boolean(placeId));
-        const namesById = await placeRepository.findNamesByPlaceIds(placeIds);
-
-        const enriched: ActiveItinerary = {
-            itineraryTemplateId: active.itineraryTemplateId.toString(),
-            slug: active.slug,
-            name: active.name,
-            description: active.description,
-            category: active.category,
-            routeType: active.routeType,
-            objectives: active.objectives,
-            startedAt: active.startedAt,
-            ...(active.targetCategory ? { targetCategory: active.targetCategory } : {}),
-            ...(active.targetCount ? { targetCount: active.targetCount } : {}),
-            places: active.places.map((place) => ({
-                ...(place.placeId ? { placeId: place.placeId } : {}),
-                placeName: place.placeId ? namesById.get(place.placeId) ?? null : null,
-                isCompleted: place.isCompleted,
-                ...(place.datetime ? { datetime: place.datetime } : {}),
-                ...(place.stamp ? { stamp: place.stamp } : {}),
-            })),
-        };
-
+        const enriched = await enrichActiveItineraryEmbed(active);
         log.info({ userId }, "Fetched active itinerary successfully");
         return enriched;
     },

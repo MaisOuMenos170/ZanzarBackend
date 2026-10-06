@@ -32,8 +32,8 @@ export async function connectDatabase() {
     registerConnectionListeners();
     // The URI is never logged: for Atlas it contains the credentials.
     log.info("Connecting to MongoDB");
-    if (rawUri.startsWith("mongodb+srv://") && uri.startsWith("mongodb://")) {
-        log.info("Using standard MongoDB URI (avoids querySrv EBADRESP on local DNS)");
+    if (rawUri.startsWith("mongodb+srv://") && uri !== rawUri) {
+        log.info("Using MONGODB_URI_STANDARD (avoids querySrv EBADRESP on local DNS)");
     }
 
     try {

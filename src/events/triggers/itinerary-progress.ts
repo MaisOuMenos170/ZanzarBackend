@@ -1,6 +1,9 @@
 import type { PlaceDocument } from '../../schemas/place.js';
 import type { UserDocument } from '../../schemas/user.js';
 
+type ActiveItinerary = NonNullable<UserDocument['activeItinerary']>;
+type ItineraryPlaceProgress = ActiveItinerary['places'][number];
+
 /**
  * Trigger embutido no check-in: progresso do roteiro ativo.
  * Retorna true se o roteiro foi movido para completedItineraries.
@@ -14,10 +17,11 @@ export function applyItineraryProgressFromCheckin(
   const active = user.activeItinerary;
   if (!active) return false;
 
-  const progress = active.places.find((entry) => entry.placeId === place.place_id);
-  if (!progress || progress.isCompleted) return false;
+  const progress = findProgressSlot(active, place);
+  if (!progress) return false;
 
   progress.isCompleted = true;
+  progress.placeId = place.place_id;
   progress.datetime = completedAt;
   progress.stamp = place.zanzar.stampId;
 
@@ -30,4 +34,21 @@ export function applyItineraryProgressFromCheckin(
   });
   user.activeItinerary = null;
   return true;
+}
+
+export function findProgressSlot(
+  active: ActiveItinerary,
+  place: PlaceDocument,
+): ItineraryPlaceProgress | null {
+  if (active.routeType === 'free') {
+    if (active.targetCategory !== place.zanzar.category) {
+      return null;
+    }
+    return active.places.find((entry) => !entry.isCompleted) ?? null;
+  }
+
+  const entry = active.places.find(
+    (slot) => slot.placeId === place.place_id && !slot.isCompleted,
+  );
+  return entry ?? null;
 }

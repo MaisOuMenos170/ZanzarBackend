@@ -12,6 +12,10 @@ import { isDuplicateKeyError } from "../../utils/mongoErrors";
 
 const log = logger.child({ module: "users", layer: "repository" });
 
+export type ActiveItineraryPlaceContext =
+    | { routeType: "fixed"; incompletePlaceIds: string[] }
+    | { routeType: "free"; targetCategory: ZanzarCategory };
+
 export type ActiveItineraryEmbedInput = {
     itineraryTemplateId: Types.ObjectId;
     slug: string;
@@ -57,28 +61,51 @@ export const userRepository = {
         }
     },
 
-    async findActiveItineraryIncompletePlaceIds(userId: string): Promise<string[]> {
+    async findActiveItineraryPlaceContext(userId: string): Promise<ActiveItineraryPlaceContext | null> {
         const user = await UserModel.findById(userId).select("activeItinerary").lean<User>();
-        if (!user?.activeItinerary) {
-            return [];
+        const active = user?.activeItinerary;
+        if (!active) {
+            return null;
         }
 
-        return user.activeItinerary.places
-            .filter((place) => !place.isCompleted && place.placeId)
-            .map((place) => place.placeId as string);
+        const hasOpenSlots = active.places.some((place) => !place.isCompleted);
+        if (!hasOpenSlots) {
+            return null;
+        }
+
+        if (active.routeType === "free") {
+            if (!active.targetCategory) {
+                return null;
+            }
+            return { routeType: "free", targetCategory: active.targetCategory };
+        }
+
+        return {
+            routeType: "fixed",
+            incompletePlaceIds: active.places
+                .filter((place) => !place.isCompleted && place.placeId)
+                .map((place) => place.placeId as string),
+        };
     },
 
-    async setActiveItinerary(userId: string, activeItinerary: ActiveItineraryEmbedInput): Promise<void> {
+    async setActiveItinerary(
+        userId: string,
+        activeItinerary: ActiveItineraryEmbedInput,
+    ): Promise<NonNullable<User["activeItinerary"]>> {
         log.debug({ userId }, "Setting active itinerary");
         try {
-            const result = await UserModel.updateOne(
+            const updated = await UserModel.findOneAndUpdate(
                 { _id: userId, activeItinerary: null },
                 { $set: { activeItinerary } },
-            );
-            if (result.matchedCount === 0) {
+                { new: true, lean: true, projection: { activeItinerary: 1 } },
+            ).lean<Pick<User, "activeItinerary">>();
+
+            if (!updated?.activeItinerary) {
                 throw new AppError("User already has an active itinerary", 409);
             }
+
             log.debug({ userId }, "Set active itinerary");
+            return updated.activeItinerary;
         } catch (err) {
             if (err instanceof AppError) {
                 throw err;
@@ -91,20 +118,24 @@ export const userRepository = {
     async abandonActiveItinerary(userId: string): Promise<void> {
         log.debug({ userId }, "Abandoning active itinerary");
         try {
-            const user = await UserModel.findById(userId).select("activeItinerary").lean<User>();
-            if (!user?.activeItinerary) {
-                throw new AppError("No active itinerary", 404);
-            }
-
             const result = await UserModel.updateOne(
-                { _id: userId },
-                {
-                    $set: { activeItinerary: null },
-                    $push: { inactiveItineraries: user.activeItinerary },
-                },
+                { _id: userId, activeItinerary: { $ne: null } },
+                [
+                    {
+                        $set: {
+                            inactiveItineraries: {
+                                $concatArrays: [
+                                    { $ifNull: ["$inactiveItineraries", []] },
+                                    ["$activeItinerary"],
+                                ],
+                            },
+                            activeItinerary: null,
+                        },
+                    },
+                ],
             );
             if (result.matchedCount === 0) {
-                throw new AppError("User not found", 404);
+                throw new AppError("No active itinerary", 404);
             }
             log.debug({ userId }, "Abandoned active itinerary");
         } catch (err) {

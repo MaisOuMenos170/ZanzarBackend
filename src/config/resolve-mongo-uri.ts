@@ -1,14 +1,7 @@
 /**
- * Resolve MongoDB URI, converting mongodb+srv when DNS SRV fails (EBADRESP).
+ * Resolve MongoDB URI, converting mongodb+srv via MONGODB_URI_STANDARD when DNS SRV fails (EBADRESP).
  * Mirrors scripts/lib/resolve-mongo-uri.py for Node (dev server, validators).
  */
-
-const CLUSTER_ZANZAR_STANDARD =
-    "mongodb://{auth}" +
-    "ac-yatndwg-shard-00-00.9lbgwfu.mongodb.net:27017," +
-    "ac-yatndwg-shard-00-01.9lbgwfu.mongodb.net:27017," +
-    "ac-yatndwg-shard-00-02.9lbgwfu.mongodb.net:27017/" +
-    "{database}?ssl=true&replicaSet=atlas-1hpih3-shard-0&authSource=admin";
 
 function parseSrv(uri: string): { user: string; password: string; host: string; database: string } {
     const prefix = "mongodb+srv://";
@@ -83,17 +76,11 @@ export function resolveMongoUri(uri: string): string {
         throw new Error("URI must start with mongodb:// or mongodb+srv://");
     }
 
-    const { user, password, host, database } = parseSrv(trimmed);
     const standardOverride = process.env.MONGODB_URI_STANDARD?.trim();
-
-    if (standardOverride) {
-        return ensureAuthSource(injectAuth(standardOverride, user, password));
+    if (!standardOverride) {
+        return trimmed;
     }
 
-    if (host === "clusterzanzar.9lbgwfu.mongodb.net") {
-        const auth = `${encodeURIComponent(user)}:${encodeURIComponent(password)}@`;
-        return CLUSTER_ZANZAR_STANDARD.replace("{auth}", auth).replace("{database}", database);
-    }
-
-    return trimmed;
+    const { user, password } = parseSrv(trimmed);
+    return ensureAuthSource(injectAuth(standardOverride, user, password));
 }

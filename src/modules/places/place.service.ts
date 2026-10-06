@@ -1,6 +1,6 @@
 import { AppError } from "../../errors/appError";
 import { checkInRepository } from "../checkin/checkin.repository";
-import { userRepository } from "../users/user.repository";
+import { userRepository, type ActiveItineraryPlaceContext } from "../users/user.repository";
 import { logger } from "../../utils/logger";
 import { placeRepository } from "./place.repository";
 import type { GetPlacesQuery, PlaceDocument, PlaceNearbyDocument, PlaceUserContext } from "../../schemas/place";
@@ -27,17 +27,16 @@ export const placeService = {
         }
 
         const placeIds = places.map((place) => place.place_id);
-        const [checkedInPlaceIds, itineraryPlaceIds] = await Promise.all([
+        const [checkedInPlaceIds, itineraryContext] = await Promise.all([
             checkInRepository.listPlaceIdsByUser(userId, placeIds),
-            userRepository.findActiveItineraryIncompletePlaceIds(userId),
+            userRepository.findActiveItineraryPlaceContext(userId),
         ]);
 
         const checkedInSet = new Set(checkedInPlaceIds);
-        const itinerarySet = new Set(itineraryPlaceIds);
 
         const enriched = places.map((place) => ({
             ...place,
-            userContext: buildUserContext(place.place_id, checkedInSet, itinerarySet),
+            userContext: buildUserContext(place, checkedInSet, itineraryContext),
         }));
         log.info({ count: enriched.length }, "Fetched nearby places successfully");
         return enriched;
@@ -55,17 +54,17 @@ export const placeService = {
             return { ...place, userContext: null };
         }
 
-        const [checkedInPlaceIds, itineraryPlaceIds] = await Promise.all([
+        const [checkedInPlaceIds, itineraryContext] = await Promise.all([
             checkInRepository.listPlaceIdsByUser(userId, [placeId]),
-            userRepository.findActiveItineraryIncompletePlaceIds(userId),
+            userRepository.findActiveItineraryPlaceContext(userId),
         ]);
 
         const enriched: PlaceWithUserContext = {
             ...place,
             userContext: buildUserContext(
-                placeId,
+                place,
                 new Set(checkedInPlaceIds),
-                new Set(itineraryPlaceIds),
+                itineraryContext,
             ),
         };
         log.info({ placeId }, "Fetched place successfully");
@@ -74,12 +73,25 @@ export const placeService = {
 };
 
 function buildUserContext(
-    placeId: string,
+    place: Pick<PlaceDocument, "place_id" | "zanzar">,
     checkedInSet: Set<string>,
-    itinerarySet: Set<string>,
+    itineraryContext: ActiveItineraryPlaceContext | null,
 ): PlaceUserContext {
     return {
-        hasCheckedIn: checkedInSet.has(placeId),
-        isInActiveItinerary: itinerarySet.has(placeId),
+        hasCheckedIn: checkedInSet.has(place.place_id),
+        isInActiveItinerary: isPlaceInActiveItinerary(place, itineraryContext),
     };
+}
+
+function isPlaceInActiveItinerary(
+    place: Pick<PlaceDocument, "place_id" | "zanzar">,
+    context: ActiveItineraryPlaceContext | null,
+): boolean {
+    if (!context) {
+        return false;
+    }
+    if (context.routeType === "fixed") {
+        return context.incompletePlaceIds.includes(place.place_id);
+    }
+    return place.zanzar.category === context.targetCategory;
 }

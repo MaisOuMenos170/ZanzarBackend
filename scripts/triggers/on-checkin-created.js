@@ -17,6 +17,14 @@
 const DATA_SOURCE = 'ClusterZanzar';
 const DB_NAME = 'Zanzardb';
 
+function findProgressEntry(active, place) {
+  if (active.routeType === 'free') {
+    if (active.targetCategory !== place.zanzar.category) return null;
+    return active.places.find((p) => !p.isCompleted) ?? null;
+  }
+  return active.places.find((p) => p.placeId === place.place_id && !p.isCompleted) ?? null;
+}
+
 async function applyCheckin(dbx, checkin) {
   const place = await dbx.collection('places').findOne({ place_id: checkin.placeId });
   if (!place) return;
@@ -39,11 +47,17 @@ async function applyCheckin(dbx, checkin) {
   const update = { $inc: { checkInCount: 1 }, $push: { stamps: stamp }, $set: { updatedAt: new Date() } };
 
   const active = user.activeItinerary;
-  const entry = active && active.places.find((p) => p.placeId === place.place_id && !p.isCompleted);
+  const entry = active && findProgressEntry(active, place);
   if (entry) {
     const places = active.places.map((p) =>
       p === entry
-        ? { ...p, isCompleted: true, datetime: checkin.datetime, stamp: place.zanzar.stampId }
+        ? {
+            ...p,
+            placeId: place.place_id,
+            isCompleted: true,
+            datetime: checkin.datetime,
+            stamp: place.zanzar.stampId,
+          }
         : p,
     );
     if (places.every((p) => p.isCompleted)) {

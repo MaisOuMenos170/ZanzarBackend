@@ -7,16 +7,6 @@ import os
 import sys
 import urllib.parse
 
-# ClusterZanzar (Atlas sa-east-1) — evita querySrv quando o DNS local falha.
-CLUSTER_ZANZAR_STANDARD = (
-    "mongodb://{auth}"
-    "ac-yatndwg-shard-00-00.9lbgwfu.mongodb.net:27017,"
-    "ac-yatndwg-shard-00-01.9lbgwfu.mongodb.net:27017,"
-    "ac-yatndwg-shard-00-02.9lbgwfu.mongodb.net:27017/"
-    "{database}?ssl=true&replicaSet=atlas-1hpih3-shard-0&authSource=admin"
-)
-
-
 def parse_srv(uri: str) -> tuple[str, str, str, str]:
     prefix = "mongodb+srv://"
     if not uri.startswith(prefix):
@@ -70,12 +60,6 @@ def resolve(uri: str) -> str:
     if standard_override:
         resolved = inject_auth(standard_override, user, password)
         return ensure_auth_source(resolved)
-
-    if host == "clusterzanzar.9lbgwfu.mongodb.net":
-        user_q = urllib.parse.quote(user, safe="")
-        pass_q = urllib.parse.quote(password, safe="")
-        auth = f"{user_q}:{pass_q}@"
-        return CLUSTER_ZANZAR_STANDARD.format(auth=auth, database=database)
 
     return uri
 

@@ -4,7 +4,10 @@ import { DomainError } from '../../domain/errors.js';
 
 /**
  * Trigger: usuário ativa um roteiro template.
- * Regra: apenas 1 activeItinerary — o atual vai para inactiveItineraries.
+ * Regra de domínio legada: apenas 1 activeItinerary — o atual vai para inactiveItineraries.
+ *
+ * A REST API (`POST /itineraries/:slug/activate`) retorna 409 se já houver roteiro ativo
+ * em vez de arquivar automaticamente; use abandon explícito antes de trocar de roteiro.
  */
 export async function onItineraryActivated(
   repos: DomainRepositories,
