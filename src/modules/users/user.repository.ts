@@ -1,4 +1,7 @@
+import { Types } from "mongoose";
 import { UserModel, User } from "../../models/user.model";
+import type { ProfileSummary } from "../../schemas/user";
+import { AppError } from "../../errors/appError";
 import { CreateUserInput } from "./schema/createUserSchema";
 import { hashPassword } from "../../utils/bcrypt";
 import { logger } from "../../utils/logger";
@@ -41,6 +44,59 @@ export const userRepository = {
         return user.activeItinerary.places
             .filter((place) => !place.isCompleted)
             .map((place) => place.placeId);
+    },
+
+    async findProfileSummaryById(userId: string): Promise<ProfileSummary | null> {
+        log.debug({ userId }, "Fetching profile summary");
+        try {
+            // $size keeps the stamps and itineraries arrays out of the response payload.
+            const [summary] = await UserModel.aggregate<ProfileSummary>([
+                { $match: { _id: new Types.ObjectId(userId) } },
+                {
+                    $project: {
+                        _id: 0,
+                        username: 1,
+                        checkInCount: 1,
+                        completedItinerariesCount: { $size: "$completedItineraries" },
+                        stampsCount: { $size: "$stamps" },
+                    },
+                },
+            ]);
+            log.debug({ userId, found: !!summary }, "Fetched profile summary");
+            return summary ?? null;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to fetch profile summary");
+            throw err;
+        }
+    },
+
+    async findTokenVersionById(userId: string): Promise<number | null> {
+        log.debug({ userId }, "Fetching token version");
+        try {
+            const user = await UserModel.findById(userId).select("tokenVersion").lean<Pick<User, "tokenVersion">>();
+            log.debug({ userId, found: !!user }, "Fetched token version");
+            return user ? user.tokenVersion : null;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to fetch token version");
+            throw err;
+        }
+    },
+
+    async incrementTokenVersion(userId: string): Promise<void> {
+        log.debug({ userId }, "Incrementing token version");
+        try {
+            const result = await UserModel.updateOne({ _id: userId }, { $inc: { tokenVersion: 1 } });
+            if (result.matchedCount === 0) {
+                throw new AppError("User not found", 404);
+            }
+            log.debug({ userId }, "Incremented token version");
+        } catch (err) {
+            if (err instanceof AppError) {
+                throw err;
+            }
+            log.error({ err, userId }, "Failed to increment token version");
+            throw err;
+        }
     },
 
     async create(data: CreateUserInput): Promise<User> {

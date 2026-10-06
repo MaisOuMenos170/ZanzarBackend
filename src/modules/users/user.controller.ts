@@ -6,3 +6,8 @@ export const getUser: RequestHandler = async (req, res) => {
     const { passwordHash, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
 };
+
+export const getUserProfile: RequestHandler = async (req, res) => {
+    const profile = await userService.getProfile(req.params.id as string, res.locals.profileQuery!.limit);
+    res.json(profile);
+};

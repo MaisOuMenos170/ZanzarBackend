@@ -47,6 +47,33 @@ export const userDocumentSchema = z.object({
   updatedAt: isoDateTimeSchema,
 });
 
+export const getProfileQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+
+export const profileSummarySchema = z.object({
+  username: z.string(),
+  checkInCount: z.number().int().nonnegative(),
+  completedItinerariesCount: z.number().int().nonnegative(),
+  stampsCount: z.number().int().nonnegative(),
+});
+
+export const recentCheckInSchema = z.object({
+  placeId: z.string(),
+  placeName: z.string().nullable(),
+  datetime: z.date(),
+  photoReference: z.string().nullable(),
+  stamp: z.object({ stampId: stampIdSchema, imageUrl: z.string() }).nullable(),
+});
+
+export const userProfileSchema = profileSummarySchema.extend({
+  recentCheckIns: z.array(recentCheckInSchema),
+});
+
 export type UserDocument = z.infer<typeof userDocumentSchema>;
 export type UserStamp = z.infer<typeof userStampSchema>;
 export type UserItineraryEmbed = z.infer<typeof userItineraryEmbedSchema>;
+export type GetProfileQuery = z.infer<typeof getProfileQuerySchema>;
+export type ProfileSummary = z.infer<typeof profileSummarySchema>;
+export type RecentCheckIn = z.infer<typeof recentCheckInSchema>;
+export type UserProfile = z.infer<typeof userProfileSchema>;

@@ -17,4 +17,21 @@ export const stampsRepository = {
             throw err;
         }
     },
+
+    async findByStampIds(stampIds: StampId[]): Promise<StampCatalogDocument[]> {
+        if (stampIds.length === 0) {
+            return [];
+        }
+
+        log.debug({ stampIdCount: stampIds.length }, "Fetching active stamps by ids");
+        try {
+            const stamps = await StampCatalogModel.find({ stampId: { $in: stampIds }, isActive: true })
+                .lean<StampCatalogDocument[]>();
+            log.debug({ stampIdCount: stampIds.length, count: stamps.length }, "Fetched active stamps by ids");
+            return stamps;
+        } catch (err) {
+            log.error({ err, stampIdCount: stampIds.length }, "Failed to fetch active stamps by ids");
+            throw err;
+        }
+    },
 };
