@@ -149,6 +149,38 @@ cd ../Zanzar
 - **Porta customizada** — `PORT=4000 npm run tunnel` aponta o túnel para outra porta.
 - **Só Debug no app** — a URL de túnel é gravada apenas na configuração Debug do Xcode; Release usa URL de produção.
 
+## Perfil e logout
+
+Ambas exigem `Authorization: Bearer <token>`.
+
+### `GET /user/:id/profile?limit=5`
+
+Só o próprio usuário (`:id` deve ser o do token). `limit` é opcional (1–20, padrão 5) e controla `recentCheckIns`.
+
+```json
+{
+  "username": "tiago",
+  "checkInCount": 12,
+  "completedItinerariesCount": 2,
+  "stampsCount": 12,
+  "recentCheckIns": [
+    {
+      "placeId": "ChIJ...",
+      "placeName": "Bar do Zé",
+      "datetime": "2026-10-05T18:30:00.000Z",
+      "photoReference": "AUacSh...",
+      "stamp": { "stampId": "bar", "imageUrl": "/assets/stamps/bar.png" }
+    }
+  ]
+}
+```
+
+`photoReference` é o `photo_reference` da primeira foto do lugar no Google (ou `null`); `stamp` é `null` quando o lugar não tem selo ativo no `stamp_catalog`.
+
+### `POST /logout`
+
+Responde `204`. Incrementa `users.tokenVersion`; o JWT carrega esse valor (`login`) e `validateAuthToken` o compara com o banco, então todos os tokens emitidos antes do logout passam a retornar `401`. Tokens antigos sem o campo contam como versão 0.
+
 ## Logging
 
 Logs estruturados com [pino](https://getpino.io) (`src/utils/logger.ts`). Importe `logger` e use campos estruturados em vez de interpolar strings:
