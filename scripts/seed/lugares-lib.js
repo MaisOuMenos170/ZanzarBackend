@@ -3,29 +3,12 @@
  * Usado por seed e sync-from-github (mongosh load()).
  */
 
-// A primeira regra que casar vence; quem não casar com nenhuma cai em `tourist`.
-// `curiosity` não tem um tipo Google equivalente claro: só casa com os tipos abaixo,
-// o restante deve ser atribuído manualmente.
-const categoryRules = [
-  { types: ['night_club', 'event_venue', 'casino'], category: 'party', stampId: 'stamp_party' },
-  { types: ['zoo', 'aquarium'], category: 'curiosity', stampId: 'stamp_curiosity' },
-  { types: ['museum'], category: 'museum', stampId: 'stamp_museum' },
-  { types: ['park', 'amusement_park'], category: 'park', stampId: 'stamp_park' },
-  { types: ['restaurant'], category: 'restaurant', stampId: 'stamp_restaurant' },
-  { types: ['bar'], category: 'bar', stampId: 'stamp_bar' },
-  { types: ['cafe', 'bakery'], category: 'cafe', stampId: 'stamp_cafe' },
-  { types: ['historic', 'church', 'place_of_worship'], category: 'historic', stampId: 'stamp_historic' },
-];
-
-function inferZanzar(types) {
-  const set = new Set(types || []);
-  for (const rule of categoryRules) {
-    if (rule.types.some((type) => set.has(type))) {
-      return { category: rule.category, stampId: rule.stampId };
-    }
-  }
-  return { category: 'tourist', stampId: 'stamp_tourist' };
-}
+const inferencePath =
+  process.env.LUGARES_INFERENCE_PATH ||
+  (process.env.LUGARES_LIB_PATH
+    ? process.env.LUGARES_LIB_PATH.replace(/lugares-lib\.js$/, 'lugares-inference.js')
+    : 'scripts/seed/lugares-inference.js');
+load(inferencePath);
 
 function buildGeoLocation(raw) {
   const lat = raw?.geometry?.location?.lat;
@@ -41,11 +24,13 @@ function stripProxyUrl(photos) {
 
 /**
  * Monta documento `places` para upsert.
- * Preserva contadores/tags Zanzar em updates (check-ins, ratings).
+ * Tags e nickname vêm do catálogo (lugares.json).
+ * Preserva contadores Zanzar gerados pelo app (check-ins, impressões).
  */
 function buildPlaceDocument(raw, existing) {
   const now = new Date();
-  const { category, stampId } = inferZanzar(raw.types);
+  const { tags: catalogTags, nickname, ...placeFields } = raw;
+  const { category, stampId } = inferZanzar(catalogTags, raw.types);
   const addedAt = existing?.added_at
     ? existing.added_at
     : raw.added_at
@@ -56,14 +41,13 @@ function buildPlaceDocument(raw, existing) {
 
   const existingZanzar = existing?.zanzar;
   const geoLocation = buildGeoLocation(raw);
-
-  return {
-    ...raw,
-    photos: stripProxyUrl(raw.photos),
+  const doc = {
+    ...placeFields,
+    photos: stripProxyUrl(placeFields.photos),
     zanzar: {
       category,
       stampId,
-      tags: existingZanzar?.tags ?? [],
+      tags: Array.isArray(catalogTags) ? catalogTags : [],
       checkInCount: existingZanzar?.checkInCount ?? 0,
       impressionCounts: existingZanzar?.impressionCounts ?? {},
     },
@@ -71,6 +55,31 @@ function buildPlaceDocument(raw, existing) {
     updated_at: updatedAt,
     ...(geoLocation ? { geoLocation } : {}),
   };
+
+  if (nickname != null && nickname !== '') {
+    doc.nickname = nickname;
+  }
+
+  return doc;
+}
+
+function buildPlaceUpdate(raw, existing) {
+  const doc = buildPlaceDocument(raw, existing);
+  const update = { $set: doc };
+  const unset = {};
+
+  if (raw.nickname == null || raw.nickname === '') {
+    unset.nickname = '';
+  }
+
+  // Limpa tags legadas no root (antes iam parar aqui via spread de raw).
+  unset.tags = '';
+
+  if (Object.keys(unset).length > 0) {
+    update.$unset = unset;
+  }
+
+  return update;
 }
 
 function upsertPlaces(dbx, rawPlaces) {
@@ -89,10 +98,10 @@ function upsertPlaces(dbx, rawPlaces) {
     }
 
     const existing = dbx.places.findOne({ place_id: raw.place_id });
-    const doc = buildPlaceDocument(raw, existing);
+    const update = buildPlaceUpdate(raw, existing);
     const op = dbx.places.updateOne(
-      { place_id: doc.place_id },
-      { $set: doc },
+      { place_id: raw.place_id },
+      update,
       { upsert: true },
     );
 
@@ -104,6 +113,30 @@ function upsertPlaces(dbx, rawPlaces) {
       results.unchanged += 1;
     }
   }
+
+  return results;
+}
+
+/**
+ * Sincronização completa: upsert do catálogo + remoção de lugares que saíram do JSON.
+ */
+function syncPlaces(dbx, rawPlaces) {
+  const results = upsertPlaces(dbx, rawPlaces);
+  const catalogIds = rawPlaces
+    .map((place) => place.place_id)
+    .filter((placeId) => placeId);
+
+  const orphans = dbx.places
+    .find({ place_id: { $nin: catalogIds } }, { place_id: 1, name: 1, _id: 0 })
+    .toArray();
+
+  const deleteResult = dbx.places.deleteMany({ place_id: { $nin: catalogIds } });
+
+  results.removed = deleteResult.deletedCount;
+  results.removedPlaces = orphans.map((place) => ({
+    place_id: place.place_id,
+    name: place.name,
+  }));
 
   return results;
 }
