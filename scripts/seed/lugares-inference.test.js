@@ -38,4 +38,8 @@ assert.equal(fallback.stampId, 'stamp_museum');
 const tagWins = inferZanzar(['histórico'], ['restaurant']);
 assert.equal(tagWins.category, 'historic');
 
+const barWins = inferZanzarFromTypes(['bar', 'restaurant', 'food']);
+assert.equal(barWins.category, 'bar');
+assert.equal(barWins.stampId, 'stamp_bar');
+
 console.log('lugares-inference.test.js: ok');

@@ -23,8 +23,8 @@ const typeCategoryRules = [
   { types: ['zoo', 'aquarium'], category: 'curiosity', stampId: 'stamp_curiosity' },
   { types: ['museum'], category: 'museum', stampId: 'stamp_museum' },
   { types: ['park', 'amusement_park'], category: 'park', stampId: 'stamp_park' },
-  { types: ['restaurant'], category: 'restaurant', stampId: 'stamp_restaurant' },
   { types: ['bar'], category: 'bar', stampId: 'stamp_bar' },
+  { types: ['restaurant'], category: 'restaurant', stampId: 'stamp_restaurant' },
   { types: ['cafe', 'bakery'], category: 'cafe', stampId: 'stamp_cafe' },
   { types: ['historic', 'church', 'place_of_worship'], category: 'historic', stampId: 'stamp_historic' },
 ];
@@ -44,6 +44,9 @@ function inferZanzarFromTags(tags) {
 
 function inferZanzarFromTypes(types) {
   const set = new Set(types || []);
+  if (set.has('bar') && set.has('restaurant')) {
+    return { category: 'bar', stampId: 'stamp_bar' };
+  }
   for (const rule of typeCategoryRules) {
     if (rule.types.some((type) => set.has(type))) {
       return { category: rule.category, stampId: rule.stampId };
