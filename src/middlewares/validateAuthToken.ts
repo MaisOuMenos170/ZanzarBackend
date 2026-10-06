@@ -4,7 +4,7 @@ import { logger } from "../utils/logger";
 import { setContextUserId } from "../utils/requestContext";
 import { getRequestPath } from "../utils/httpLog";
 import { verifyJwtToken } from "../utils/jwt";
-import { userRepository } from "../modules/users/user.repository";
+import { isTokenRevoked } from "../utils/tokenRevocation";
 
 const log = logger.child({ module: "auth", layer: "middleware" });
 
@@ -26,11 +26,9 @@ export const validateAuthToken: RequestHandler = (req, res, next) => {
             return next(new AppError("Invalid JWT token", 401));
         }
 
-        // Logout bumps users.tokenVersion; tokens issued before the bump (or without the claim, i.e. version 0) stop matching.
-        userRepository
-            .findTokenVersionById(String(user.id))
-            .then((currentVersion) => {
-                if (currentVersion === null || currentVersion !== (user.tokenVersion ?? 0)) {
+        isTokenRevoked(user)
+            .then((revoked) => {
+                if (revoked) {
                     log.warn(
                         { method: req.method, path: getRequestPath(req), reason: "token_revoked" },
                         "Auth rejected: revoked JWT token",

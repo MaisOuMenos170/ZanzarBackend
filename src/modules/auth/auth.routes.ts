@@ -5,10 +5,10 @@ import { validateSchema } from "../../middlewares/validateSchema";
 import { createUserSchema } from "../users/schema/createUserSchema";
 import { loginAuthSchema } from "./schema/loginAuthSchema";
 import { validateAuthToken } from "../../middlewares/validateAuthToken";
-import { loginLimiter, registerLimiter } from "../../middlewares/rateLimiters";
+import { loginLimiter, logoutLimiter, registerLimiter } from "../../middlewares/rateLimiters";
 
 export const authRouter: Router = express.Router();
 
 authRouter.post("/register", registerLimiter, validateSchema(createUserSchema), createUser);
 authRouter.post("/login", loginLimiter, validateSchema(loginAuthSchema), loginUser);
-authRouter.post("/logout", validateAuthToken, logoutUser);
+authRouter.post("/logout", logoutLimiter, validateAuthToken, logoutUser);

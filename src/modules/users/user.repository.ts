@@ -47,6 +47,10 @@ export const userRepository = {
     },
 
     async findProfileSummaryById(userId: string): Promise<ProfileSummary | null> {
+        if (!Types.ObjectId.isValid(userId)) {
+            return null;
+        }
+
         log.debug({ userId }, "Fetching profile summary");
         try {
             // $size keeps the stamps and itineraries arrays out of the response payload.
@@ -57,8 +61,8 @@ export const userRepository = {
                         _id: 0,
                         username: 1,
                         checkInCount: 1,
-                        completedItinerariesCount: { $size: "$completedItineraries" },
-                        stampsCount: { $size: "$stamps" },
+                        completedItinerariesCount: { $size: { $ifNull: ["$completedItineraries", []] } },
+                        stampsCount: { $size: { $ifNull: ["$stamps", []] } },
                     },
                 },
             ]);
@@ -75,7 +79,7 @@ export const userRepository = {
         try {
             const user = await UserModel.findById(userId).select("tokenVersion").lean<Pick<User, "tokenVersion">>();
             log.debug({ userId, found: !!user }, "Fetched token version");
-            return user ? user.tokenVersion : null;
+            return user ? (user.tokenVersion ?? 0) : null;
         } catch (err) {
             log.error({ err, userId }, "Failed to fetch token version");
             throw err;

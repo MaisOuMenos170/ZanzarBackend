@@ -36,3 +36,11 @@ export const registerLimiter = rateLimit({
     limit: 5,
     handler: rateLimitHandler("register"),
 });
+
+/** Each logout bumps tokenVersion (a DB write) and runs before auth, so unauthenticated hammering is throttled per IP. */
+export const logoutLimiter = rateLimit({
+    ...authLimiterBase,
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    handler: rateLimitHandler("logout"),
+});

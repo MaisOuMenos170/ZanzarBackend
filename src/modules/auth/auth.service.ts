@@ -38,7 +38,7 @@ export const authService = {
         }
 
         const token = jwt.sign(
-            { id: user._id, email: user.email, tokenVersion: user.tokenVersion },
+            { id: user._id, email: user.email, tokenVersion: user.tokenVersion ?? 0 },
             process.env.JWT_SECRET as string,
             { expiresIn: JWT_EXPIRATION },
         )
