@@ -340,7 +340,7 @@ Dois ambientes no mesmo projeto Railway, cada um com **seu próprio cluster Atla
 | `development` | `develop` | [`.env.development.example`](.env.development.example) | **bloqueado** (403) |
 | `production` | `main` | [`.env.production.example`](.env.production.example) | liberado |
 
-- Build/start vêm de [`railway.json`](railway.json): `npm ci --include=dev && npm run build`, depois `npm start` (`node dist/index.js`). Healthcheck em `GET /health`. `PORT` é injetado pelo Railway.
+- Build/start vêm de [`railway.json`](railway.json): `npm run build` (o Nixpacks já roda `npm ci` antes, com devDependencies), depois `npm start` (`node dist/index.js`). Healthcheck em `GET /health`. `PORT` é injetado pelo Railway.
 - O signup é bloqueado quando `NODE_ENV=development`. `SIGNUP_ENABLED=true|false` sobrescreve isso (útil para criar contas de teste no dev ou rodar `npm run dev` local com cadastro). Sem `NODE_ENV=development` o cadastro fica liberado.
 - Use `JWT_SECRET` **diferente** em cada ambiente (um token do dev nunca vale em produção). Em `NODE_ENV=production` o servidor não sobe com `JWT_SECRET` de menos de 32 caracteres. Gere com `openssl rand -base64 48`.
 - Atlas, por cluster: crie um usuário de banco, mantenha o database `Zanzardb` (os scripts mongosh usam esse nome fixo) e libere o acesso de rede do Railway em **Network Access** (os IPs de saída do Railway são dinâmicos, então na prática `0.0.0.0/0`, a menos que use IP estático).
