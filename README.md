@@ -1,6 +1,6 @@
 # ZanzarBackend
 
-API REST do Zanzar — Express · Mongoose · MongoDB · JWT · TypeScript.
+API REST do Zanzar — Express · Mongoose · MongoDB · JWT · TypeScript
 
 ## Estrutura
 
