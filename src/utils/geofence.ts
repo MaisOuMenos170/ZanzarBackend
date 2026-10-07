@@ -58,7 +58,10 @@ export function assertWithinCheckinRadius(
 
     const placeCoords = resolvePlaceCoordinates(place);
     if (!placeCoords) {
-        return;
+        throw new AppError(
+            "Place has no coordinates; cannot validate check-in location",
+            422,
+        );
     }
 
     const distanceMeters = haversineDistanceMeters(placeCoords, coordinates);

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { assertWithinCheckinRadius, haversineDistanceMeters } from './geofence.js';
 import { AppError } from '../errors/appError.js';
+import type { PlaceDocument } from '../schemas/place.js';
 
 const placeCoords = {
   geometry: { location: { lat: -25.4284, lng: -49.2733 } },
@@ -19,6 +20,18 @@ assertWithinCheckinRadius(placeCoords, undefined, 150);
 try {
   assertWithinCheckinRadius(placeCoords, farAway, 150);
   assert.fail('expected AppError');
+} catch (error) {
+  assert.ok(error instanceof AppError);
+  assert.equal(error.statusCode, 422);
+}
+
+const placeWithoutCoords = {
+  geometry: undefined,
+  geoLocation: undefined,
+} as unknown as Pick<PlaceDocument, 'geometry' | 'geoLocation'>;
+try {
+  assertWithinCheckinRadius(placeWithoutCoords, nearby, 150);
+  assert.fail('expected AppError for place without coordinates');
 } catch (error) {
   assert.ok(error instanceof AppError);
   assert.equal(error.statusCode, 422);
