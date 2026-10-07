@@ -6,6 +6,7 @@ import { rateLimit } from 'express-rate-limit'
 import type { Express } from "express";
 import { logger } from "./utils/logger";
 import { connectDatabase, disconnectDatabase } from "./config/database";
+import { isSignupEnabled } from "./config/env";
 
 // Routes import
 import { healthRouter } from "./modules/health/health.routes";
@@ -25,6 +26,7 @@ import { rateLimitHandler } from "./middlewares/rateLimiters";
 
 const PORT = process.env.PORT || 8000;
 const SHUTDOWN_TIMEOUT_MS = 10_000;
+const MIN_PRODUCTION_JWT_SECRET_LENGTH = 32;
 
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
@@ -35,11 +37,19 @@ function requireEnv(name: string): string {
   return value;
 }
 
-requireEnv("JWT_SECRET");
+const jwtSecret = requireEnv("JWT_SECRET");
 requireEnv("MONGODB_URI");
 
 if (!process.env.GOOGLE_PLACES_API_KEY?.trim()) {
   logger.warn("GOOGLE_PLACES_API_KEY is not set — GET /places/photo will return 500 until configured");
+}
+
+if (process.env.NODE_ENV === "production" && jwtSecret.length < MIN_PRODUCTION_JWT_SECRET_LENGTH) {
+  logger.fatal(
+    { variable: "JWT_SECRET", minLength: MIN_PRODUCTION_JWT_SECRET_LENGTH },
+    "JWT_SECRET is too short for production",
+  );
+  process.exit(1);
 }
 
 const app: Express = express();
@@ -84,7 +94,10 @@ connectDatabase()
         logger.fatal({ err, port: PORT }, "Failed to bind server port");
         process.exit(1);
       }
-      logger.info({ port: PORT, env: process.env.NODE_ENV }, "Server is running");
+      logger.info(
+        { port: PORT, env: process.env.NODE_ENV, signupEnabled: isSignupEnabled() },
+        "Server is running",
+      );
     });
 
     for (const signal of ["SIGTERM", "SIGINT"] as const) {
