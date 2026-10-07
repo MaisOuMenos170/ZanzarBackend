@@ -48,7 +48,7 @@ Resposta `201` traz o selo e o progresso para o app exibir o alert imediatamente
 
 **Geofence:** se o body incluir `coordinates`, a distância ao lugar é validada contra `CHECKIN_RADIUS_METERS` (padrão 150 m); fora do raio → `422`. Sem `coordinates`, a validação é ignorada (compatibilidade com builds antigos do app).
 
-**Atlas trigger legado:** [`scripts/triggers/on-checkin-created.js`](scripts/triggers/README.md) não deve permanecer **ativo** no Atlas após o deploy do E2 — senão contadores e selos seriam aplicados em dobro. A lógica vive em `src/events/triggers/` e roda dentro da API.
+**Atlas trigger legado:** após o deploy do E2, **desative manualmente** o Database Trigger de `checkins` INSERT no Atlas App Services — o MCP do MongoDB não faz isso. Passo a passo + checklist: [`scripts/triggers/README.md`](scripts/triggers/README.md). Se trigger e API rodarem juntos, contadores e selos duplicam.
 
 Roteiros do usuário ficam **embed** em `users` (não há collection `user_itineraries`).
 
