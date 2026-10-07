@@ -38,6 +38,10 @@ function requireEnv(name: string): string {
 requireEnv("JWT_SECRET");
 requireEnv("MONGODB_URI");
 
+if (!process.env.GOOGLE_PLACES_API_KEY?.trim()) {
+  logger.warn("GOOGLE_PLACES_API_KEY is not set — GET /places/photo will return 500 until configured");
+}
+
 const app: Express = express();
 
 app.set("trust proxy", 1);
