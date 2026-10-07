@@ -1,4 +1,7 @@
 /**
+ * LEGADO — descontinuado após E2 (check-in síncrono na API).
+ * Não mantenha este trigger ativo no Atlas junto com POST /checkIn (contagem em dobro).
+ *
  * Atlas Database Trigger: Zanzardb.checkins → INSERT (Full Document ligado).
  *
  * Efeitos do check-in (diagrama CheckIns):

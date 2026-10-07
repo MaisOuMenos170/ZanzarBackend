@@ -38,8 +38,9 @@ const now = new Date('2026-01-01T12:00:00Z');
       { placeId: 'place-b', isCompleted: false },
     ],
   });
-  const completed = applyItineraryProgressFromCheckin(user, makePlace('place-a', 'historic'), now, now);
-  assert.equal(completed, false);
+  const result = applyItineraryProgressFromCheckin(user, makePlace('place-a', 'historic'), now, now);
+  assert.equal(result.itineraryCompleted, false);
+  assert.equal(result.itineraryProgress?.completedSlots, 1);
   assert.equal(user.activeItinerary?.places[0]?.isCompleted, true);
   assert.equal(user.activeItinerary?.places[0]?.placeId, 'place-a');
 }
@@ -60,16 +61,18 @@ const now = new Date('2026-01-01T12:00:00Z');
     places: [{ isCompleted: false }, { isCompleted: false }],
   });
   const wrongCategory = applyItineraryProgressFromCheckin(user, makePlace('park-1', 'restaurant'), now, now);
-  assert.equal(wrongCategory, false);
+  assert.equal(wrongCategory.itineraryCompleted, false);
+  assert.equal(wrongCategory.itineraryProgress?.completedSlots, 0);
   assert.equal(user.activeItinerary?.places[0]?.isCompleted, false);
 
   const ok = applyItineraryProgressFromCheckin(user, makePlace('park-1', 'park'), now, now);
-  assert.equal(ok, false);
-  assert.equal(user.activeItinerary?.places[0]?.isCompleted, true);
+  assert.equal(ok.itineraryCompleted, false);
+  assert.equal(ok.itineraryProgress?.completedSlots, 1);
   assert.equal(user.activeItinerary?.places[0]?.placeId, 'park-1');
 
   const done = applyItineraryProgressFromCheckin(user, makePlace('park-2', 'park'), now, now);
-  assert.equal(done, true);
+  assert.equal(done.itineraryCompleted, true);
+  assert.equal(done.itineraryProgress?.completedSlots, 2);
   assert.equal(user.activeItinerary, null);
   assert.equal(user.completedItineraries.length, 1);
 }

@@ -62,7 +62,7 @@ export async function onCheckinCreated(
 
   await repos.places.incrementCheckInCount(place.place_id);
 
-  const itineraryCompleted = applyItineraryProgressFromCheckin(
+  const { itineraryCompleted } = applyItineraryProgressFromCheckin(
     user,
     place,
     body.datetime,

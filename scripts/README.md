@@ -8,7 +8,7 @@
 | [`seed/`](seed/README.md) | Seed e sync de `stamp_catalog` e `places` | `seed`, `sync:lugares`, `db:init` |
 | [`validators/`](validators/README.md) | `$jsonSchema` gerado dos models Mongoose | `db:validate`, `db:validate:dry` |
 | [`migrations/`](migrations/README.md) | Migrações pontuais de dados | `db:migrate:geo` |
-| [`triggers/`](triggers/README.md) | Funções de Atlas Database Triggers | (deploy manual no Atlas) |
+| [`triggers/`](triggers/README.md) | Atlas Database Triggers (legado E2) | desativar trigger no Atlas UI após E2 — ver README |
 | [`dev/`](dev/README.md) | Utilitários de desenvolvimento local | `tunnel`, `atlas:ip` |
 | `lib/` | Código compartilhado (`mongosh-run.sh`, `resolve-mongo-uri.py`) | — |
 
