@@ -197,7 +197,7 @@ Só o próprio usuário (`:id` deve ser o do token). `limit` é opcional (1–20
 {
   "username": "tiago",
   "checkInCount": 12,
-  "completedItinerariesCount": 2,
+  "itinerariesCount": 2,
   "stampsCount": 12,
   "recentCheckIns": [
     {
@@ -205,13 +205,20 @@ Só o próprio usuário (`:id` deve ser o do token). `limit` é opcional (1–20
       "placeName": "Bar do Zé",
       "datetime": "2026-10-05T18:30:00.000Z",
       "photoReference": "AUacSh...",
-      "stamp": { "stampId": "bar", "imageUrl": "/assets/stamps/bar.png" }
+      "stamp": { "stampId": "bar", "imageUrl": "/assets/stamps/bar.png" },
+      "impressionTag": "happy"
     }
   ]
 }
 ```
 
-`photoReference` é o `photo_reference` da primeira foto do lugar no Google (ou `null`); `stamp` é `null` quando o lugar não tem selo ativo no `stamp_catalog`.
+`itinerariesCount` soma roteiro ativo + `inactiveItineraries` + `completedItineraries`. `photoReference` é o `photo_reference` da primeira foto do lugar no Google (ou `null`); `stamp` é `null` quando o lugar não tem selo ativo no `stamp_catalog`; `impressionTag` vem da collection `rating` (ou `null` sem reação).
+
+### `GET /places/photo?ref=&maxwidth=800`
+
+Proxy público para a Google Places Photo API. A chave fica só no servidor (`GOOGLE_PLACES_API_KEY` no `.env`). Resposta binária (`image/jpeg` ou o content-type devolvido pelo Google) com cache de 24 h. `ref` ausente → `400`.
+
+O app iOS monta a URL como `{ZanzarAPIBaseURL}/places/photo?ref=...&maxwidth=800` — não carrega mais chave do Google no bundle.
 
 ### `POST /logout`
 

@@ -3,6 +3,7 @@ import { logger } from "../../utils/logger";
 import { userRepository } from "./user.repository";
 import { checkInRepository } from "../checkin/checkin.repository";
 import { placeRepository } from "../places/place.repository";
+import { ratingRepository } from "../rating/rating.repository";
 import { stampsRepository } from "../stamps/stamps.repository";
 import type { RecentCheckIn, UserProfile } from "../../schemas/user";
 
@@ -30,6 +31,10 @@ export const userService = {
         const stamps = await stampsRepository.findByStampIds(stampIds);
         const stampsById = new Map(stamps.map((stamp) => [stamp.stampId, stamp]));
 
+        const placeIds = checkIns.map((checkIn) => checkIn.placeId);
+        const ratings = await ratingRepository.findByUserAndPlaceIds(userId, placeIds);
+        const impressionTagsByPlaceId = new Map(ratings.map((rating) => [rating.placeId, rating.impressionTag]));
+
         const recentCheckIns: RecentCheckIn[] = checkIns.map(({ placeId, datetime }) => {
             const place = placesById.get(placeId);
             const stamp = place?.zanzar ? stampsById.get(place.zanzar.stampId) : undefined;
@@ -39,6 +44,7 @@ export const userService = {
                 datetime,
                 photoReference: place?.photos?.[0]?.photo_reference ?? null,
                 stamp: stamp ? { stampId: stamp.stampId, imageUrl: stamp.imageUrl } : null,
+                impressionTag: impressionTagsByPlaceId.get(placeId) ?? null,
             };
         });
 

@@ -6,7 +6,7 @@
     "build": "npx tsc",
     "start": "npx tsc && node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "test": "node scripts/seed/lugares-inference.test.js && tsx src/events/triggers/itinerary-progress.test.ts && tsx src/utils/geofence.test.ts",
+    "test": "node scripts/seed/lugares-inference.test.js && tsx src/events/triggers/itinerary-progress.test.ts && tsx src/utils/geofence.test.ts && tsx src/constants/auth.test.ts && tsx src/schemas/user.test.ts && tsx src/modules/places/place-photo.service.test.ts",
     "setup:collections": "bash scripts/setup/setup-collections.sh",
     "seed": "bash scripts/seed/seed-zanzardb.sh",
     "sync:lugares": "bash scripts/seed/sync-lugares-from-github.sh",
