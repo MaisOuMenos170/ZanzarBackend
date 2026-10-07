@@ -44,3 +44,11 @@ export const logoutLimiter = rateLimit({
     limit: 20,
     handler: rateLimitHandler("logout"),
 });
+
+/** Protects Google Places quota on the public photo proxy. */
+export const placePhotoLimiter = rateLimit({
+    ...authLimiterBase,
+    windowMs: 15 * 60 * 1000,
+    limit: 120,
+    handler: rateLimitHandler("places-photo"),
+});

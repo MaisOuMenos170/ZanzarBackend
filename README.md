@@ -66,6 +66,34 @@ Cada tema de `scripts/` tem README próprio ([índice](scripts/README.md)).
 
 Alternativa: Atlas → **ClusterZanzar** → **Browse Collections** → `_MONGOSH` → colar os `.js` de `scripts/setup/`.
 
+## Endpoints (REST)
+
+Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exceto onde indicado.
+
+| Método | Path | Auth | Descrição |
+|--------|------|------|-----------|
+| GET | `/health` | — | Health check |
+| POST | `/register` | — | Criar conta (rate limit) |
+| POST | `/login` | — | JWT (rate limit) |
+| POST | `/logout` | Bearer | Invalida sessão (`tokenVersion`) |
+| GET | `/places` | opcional | Lista lugares (`lat`, `lng`, `radius`, …) |
+| GET | `/places/photo?ref=&maxwidth=` | — | Proxy foto Google (rate limit; `GOOGLE_PLACES_API_KEY`) |
+| GET | `/places/:placeId` | opcional | Detalhe do lugar |
+| GET | `/itineraries` | Bearer | Roteiros curados |
+| GET | `/itineraries/:slug` | Bearer | Detalhe por slug |
+| POST | `/itineraries/:slug/activate` | Bearer | Ativa roteiro (409 se já houver ativo) |
+| POST | `/itineraries/active/abandon` | Bearer | Abandona roteiro ativo |
+| GET | `/user/:id` | Bearer (owner) | Usuário |
+| GET | `/user/:id/profile?limit=` | Bearer (owner) | Perfil enriquecido (`itinerariesCount`, `impressionTag`) |
+| GET | `/user/:id/itinerary` | Bearer (owner) | Roteiro ativo + progresso |
+| POST | `/checkIn` | Bearer | Check-in síncrono (idempotente, geofence opcional) |
+| GET | `/checkIn?placeId=` | Bearer | Check-in existente usuário+lugar |
+| POST | `/rating` | Bearer | Reação pós-visita |
+| GET | `/rating?placeId=` | Bearer | Reação existente |
+| GET | `/stamps/:stampId` | Bearer | Metadados do selo |
+
+Rotas após login usam `Authorization: Bearer <token>` exceto `/places`, `/places/photo` e auth público. Detalhes de body/resposta: seções abaixo e código em `src/modules/*/`.
+
 ### Checklist até o banco MVP ficar 100%
 
 | Etapa | Comando / artefato | Status típico |
@@ -303,9 +331,11 @@ Todo log traz `service`, `pid` e `hostname`, para distinguir instâncias quando 
 - Falhas de login logam sempre o mesmo motivo (`invalid_credentials`), sem `userId` e sem e-mail: nem a resposta HTTP nem os logs permitem descobrir quais e-mails existem.
 - Erros são serializados por `serializeError` (`src/utils/logger.ts`): erros de chave duplicada (E11000) e de validação/cast do Mongoose logam só o tipo e os **nomes** dos campos, nunca os valores enviados (o erro bruto do Mongo inclui `keyValue` com o e-mail).
 
-## Próximos passos (quando for implementar)
+## Testes
 
-1. `npm init` / instalar dependências (express, mongoose, jsonwebtoken, zod…)
-2. Copiar `.env.example` → `.env`
-3. Escrever models em `src/models/`
-4. Seed a partir de `data/lugares.json`
+```bash
+npm test          # Vitest (HTTP/mocks) + testes legados (geofence, inferência, …)
+npm run typecheck
+```
+
+CI: `.github/workflows/ci.yml` (push/PR em `main` e `develop`).
