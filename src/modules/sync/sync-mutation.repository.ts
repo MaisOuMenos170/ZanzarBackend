@@ -1,3 +1,4 @@
+import type { ClientSession } from "mongoose";
 import { SyncMutationModel } from "../../models/sync-mutation.model";
 import { logger } from "../../utils/logger";
 
@@ -19,14 +20,17 @@ export const syncMutationRepository = {
         }
     },
 
-    async record(entry: {
-        clientMutationId: string;
-        userId: string;
-        mutationType: "checkin" | "rating";
-        resultStatus: "accepted" | "rejected";
-        resultPayload: Record<string, unknown>;
-        processedAt: Date;
-    }): Promise<void> {
+    async record(
+        entry: {
+            clientMutationId: string;
+            userId: string;
+            mutationType: "checkin" | "rating";
+            resultStatus: "accepted" | "rejected";
+            resultPayload: Record<string, unknown>;
+            processedAt: Date;
+        },
+        session?: ClientSession,
+    ): Promise<void> {
         const context = {
             clientMutationId: entry.clientMutationId,
             userId: entry.userId,
@@ -35,7 +39,11 @@ export const syncMutationRepository = {
         };
         log.debug(context, "Recording sync mutation");
         try {
-            await SyncMutationModel.create(entry);
+            if (session) {
+                await SyncMutationModel.create([entry], { session });
+            } else {
+                await SyncMutationModel.create(entry);
+            }
             log.debug(context, "Recorded sync mutation");
         } catch (err) {
             log.error({ err, ...context }, "Failed to record sync mutation");

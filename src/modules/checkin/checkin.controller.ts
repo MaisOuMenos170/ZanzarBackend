@@ -9,8 +9,8 @@ export const checkIn: RequestHandler = async (req, res) => {
         throw new AppError("Access denied", 401);
     }
 
-    await checkInService.checkIn(userId, req.body);
-    res.status(201).json({ message: "Check-in registered successfully" });
+    const result = await checkInService.checkIn(userId, req.body);
+    res.status(201).json(result);
 };
 
 export const getCheckInByUserAndPlace: RequestHandler = async (req, res) => {

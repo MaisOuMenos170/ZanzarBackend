@@ -1,4 +1,4 @@
-import type { PipelineStage } from "mongoose";
+import type { ClientSession, PipelineStage } from "mongoose";
 import { PlaceModel } from "../../models/place.model";
 import type { PlaceDocument, PlaceNearbyDocument } from "../../schemas/place";
 import { logger } from "../../utils/logger";
@@ -117,12 +117,13 @@ export const placeRepository = {
         }
     },
 
-    async incrementCheckInCount(placeId: string): Promise<void> {
+    async incrementCheckInCount(placeId: string, session?: ClientSession): Promise<void> {
         log.debug({ placeId }, "Incrementing place check-in count");
         try {
             const result = await PlaceModel.updateOne(
                 { place_id: placeId },
                 { $inc: { "zanzar.checkInCount": 1 } },
+                session ? { session } : undefined,
             );
             if (result.matchedCount === 0) {
                 log.error({ placeId }, "Place not found while incrementing check-in count");

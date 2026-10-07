@@ -1,24 +1,21 @@
 # ZanzarBackend
 
-Base do backend — **só estrutura de pastas e config mínima**. Sem código implementado ainda.
-
-Stack planejada: Express · Mongoose · MongoDB · JWT · TypeScript.
+API REST do Zanzar — Express · Mongoose · MongoDB · JWT · TypeScript.
 
 ## Estrutura
 
 ```text
 ZanzarBackend/
 ├── data/
-│   └── lugares.json       # dados de lugares (Google Places + campos futuros)
-├── scripts/               # seed, setup, migrations, triggers, dev (ver scripts/README.md)
+│   └── lugares.json       # lugares (Google Places + extensão zanzar)
+├── scripts/               # seed, setup, migrations, triggers (legado), dev
 ├── src/
-│   ├── config/            # env, conexão MongoDB
-│   ├── models/            # schemas Mongoose (8 collections)
-│   ├── routes/            # endpoints REST
-│   ├── services/          # regras de negócio
-│   ├── middleware/        # auth JWT, validação
-│   ├── types/             # tipos compartilhados
-│   └── utils/             # helpers (geofence, categorias…)
+│   ├── config/            # env, MongoDB, resolução de URI
+│   ├── models/            # schemas Mongoose
+│   ├── modules/           # routes → controller → service → repository
+│   ├── events/triggers/   # lógica de domínio reutilizada pela API
+│   ├── schemas/           # validação Zod (request/response)
+│   └── utils/             # geofence, logger, helpers
 ├── .env.example
 ├── tsconfig.json
 └── package.json
@@ -34,15 +31,24 @@ Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados).
 | `places` | Places | Google Places + extensão `zanzar` |
 | `stamp_catalog` | Stamp | Catálogo curado (1 selo por categoria) |
 | `itineraries` | Itinerary (geral) | Templates de roteiros curados |
-| `checkins` | CheckIns | Visita (`userId`, `placeId`, `datetime`); selo e contadores via Atlas trigger |
+| `checkins` | CheckIns | Visita (`userId`, `placeId`, `datetime`, `coordinates?`, `stampIdGranted`); efeitos aplicados pela API |
 | `rating` | Rating / Reações | Reação pós-visita (`impressionTag`) |
 | `sync_mutations` | — | Idempotência do sync offline |
 
-### Trigger de check-in (Atlas)
+### Check-in síncrono (API)
 
-O `POST /checkIn` só insere o documento em `checkins`. Contadores (`users.checkInCount`, `places.zanzar.checkInCount`), selo em `users.stamps` e progresso do roteiro são aplicados por um Database Trigger em [`scripts/triggers/on-checkin-created.js`](scripts/triggers/README.md).
+O `POST /checkIn` aplica **todos os efeitos na mesma requisição** (transação MongoDB):
 
-Deploy manual: Atlas → App Services → Triggers → Database → collection `checkins`, operation **Insert**, **Full Document** ligado, colar a função. Sem o trigger publicado, check-ins não atualizam contadores nem selos.
+- insert em `checkins` (+ `serverReceivedAt`, `coordinates` opcional, `stampIdGranted`)
+- `users.checkInCount +1`, push em `users.stamps`
+- `places.zanzar.checkInCount +1`
+- progresso do `activeItinerary` (rota fixa e livre)
+
+Resposta `201` traz o selo e o progresso para o app exibir o alert imediatamente.
+
+**Geofence:** se o body incluir `coordinates`, a distância ao lugar é validada contra `CHECKIN_RADIUS_METERS` (padrão 150 m); fora do raio → `422`. Sem `coordinates`, a validação é ignorada (compatibilidade com builds antigos do app).
+
+**Atlas trigger legado:** [`scripts/triggers/on-checkin-created.js`](scripts/triggers/README.md) não deve permanecer **ativo** no Atlas após o deploy do E2 — senão contadores e selos seriam aplicados em dobro. A lógica vive em `src/events/triggers/` e roda dentro da API.
 
 Roteiros do usuário ficam **embed** em `users` (não há collection `user_itineraries`).
 
@@ -148,6 +154,36 @@ cd ../Zanzar
 - **URL efêmera** — toda vez que o `cloudflared` reinicia, a URL muda. Rode `dev-tunnel.sh` (ou o script do app) de novo.
 - **Porta customizada** — `PORT=4000 npm run tunnel` aponta o túnel para outra porta.
 - **Só Debug no app** — a URL de túnel é gravada apenas na configuração Debug do Xcode; Release usa URL de produção.
+
+## Check-in
+
+Exige `Authorization: Bearer <token>`.
+
+### `POST /checkIn`
+
+Body:
+
+```json
+{
+  "placeId": "ChIJ...",
+  "datetime": "2026-10-07T12:00:00.000Z",
+  "clientMutationId": "550e8400-e29b-41d4-a716-446655440000",
+  "coordinates": { "lat": -25.428, "lng": -49.273, "accuracyMeters": 12 }
+}
+```
+
+`coordinates` é opcional. Resposta `201`:
+
+```json
+{
+  "stampIdGranted": "stamp_park",
+  "isNewStamp": true,
+  "itineraryProgress": { "completedSlots": 1, "totalSlots": 4 },
+  "isItineraryCompleted": false
+}
+```
+
+`itineraryProgress` é `null` sem roteiro ativo. Replay com o mesmo `clientMutationId` devolve a mesma resposta (idempotente).
 
 ## Perfil e logout
 

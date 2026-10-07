@@ -27,5 +27,20 @@ export const createCheckinBodySchema = z.object({
   coordinates: coordinatesSchema.optional(),
 });
 
+export const itineraryProgressSchema = z.object({
+  completedSlots: z.number().int().min(0),
+  totalSlots: z.number().int().min(1),
+});
+
+/** Resposta síncrona de POST /checkIn (E2). */
+export const checkinResponseSchema = z.object({
+  stampIdGranted: stampIdSchema,
+  isNewStamp: z.boolean(),
+  itineraryProgress: itineraryProgressSchema.nullable(),
+  isItineraryCompleted: z.boolean(),
+});
+
 export type CheckinDocument = z.infer<typeof checkinDocumentSchema>;
 export type CreateCheckinBody = z.infer<typeof createCheckinBodySchema>;
+export type ItineraryProgress = z.infer<typeof itineraryProgressSchema>;
+export type CheckinResponse = z.infer<typeof checkinResponseSchema>;

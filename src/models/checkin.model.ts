@@ -1,11 +1,23 @@
 import { Schema, model, InferSchemaType, Types } from "mongoose";
 
+const coordinatesSchema = new Schema(
+    {
+        lat: { type: Number, required: true },
+        lng: { type: Number, required: true },
+        accuracyMeters: { type: Number, min: 0 },
+    },
+    { _id: false },
+);
+
 const checkinSchema = new Schema(
     {
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
         placeId: { type: String, required: true },
         datetime: { type: Date, required: true },
+        serverReceivedAt: { type: Date, required: true },
         clientMutationId: { type: String, required: true },
+        stampIdGranted: { type: String, required: true },
+        coordinates: { type: coordinatesSchema },
     },
     { collection: "checkins" },
 );
