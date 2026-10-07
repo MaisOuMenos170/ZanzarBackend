@@ -5,6 +5,8 @@ const log = logger.child({ module: "places", layer: "photo-service" });
 
 const DEFAULT_MAX_WIDTH = 800;
 const MAX_ALLOWED_WIDTH = 1600;
+/** Seeded Google `photo_reference` values are ~450 chars. Cap rejects unbounded query strings. */
+const MAX_PHOTO_REFERENCE_LENGTH = 2048;
 const PHOTO_CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=43200";
 
 function resolveGooglePlacesApiKey(): string {
@@ -33,6 +35,9 @@ export const placePhotoService = {
         const photoReference = reference?.trim();
         if (!photoReference) {
             throw new AppError("Query parameter 'ref' is required", 400);
+        }
+        if (photoReference.length > MAX_PHOTO_REFERENCE_LENGTH) {
+            throw new AppError("Query parameter 'ref' is too long", 400);
         }
 
         const maxWidth = parseMaxWidth(maxWidthRaw);

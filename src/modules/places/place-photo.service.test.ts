@@ -20,6 +20,14 @@ async function run() {
     }
 
     try {
+        await placePhotoService.fetchPhoto("a".repeat(2049), undefined);
+        assert.fail("expected AppError for oversized ref");
+    } catch (error) {
+        assert.ok(error instanceof AppError);
+        assert.equal(error.statusCode, 400);
+    }
+
+    try {
         await placePhotoService.fetchPhoto("valid-ref", "not-a-number");
         assert.fail("expected AppError for invalid maxwidth");
     } catch (error) {

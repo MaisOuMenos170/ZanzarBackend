@@ -14,6 +14,13 @@ describe("placePhotoService.fetchPhoto", () => {
         } satisfies Partial<AppError>);
     });
 
+    it("rejects an oversized photo reference", async () => {
+        await expect(placePhotoService.fetchPhoto("a".repeat(2049), undefined)).rejects.toMatchObject({
+            statusCode: 400,
+            message: "Query parameter 'ref' is too long",
+        } satisfies Partial<AppError>);
+    });
+
     it("requires a configured Google API key", async () => {
         await expect(placePhotoService.fetchPhoto("valid-ref", undefined)).rejects.toMatchObject({
             statusCode: 500,

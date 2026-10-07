@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { userService } from "./user.service.js";
 import { userRepository } from "./user.repository.js";
@@ -30,10 +31,25 @@ describe("userService.getProfile", () => {
             } as any,
         ]);
         vi.spyOn(stampsRepository, "findByStampIds").mockResolvedValue([
-            { stampId: "stamp_bar", imageUrl: "/assets/stamps/bar.png" },
+            {
+                stampId: "stamp_bar",
+                stampType: "bar",
+                label: "Bar",
+                imageUrl: "/assets/stamps/bar.png",
+                sortOrder: 0,
+                isActive: true,
+            },
         ]);
         vi.spyOn(ratingRepository, "findByUserAndPlaceIds").mockResolvedValue([
-            { placeId: "ChIJ1", impressionTag: "happy" },
+            {
+                _id: new Types.ObjectId(),
+                userId: new Types.ObjectId(),
+                placeId: "ChIJ1",
+                impressionTag: "happy",
+                clientMutationId: "00000000-0000-4000-8000-000000000001",
+                createdAt: new Date("2026-10-05T18:30:00.000Z"),
+                __v: 0,
+            },
         ]);
 
         const profile = await userService.getProfile("user-1", 5);

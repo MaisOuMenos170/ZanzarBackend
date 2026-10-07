@@ -14,16 +14,78 @@ export type CheckinItineraryProgressResult = {
   itineraryProgress: ItineraryProgressSnapshot | null;
 };
 
+type ItineraryPlaces = {
+  places: ReadonlyArray<{ isCompleted: boolean; placeId?: string; datetime?: Date }>;
+};
+
 export function getItineraryProgressSnapshot(
-  active: ActiveItinerary | null | undefined,
+  itinerary: ItineraryPlaces | null | undefined,
 ): ItineraryProgressSnapshot | null {
-  if (!active) {
+  if (!itinerary) {
     return null;
   }
   return {
-    completedSlots: active.places.filter((entry) => entry.isCompleted).length,
-    totalSlots: active.places.length,
+    completedSlots: itinerary.places.filter((entry) => entry.isCompleted).length,
+    totalSlots: itinerary.places.length,
   };
+}
+
+function slotMatchesCheckin(
+  slot: { isCompleted: boolean; placeId?: string; datetime?: Date },
+  placeId: string,
+  checkinDatetime: Date,
+): boolean {
+  return (
+    slot.isCompleted &&
+    slot.placeId === placeId &&
+    slot.datetime?.getTime() === checkinDatetime.getTime()
+  );
+}
+
+function latestSlotTime(places: ReadonlyArray<{ datetime?: Date }>): number {
+  return places.reduce((latest, slot) => {
+    const time = slot.datetime?.getTime();
+    if (time === undefined || Number.isNaN(time)) {
+      return latest;
+    }
+    return Math.max(latest, time);
+  }, Number.NEGATIVE_INFINITY);
+}
+
+/**
+ * Rebuilds itinerary fields for an idempotent replay when `sync_mutations` has no
+ * cached `CheckinResponse`. Matches the slot by `placeId` + client `datetime`
+ * (the value stored on the slot), not by `completedAt`, which is the server clock
+ * and can be minutes apart on delayed sync.
+ *
+ * `isItineraryCompleted` is true only when this check-in is the latest completed
+ * slot of an itinerary already in `completedItineraries`.
+ */
+export function replayItineraryFromUserState(
+  user: Pick<UserDocument, "activeItinerary" | "completedItineraries">,
+  placeId: string,
+  checkinDatetime: Date,
+): CheckinItineraryProgressResult {
+  const completed = user.completedItineraries.find((itinerary) =>
+    itinerary.places.some((slot) => slotMatchesCheckin(slot, placeId, checkinDatetime)),
+  );
+
+  if (completed && latestSlotTime(completed.places) === checkinDatetime.getTime()) {
+    return {
+      itineraryCompleted: true,
+      itineraryProgress: getItineraryProgressSnapshot(completed),
+    };
+  }
+
+  const active = user.activeItinerary;
+  if (active?.places.some((slot) => slotMatchesCheckin(slot, placeId, checkinDatetime))) {
+    return {
+      itineraryCompleted: false,
+      itineraryProgress: getItineraryProgressSnapshot(active),
+    };
+  }
+
+  return { itineraryCompleted: false, itineraryProgress: null };
 }
 
 /**

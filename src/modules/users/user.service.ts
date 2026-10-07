@@ -5,9 +5,15 @@ import { checkInRepository } from "../checkin/checkin.repository";
 import { placeRepository } from "../places/place.repository";
 import { ratingRepository } from "../rating/rating.repository";
 import { stampsRepository } from "../stamps/stamps.repository";
+import { impressionTagFieldSchema } from "../../schemas/impression-tag";
 import type { RecentCheckIn, UserProfile } from "../../schemas/user";
 
 const log = logger.child({ module: "users", layer: "service" });
+
+function parseImpressionTag(value: unknown) {
+    const parsed = impressionTagFieldSchema.safeParse(value);
+    return parsed.success ? parsed.data : null;
+}
 
 export const userService = {
     async getById(id: string) {
@@ -44,7 +50,7 @@ export const userService = {
                 datetime,
                 photoReference: place?.photos?.[0]?.photo_reference ?? null,
                 stamp: stamp ? { stampId: stamp.stampId, imageUrl: stamp.imageUrl } : null,
-                impressionTag: impressionTagsByPlaceId.get(placeId) ?? null,
+                impressionTag: parseImpressionTag(impressionTagsByPlaceId.get(placeId)),
             };
         });
 
