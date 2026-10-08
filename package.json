@@ -6,7 +6,8 @@
     "build": "npx tsc",
     "start": "npx tsc && node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "test": "node scripts/seed/lugares-inference.test.js && tsx src/events/triggers/itinerary-progress.test.ts && tsx src/utils/geofence.test.ts",
+    "test": "vitest run && npm run test:legacy",
+    "test:legacy": "node scripts/seed/lugares-inference.test.js && tsx src/events/triggers/itinerary-progress.test.ts && tsx src/utils/geofence.test.ts && tsx src/constants/auth.test.ts && tsx src/schemas/user.test.ts && tsx src/modules/places/place-photo.service.test.ts",
     "setup:collections": "bash scripts/setup/setup-collections.sh",
     "seed": "bash scripts/seed/seed-zanzardb.sh",
     "sync:lugares": "bash scripts/seed/sync-lugares-from-github.sh",
@@ -32,10 +33,14 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.2",
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^5.0.3",
     "nodemon": "^3.1.14",
+    "supertest": "^7.3.1",
     "tsconfig": "^7.0.0",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

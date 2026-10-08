@@ -162,7 +162,13 @@ export const userRepository = {
                         _id: 0,
                         username: 1,
                         checkInCount: 1,
-                        completedItinerariesCount: { $size: { $ifNull: ["$completedItineraries", []] } },
+                        itinerariesCount: {
+                            $add: [
+                                { $size: { $ifNull: ["$completedItineraries", []] } },
+                                { $size: { $ifNull: ["$inactiveItineraries", []] } },
+                                { $cond: [{ $ifNull: ["$activeItinerary", false] }, 1, 0] },
+                            ],
+                        },
                         stampsCount: { $size: { $ifNull: ["$stamps", []] } },
                     },
                 },

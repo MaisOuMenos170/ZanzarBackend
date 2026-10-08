@@ -8,7 +8,7 @@ import type { UserDocument } from "../../schemas/user.js";
 import { getCheckinRadiusMeters } from "../../config/env";
 import {
     applyItineraryProgressFromCheckin,
-    getItineraryProgressSnapshot,
+    replayItineraryFromUserState,
 } from "../../events/triggers/itinerary-progress.js";
 import { CheckinModel } from "../../models/checkin.model";
 import { UserModel } from "../../models/user.model";
@@ -68,26 +68,6 @@ function computeIsNewStamp(
     return firstStamp.checkinId === checkinId;
 }
 
-function computeItineraryCompletedAtReplay(
-    user: UserDocument,
-    placeId: string,
-    checkinDatetime: Date,
-): boolean {
-    return user.completedItineraries.some((itinerary) => {
-        if (!itinerary.completedAt) {
-            return false;
-        }
-
-        const completedNearCheckin =
-            Math.abs(itinerary.completedAt.getTime() - checkinDatetime.getTime()) < 60_000;
-        const includesPlace = itinerary.places.some(
-            (slot) => slot.placeId === placeId && slot.isCompleted,
-        );
-
-        return completedNearCheckin && includesPlace;
-    });
-}
-
 async function buildReplayResponseFromExistingState(
     userId: string,
     placeId: string,
@@ -120,16 +100,13 @@ async function buildReplayResponseFromExistingState(
                 ? legacyPayload.stampId
                 : place.zanzar.stampId),
     );
+    const itineraryReplay = replayItineraryFromUserState(user, placeId, existingCheckin.datetime);
 
     return {
         stampIdGranted,
         isNewStamp: computeIsNewStamp(user, stampIdGranted, checkinId),
-        itineraryProgress: getItineraryProgressSnapshot(user.activeItinerary),
-        isItineraryCompleted: computeItineraryCompletedAtReplay(
-            user,
-            placeId,
-            existingCheckin.datetime,
-        ),
+        itineraryProgress: itineraryReplay.itineraryProgress,
+        isItineraryCompleted: itineraryReplay.itineraryCompleted,
     };
 }
 

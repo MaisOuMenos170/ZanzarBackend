@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { objectIdSchema, isoDateTimeSchema, slugSchema } from './common.js';
 import { stampIdSchema } from './stamp-id.js';
+import { impressionTagFieldSchema } from './impression-tag.js';
 import { itineraryRouteTypeSchema } from './itinerary.js';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 
@@ -60,7 +61,7 @@ export const getProfileQuerySchema = z.object({
 export const profileSummarySchema = z.object({
   username: z.string(),
   checkInCount: z.number().int().nonnegative(),
-  completedItinerariesCount: z.number().int().nonnegative(),
+  itinerariesCount: z.number().int().nonnegative(),
   stampsCount: z.number().int().nonnegative(),
 });
 
@@ -70,6 +71,7 @@ export const recentCheckInSchema = z.object({
   datetime: z.date(),
   photoReference: z.string().nullable(),
   stamp: z.object({ stampId: stampIdSchema, imageUrl: z.string() }).nullable(),
+  impressionTag: impressionTagFieldSchema.nullable(),
 });
 
 export const userProfileSchema = profileSummarySchema.extend({

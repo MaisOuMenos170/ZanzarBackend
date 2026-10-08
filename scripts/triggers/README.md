@@ -18,6 +18,8 @@ O arquivo `.js` permanece no repo como referência e para testes locais (`module
 
 ---
 
+Checklist rápido (E2-04): [`E2-04-OPS-CHECKLIST.md`](E2-04-OPS-CHECKLIST.md).
+
 ## Desativar o trigger no Atlas (manual, uma vez)
 
 > **Nota:** o MCP do MongoDB no Cursor **não** gerencia App Services / Database Triggers (só cluster, queries e streams). Este passo é feito no [Atlas UI](https://cloud.mongodb.com).

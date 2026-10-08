@@ -18,6 +18,24 @@ export const ratingRepository = {
         }
     },
 
+    async findByUserAndPlaceIds(userId: string, placeIds: string[]) {
+        if (placeIds.length === 0) {
+            return [];
+        }
+
+        log.debug({ userId, placeCount: placeIds.length }, "Fetching ratings by user and places");
+        try {
+            const ratings = await RatingModel.find({ userId, placeId: { $in: placeIds } })
+                .select("placeId impressionTag")
+                .lean();
+            log.debug({ userId, found: ratings.length }, "Fetched ratings by user and places");
+            return ratings;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to fetch ratings by user and places");
+            throw err;
+        }
+    },
+
     async create(userId: string, body: CreateRatingBody, checkinId?: string) {
         const context = {
             userId,
