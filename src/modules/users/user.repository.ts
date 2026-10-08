@@ -14,7 +14,7 @@ const log = logger.child({ module: "users", layer: "repository" });
 
 export type ActiveItineraryPlaceContext =
     | { routeType: "fixed"; incompletePlaceIds: string[] }
-    | { routeType: "free"; targetCategory: ZanzarCategory };
+    | { routeType: "free"; targetCategory?: ZanzarCategory; eligiblePlaceIds: string[] };
 
 export type ActiveItineraryEmbedInput = {
     itineraryTemplateId: Types.ObjectId;
@@ -25,6 +25,7 @@ export type ActiveItineraryEmbedInput = {
     routeType: ItineraryRouteType;
     targetCategory?: ZanzarCategory;
     targetCount?: number;
+    eligiblePlaceIds?: string[];
     objectives: string[];
     startedAt: Date;
     places: {
@@ -74,10 +75,22 @@ export const userRepository = {
         }
 
         if (active.routeType === "free") {
-            if (!active.targetCategory) {
+            const completedPlaceIds = new Set(
+                active.places
+                    .filter((place) => place.isCompleted && place.placeId)
+                    .map((place) => place.placeId as string),
+            );
+            const eligiblePlaceIds = (active.eligiblePlaceIds ?? []).filter(
+                (placeId) => !completedPlaceIds.has(placeId),
+            );
+            if (eligiblePlaceIds.length === 0 && !active.targetCategory) {
                 return null;
             }
-            return { routeType: "free", targetCategory: active.targetCategory };
+            return {
+                routeType: "free",
+                ...(active.targetCategory ? { targetCategory: active.targetCategory } : {}),
+                eligiblePlaceIds,
+            };
         }
 
         return {

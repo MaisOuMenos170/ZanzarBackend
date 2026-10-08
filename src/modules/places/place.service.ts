@@ -93,5 +93,8 @@ function isPlaceInActiveItinerary(
     if (context.routeType === "fixed") {
         return context.incompletePlaceIds.includes(place.place_id);
     }
+    if (context.eligiblePlaceIds.length > 0) {
+        return context.eligiblePlaceIds.includes(place.place_id);
+    }
     return place.zanzar.category === context.targetCategory;
 }

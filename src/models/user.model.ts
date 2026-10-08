@@ -35,6 +35,7 @@ const itineraryFields = {
     routeType: { type: String, enum: ITINERARY_ROUTE_TYPES, required: true },
     targetCategory: { type: String, enum: ZANZAR_CATEGORIES },
     targetCount: { type: Number, min: 1 },
+    eligiblePlaceIds: { type: [String], default: undefined },
     objectives: { type: [String], required: true },
     startedAt: { type: Date, required: true },
     places: { type: [itineraryPlaceSchema], required: true, validate: nonEmptyArray },

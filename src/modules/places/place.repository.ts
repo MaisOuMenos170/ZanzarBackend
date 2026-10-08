@@ -25,7 +25,7 @@ export const placeRepository = {
 
     async findLocationsByPlaceIds(
         placeIds: string[],
-    ): Promise<Array<{ place_id: string; name: string; lat: number; lng: number }>> {
+    ): Promise<Array<{ place_id: string; name: string; lat: number; lng: number; category?: string }>> {
         if (placeIds.length === 0) {
             return [];
         }
@@ -33,8 +33,13 @@ export const placeRepository = {
         log.debug({ placeIdCount: placeIds.length }, "Fetching place locations by ids");
         try {
             const places = await PlaceModel.find({ place_id: { $in: placeIds } })
-                .select("place_id name geometry.location")
-                .lean<Array<{ place_id: string; name: string; geometry?: { location?: { lat: number; lng: number } } }>>();
+                .select("place_id name geometry.location zanzar.category")
+                .lean<Array<{
+                    place_id: string;
+                    name: string;
+                    geometry?: { location?: { lat: number; lng: number } };
+                    zanzar?: { category?: string };
+                }>>();
 
             return places
                 .filter((place) => place.geometry?.location != null)
@@ -43,6 +48,7 @@ export const placeRepository = {
                     name: place.name,
                     lat: place.geometry!.location!.lat,
                     lng: place.geometry!.location!.lng,
+                    ...(place.zanzar?.category ? { category: place.zanzar.category } : {}),
                 }));
         } catch (err) {
             log.error({ err, placeIdCount: placeIds.length }, "Failed to fetch place locations by ids");
