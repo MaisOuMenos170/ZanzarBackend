@@ -10,6 +10,6 @@ import { requireSignupEnabled } from "../../middlewares/requireSignupEnabled";
 
 export const authRouter: Router = express.Router();
 
-authRouter.post("/register", requireSignupEnabled, registerLimiter, validateSchema(createUserSchema), createUser);
+authRouter.post("/register", registerLimiter, requireSignupEnabled, validateSchema(createUserSchema), createUser);
 authRouter.post("/login", loginLimiter, validateSchema(loginAuthSchema), loginUser);
 authRouter.post("/logout", logoutLimiter, validateAuthToken, logoutUser);

@@ -6,7 +6,7 @@ import { rateLimit } from 'express-rate-limit'
 import type { Express } from "express";
 import { logger } from "./utils/logger";
 import { connectDatabase, disconnectDatabase } from "./config/database";
-import { isSignupEnabled } from "./config/env";
+import { isProduction, isSignupEnabled } from "./config/env";
 
 // Routes import
 import { healthRouter } from "./modules/health/health.routes";
@@ -44,7 +44,7 @@ if (!process.env.GOOGLE_PLACES_API_KEY?.trim()) {
   logger.warn("GOOGLE_PLACES_API_KEY is not set — GET /places/photo will return 500 until configured");
 }
 
-if (process.env.NODE_ENV === "production" && jwtSecret.length < MIN_PRODUCTION_JWT_SECRET_LENGTH) {
+if (isProduction() && jwtSecret.length < MIN_PRODUCTION_JWT_SECRET_LENGTH) {
   logger.fatal(
     { variable: "JWT_SECRET", minLength: MIN_PRODUCTION_JWT_SECRET_LENGTH },
     "JWT_SECRET is too short for production",
