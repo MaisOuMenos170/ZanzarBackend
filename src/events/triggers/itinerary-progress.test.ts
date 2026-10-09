@@ -97,4 +97,34 @@ const now = new Date('2026-01-01T12:00:00Z');
   assert.equal(findProgressSlot(active, makePlace('x', 'bar')), null);
 }
 
+// Free route with an eligible list: only those places count, and each place once
+{
+  const user = makeUser({
+    itineraryTemplateId: 'abc1234567890123456789012',
+    slug: 'visitando-parques',
+    name: 'Parques',
+    description: '',
+    category: 'park',
+    routeType: 'free',
+    targetCategory: 'park',
+    targetCount: 2,
+    eligiblePlaceIds: ['park-a', 'park-b', 'museum-mon'],
+    objectives: [],
+    startedAt: now,
+    places: [{ isCompleted: false }, { isCompleted: false }],
+  });
+
+  const outside = applyItineraryProgressFromCheckin(user, makePlace('other-park', 'park'), now, now);
+  assert.equal(outside.itineraryProgress?.completedSlots, 0);
+
+  const listedMuseum = applyItineraryProgressFromCheckin(user, makePlace('museum-mon', 'museum'), now, now);
+  assert.equal(listedMuseum.itineraryProgress?.completedSlots, 1);
+
+  const repeat = applyItineraryProgressFromCheckin(user, makePlace('museum-mon', 'museum'), now, now);
+  assert.equal(repeat.itineraryProgress?.completedSlots, 1);
+
+  const done = applyItineraryProgressFromCheckin(user, makePlace('park-a', 'park'), now, now);
+  assert.equal(done.itineraryCompleted, true);
+}
+
 console.log('itinerary-progress.test.ts: ok');

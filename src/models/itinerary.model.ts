@@ -38,6 +38,9 @@ itinerarySchema.pre("validate", function validateRouteShape(this: HydratedDocume
         if (typeof this.targetCount !== "number" || this.targetCount < 1) {
             throw new Error("targetCount is required for free itineraries");
         }
+        if (Array.isArray(this.placeIds) && this.placeIds.length > 0 && this.placeIds.length < this.targetCount) {
+            throw new Error("free itinerary placeIds must include at least targetCount places");
+        }
     }
 });
 

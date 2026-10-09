@@ -15,13 +15,25 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Starting Cloudflare Tunnel -> http://127.0.0.1:${PORT}"
-cloudflared tunnel --url "http://127.0.0.1:${PORT}" >"$LOG_FILE" 2>&1 &
+if ! curl -sf --max-time 2 "http://127.0.0.1:${PORT}/health" >/dev/null; then
+  echo "Backend is not listening on http://127.0.0.1:${PORT} — start it first: npm run dev" >&2
+  exit 1
+fi
+
+echo "Starting Cloudflare Tunnel (HTTP/2) -> http://127.0.0.1:${PORT}"
+# Line-buffered via script(1) so the URL appears in the log file before we parse it.
+script -q "$LOG_FILE" cloudflared tunnel --protocol http2 --url "http://127.0.0.1:${PORT}" &
 TUNNEL_PID=$!
 
+extract_tunnel_url() {
+  rg -o 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' "$LOG_FILE" 2>/dev/null | head -1 \
+    || grep -Eo 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' "$LOG_FILE" 2>/dev/null | head -1 \
+    || true
+}
+
 TUNNEL_URL=""
-for _ in $(seq 1 30); do
-  TUNNEL_URL="$(rg -o 'https://[a-z0-9-]+\\.trycloudflare\\.com' "$LOG_FILE" | head -1 || true)"
+for _ in $(seq 1 90); do
+  TUNNEL_URL="$(extract_tunnel_url)"
   if [[ -n "$TUNNEL_URL" ]]; then
     break
   fi

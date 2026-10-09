@@ -30,6 +30,8 @@ export const userItineraryEmbedSchema = z.object({
   routeType: itineraryRouteTypeSchema,
   targetCategory: z.enum(ZANZAR_CATEGORIES).optional(),
   targetCount: z.number().int().min(1).optional(),
+  /** Lista elegível copiada do template quando a rota livre não é a categoria inteira. */
+  eligiblePlaceIds: z.array(z.string().min(1)).optional(),
   objectives: z.array(z.string()),
   startedAt: isoDateTimeSchema,
   places: z.array(itineraryPlaceProgressSchema).min(1),

@@ -1,4 +1,5 @@
 import type { Itinerary } from "../../models/itinerary.model";
+import { ZANZAR_CATEGORIES, type ZanzarCategory } from "../../constants/zanzar-categories";
 import type { User } from "../../models/user.model";
 import { AppError } from "../../errors/appError";
 import { logger } from "../../utils/logger";
@@ -12,6 +13,13 @@ import { placeRepository } from "../places/place.repository";
 import { userRepository, type ActiveItineraryEmbedInput } from "../users/user.repository";
 
 const log = logger.child({ module: "itineraries", layer: "service" });
+
+function knownCategory(value: string | undefined): ZanzarCategory | undefined {
+    if (!value) {
+        return undefined;
+    }
+    return (ZANZAR_CATEGORIES as readonly string[]).includes(value) ? (value as ZanzarCategory) : undefined;
+}
 
 function placesCountFor(template: Itinerary): number {
     return template.routeType === "free" ? template.targetCount! : template.placeIds.length;
@@ -63,6 +71,7 @@ function buildActiveItineraryEmbed(template: Itinerary, now: Date): ActiveItiner
             ...base,
             targetCategory: template.targetCategory!,
             targetCount: template.targetCount!,
+            ...(template.placeIds.length > 0 ? { eligiblePlaceIds: template.placeIds } : {}),
             places: Array.from({ length: template.targetCount! }, () => ({
                 isCompleted: false,
             })),
@@ -103,7 +112,7 @@ export const itineraryService = {
         }
 
         let places: ItineraryDetail["places"] = [];
-        if (template.routeType === "fixed") {
+        if (template.placeIds.length > 0) {
             const locations = await placeRepository.findLocationsByPlaceIds(template.placeIds);
             const byId = new Map(locations.map((place) => [place.place_id, place]));
             places = template.placeIds.flatMap((placeId) => {
@@ -111,17 +120,19 @@ export const itineraryService = {
                 if (!place) {
                     return [];
                 }
+                const category = knownCategory(place.category);
                 return [{
                     placeId,
                     name: place.name,
                     location: { lat: place.lat, lng: place.lng },
+                    ...(category ? { category } : {}),
                 }];
             });
 
             if (places.length !== template.placeIds.length) {
                 log.warn(
                     { slug, expected: template.placeIds.length, resolved: places.length },
-                    "Published fixed itinerary has missing places in database",
+                    "Published itinerary has missing places in database",
                 );
             }
         }

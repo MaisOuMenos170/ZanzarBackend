@@ -49,6 +49,7 @@ export async function onItineraryActivated(
           ...base,
           targetCategory: template.targetCategory!,
           targetCount: template.targetCount!,
+          ...(template.placeIds.length > 0 ? { eligiblePlaceIds: [...template.placeIds] } : {}),
           places: Array.from({ length: template.targetCount! }, () => ({
             isCompleted: false,
           })),

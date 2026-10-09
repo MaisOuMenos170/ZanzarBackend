@@ -53,6 +53,7 @@ export const itineraryDetailPlaceSchema = z.object({
   placeId: googlePlaceIdSchema,
   name: z.string(),
   location: coordinatesSchema.pick({ lat: true, lng: true }),
+  category: z.enum(ZANZAR_CATEGORIES).optional(),
 });
 
 export const itineraryDetailSchema = z.object({

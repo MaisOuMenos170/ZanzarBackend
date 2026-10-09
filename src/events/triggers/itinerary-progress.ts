@@ -129,12 +129,27 @@ export function applyItineraryProgressFromCheckin(
   return { itineraryCompleted: true, itineraryProgress: snapshot };
 }
 
+function placeAlreadyCounted(
+  active: ActiveItinerary,
+  placeId: string,
+): boolean {
+  return active.places.some((entry) => entry.isCompleted && entry.placeId === placeId);
+}
+
 export function findProgressSlot(
   active: ActiveItinerary,
   place: PlaceDocument,
 ): ItineraryPlaceProgress | null {
   if (active.routeType === 'free') {
-    if (active.targetCategory !== place.zanzar.category) {
+    const eligiblePlaceIds = active.eligiblePlaceIds ?? [];
+    if (eligiblePlaceIds.length > 0) {
+      if (!eligiblePlaceIds.includes(place.place_id)) {
+        return null;
+      }
+    } else if (active.targetCategory !== place.zanzar.category) {
+      return null;
+    }
+    if (placeAlreadyCounted(active, place.place_id)) {
       return null;
     }
     return active.places.find((entry) => !entry.isCompleted) ?? null;

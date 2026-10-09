@@ -69,6 +69,35 @@ describe("replayItineraryFromUserState", () => {
         });
     });
 
+    it("counts only places from the eligible list, once each", () => {
+        const user = makeUser({
+            ...structuredClone(template),
+            eligiblePlaceIds: ["park-1", "park-2"],
+        });
+
+        const outside = applyItineraryProgressFromCheckin(
+            user,
+            makePlace("other-park", "park"),
+            new Date("2026-01-01T10:00:00.000Z"),
+            new Date("2026-01-01T10:00:00.000Z"),
+        );
+        expect(outside.itineraryProgress).toEqual({ completedSlots: 0, totalSlots: 2 });
+
+        applyItineraryProgressFromCheckin(
+            user,
+            makePlace("park-1", "park"),
+            new Date("2026-01-01T10:00:00.000Z"),
+            new Date("2026-01-01T10:00:00.000Z"),
+        );
+        const repeat = applyItineraryProgressFromCheckin(
+            user,
+            makePlace("park-1", "park"),
+            new Date("2026-01-01T10:01:00.000Z"),
+            new Date("2026-01-01T10:01:00.000Z"),
+        );
+        expect(repeat.itineraryProgress).toEqual({ completedSlots: 1, totalSlots: 2 });
+    });
+
     it("returns the active snapshot while the itinerary is still in progress", () => {
         const user = makeUser(structuredClone(template));
         const firstAt = new Date("2026-01-01T10:00:00.000Z");

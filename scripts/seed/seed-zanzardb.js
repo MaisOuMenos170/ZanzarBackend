@@ -41,18 +41,47 @@ const demoZanzarStatsByPlaceId = {
   },
 };
 
+function requirePlaceId(name, addressIncludes) {
+  const matches = rawPlaces.filter((place) => {
+    if (place.name !== name || !place.place_id) return false;
+    if (addressIncludes && !String(place.formatted_address || '').includes(addressIncludes)) return false;
+    return true;
+  });
+  if (matches.length !== 1) {
+    const hint = addressIncludes ? ` (${addressIncludes})` : '';
+    throw new Error(`Expected exactly 1 place for "${name}"${hint}, found ${matches.length}`);
+  }
+  return matches[0].place_id;
+}
+
 const itineraryTemplates = [
   {
     slug: 'visitando-parques',
     name: 'Visitando parques',
     description:
-      'Conheça os diferentes parques da cidade. Faça check-in em qualquer local da categoria Parque e complete o seu passaporte com carimbos exclusivos desse roteiro!',
+      'Conheça os diferentes parques da cidade. Faça check-in em 4 lugares desta seleção e complete o seu passaporte com carimbos exclusivos desse roteiro!',
     category: 'park',
     routeType: 'free',
     targetCategory: 'park',
     targetCount: 4,
-    objectives: ['Parque', 'Rota Livre'],
-    placeIds: [],
+    objectives: ['Parque', 'Rota livre'],
+    placeIds: [
+      requirePlaceId('Parque Barigui', 'Cândido Hartmann'),
+      requirePlaceId('Parque Tanguá'),
+      requirePlaceId('Jardim Botânico Municipal de Curitiba'),
+      requirePlaceId('Bosque Papa João Paulo II'),
+      requirePlaceId('Parque São Lourenço'),
+      requirePlaceId('Bosque Alemão'),
+      requirePlaceId('Parque Tingui'),
+      requirePlaceId('Museu Oscar Niemeyer | MON'),
+      requirePlaceId('Represa do Passaúna'),
+      requirePlaceId('Bosque Zaninelli I UNILIVRE'),
+      requirePlaceId('Passeio Público'),
+      requirePlaceId('Bosque de Portugal 🇵🇹'),
+      requirePlaceId('Bosque Gutierrez'),
+      requirePlaceId('Praça do Japão'),
+      requirePlaceId('Parque General Iberê de Matos (Parque Bacacheri)'),
+    ],
     completedCount: 40,
     isPublished: true,
   },
@@ -65,19 +94,28 @@ const itineraryTemplates = [
     routeType: 'fixed',
     objectives: ['Histórico', 'Museu', 'Café'],
     placeIds: [
-      'ChIJJxOyglvl3JQRijqeBfsu42Y',
-      'ChIJZ2aeCRLk3JQRvDAX1BUsBJo',
-      'ChIJKWpDaRLk3JQRSaxCYmuUspc',
-      'ChIJbyW3HRLk3JQR9Od-AJCxkmQ',
+      requirePlaceId('Ruínas de São Francisco'),
+      requirePlaceId('Cavalo Babão'),
+      requirePlaceId('Memorial de Curitiba'),
+      requirePlaceId('Arcádia - Sebo & Café - Vinis, Livros, Dvds, Cds'),
     ],
     completedCount: 20,
     isPublished: true,
   },
 ];
 
-const itineraryResults = itineraryTemplates.map((template) =>
-  dbx.itineraries.updateOne({ slug: template.slug }, { $set: template }, { upsert: true }),
-);
+const itineraryNow = new Date();
+const itineraryResults = itineraryTemplates.map((template) => {
+  const { completedCount, ...published } = template;
+  return dbx.itineraries.updateOne(
+    { slug: template.slug },
+    {
+      $set: { ...published, updatedAt: itineraryNow },
+      $setOnInsert: { createdAt: itineraryNow, completedCount },
+    },
+    { upsert: true },
+  );
+});
 
 const demoStatsResults = Object.entries(demoZanzarStatsByPlaceId).map(([placeId, stats]) =>
   dbx.places.updateOne(

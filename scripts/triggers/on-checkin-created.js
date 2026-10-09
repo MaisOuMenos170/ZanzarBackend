@@ -22,7 +22,13 @@ const DB_NAME = 'Zanzardb';
 
 function findProgressEntry(active, place) {
   if (active.routeType === 'free') {
-    if (active.targetCategory !== place.zanzar.category) return null;
+    const eligible = active.eligiblePlaceIds || [];
+    if (eligible.length > 0) {
+      if (!eligible.includes(place.place_id)) return null;
+    } else if (active.targetCategory !== place.zanzar.category) {
+      return null;
+    }
+    if (active.places.some((slot) => slot.isCompleted && slot.placeId === place.place_id)) return null;
     return active.places.find((p) => !p.isCompleted) ?? null;
   }
   return active.places.find((p) => p.placeId === place.place_id && !p.isCompleted) ?? null;
