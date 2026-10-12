@@ -1,0 +1,23 @@
+{
+  "place_id": "ChIJNWbp1QDl3JQRVFbc_cVeLRo",
+  "name": "Parque Barigui",
+  "geometry": {
+    "location": {
+      "lat": -25.4275,
+      "lng": -49.3072
+    }
+  },
+  "types": ["park"],
+  "photos": [],
+  "zanzar": {
+    "category": "park",
+    "stampId": "stamp_park",
+    "tags": ["parque"],
+    "checkInCount": 0,
+    "impressionCounts": {}
+  },
+  "added_at": "2026-08-26T18:29:30.874Z",
+  "updated_at": "2026-09-30T18:13:18.207Z",
+  "distanceMeters": 120,
+  "userContext": null
+}
