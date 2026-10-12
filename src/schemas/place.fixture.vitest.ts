@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { placeNearbySchema } from "./place.js";
 
 describe("place nearby fixture", () => {
     it("decodes the shared fixture without a user", () => {
         const raw = JSON.parse(
-            readFileSync(new URL("./fixtures/place-nearby.json", import.meta.url), "utf8"),
+            readFileSync(path.join(process.cwd(), "src/schemas/fixtures/place-nearby.json"), "utf8"),
         );
         const place = placeNearbySchema.parse(raw);
         expect(place.name).toBe("Parque Barigui");
