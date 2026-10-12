@@ -36,4 +36,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh pr comment "$PR_NUMBER" --body-file contract-comment.md
+          REPO: ${{ github.repository }}
+        run: |
+          existing=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("## Clientes Swift")))][0].id')
+          if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$existing" \
+              -f body="$(cat contract-comment.md)"
+          else
+            gh pr comment "$PR_NUMBER" --body-file contract-comment.md
+          fi

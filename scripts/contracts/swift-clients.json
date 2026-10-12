@@ -1,6 +1,6 @@
 {
   "src/schemas/place.ts": [
-    "PlaceAPIResponse in ZanzarProject/Features/LocationMap/Models/LocationMap.swift"
+    "PlaceAPIResponse em ZanzarProject/Features/LocationMap/Models/LocationMap.swift"
   ],
   "src/schemas/user.ts": [
     "ProfileService.swift"

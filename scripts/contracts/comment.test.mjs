@@ -19,3 +19,17 @@ test("an unmapped schema is called out", () => {
   const comment = commentForChangedFiles(["src/schemas/stamp-id.ts"], clients);
   assert.match(comment, /sem cliente Swift mapeado/);
 });
+
+test("the fixture and its test point at the place schema, not at themselves", () => {
+  const comment = commentForChangedFiles(
+    [
+      "src/schemas/fixtures/place-nearby.json",
+      "src/schemas/place.fixture.vitest.ts",
+    ],
+    clients,
+  );
+  assert.match(comment, /src\/schemas\/place\.ts/);
+  assert.match(comment, /PlaceAPIResponse/);
+  assert.doesNotMatch(comment, /sem cliente Swift mapeado/);
+  assert.doesNotMatch(comment, /place-nearby\.json` →/);
+});

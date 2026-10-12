@@ -4,25 +4,38 @@
  */
 import { readFile, writeFile } from "node:fs/promises";
 
+const fixtureSchema = {
+  "src/schemas/fixtures/place-nearby.json": "src/schemas/place.ts",
+  "src/schemas/place.fixture.vitest.ts": "src/schemas/place.ts",
+};
+
 export function commentForChangedFiles(changedFiles, clients) {
-  const relevant = changedFiles.filter((file) => file.startsWith("src/schemas/"));
-  const lines = ["## Clientes Swift", ""];
-  if (relevant.length === 0) {
-    lines.push("Nenhum arquivo em `src/schemas` mudou.");
-    return lines.join("\n");
-  }
-  for (const file of relevant) {
-    const swift = clients[file];
-    if (swift?.length) {
-      lines.push(`- \`${file}\` → ${swift.join(", ")}`);
-    } else {
-      lines.push(`- \`${file}\` → sem cliente Swift mapeado`);
+  const schemas = new Set();
+  const unmapped = [];
+  for (const file of changedFiles) {
+    if (!file.startsWith("src/schemas/") || file.endsWith("/")) continue;
+    const viaFixture = fixtureSchema[file];
+    if (viaFixture) {
+      schemas.add(viaFixture);
+      continue;
     }
+    if (!file.endsWith(".ts")) continue;
+    if (clients[file]?.length) schemas.add(file);
+    else unmapped.push(file);
   }
-  lines.push(
-    "",
-    "O Zod deste repositório decodifica `src/schemas/fixtures/place-nearby.json`. O app ainda não lê esse arquivo.",
-  );
+
+  const lines = ["## Clientes Swift", ""];
+  if (schemas.size === 0 && unmapped.length === 0) {
+    lines.push("Nenhum schema com cliente Swift mudou.");
+    return `${lines.join("\n")}\n`;
+  }
+  for (const file of schemas) {
+    lines.push(`- \`${file}\` → ${clients[file].join(", ")}`);
+  }
+  for (const file of unmapped) {
+    lines.push(`- \`${file}\` → sem cliente Swift mapeado`);
+  }
+  lines.push("", "O app ainda não lê o fixture. O Zod daqui decodifica o JSON do schema citado.");
   return `${lines.join("\n")}\n`;
 }
 
