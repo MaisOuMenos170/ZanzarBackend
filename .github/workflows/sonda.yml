@@ -1,0 +1,49 @@
+name: Sonda da API
+
+on:
+  schedule:
+    - cron: "15 8,12,16,20 * * *"
+      timezone: America/Sao_Paulo
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: URL base da API. Vazio usa a URL do app Release.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Sonda
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Sondar
+        id: probe
+        continue-on-error: true
+        env:
+          PROBE_BASE_URL: ${{ inputs.base_url }}
+        run: node scripts/probe/probe-api.mjs --out probe-report.md
+
+      - name: Atualizar a issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROBE_OUTCOME: ${{ steps.probe.outcome }}
+        run: node scripts/probe/update-issue.mjs probe-report.md
+
+      - name: Falhar quando a API não responde
+        if: steps.probe.outcome == 'failure'
+        run: exit 1
