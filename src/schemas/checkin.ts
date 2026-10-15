@@ -19,12 +19,12 @@ export const checkinDocumentSchema = z.object({
   coordinates: coordinatesSchema.optional(),
 });
 
-/** POST /checkins e payload de sync offline. GPS validado no cliente (MVP). */
+/** POST /checkIn e payload de sync offline. `coordinates` é obrigatório; o geofence recusa quem está longe. */
 export const createCheckinBodySchema = z.object({
   placeId: googlePlaceIdSchema,
   datetime: isoDateTimeSchema,
   clientMutationId: uuidSchema,
-  coordinates: coordinatesSchema.optional(),
+  coordinates: coordinatesSchema,
 });
 
 export const itineraryProgressSchema = z.object({

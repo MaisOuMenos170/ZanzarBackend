@@ -39,14 +39,14 @@ Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados).
 
 O `POST /checkIn` aplica **todos os efeitos na mesma requisição** (transação MongoDB):
 
-- insert em `checkins` (+ `serverReceivedAt`, `coordinates` opcional, `stampIdGranted`)
+- insert em `checkins` (+ `serverReceivedAt`, `coordinates`, `stampIdGranted`)
 - `users.checkInCount +1`, push em `users.stamps`
 - `places.zanzar.checkInCount +1`
 - progresso do `activeItinerary` (rota fixa e livre)
 
 Resposta `201` traz o selo e o progresso para o app exibir o alert imediatamente.
 
-**Geofence:** se o body incluir `coordinates`, a distância ao lugar é validada contra `CHECKIN_RADIUS_METERS` (padrão 150 m); fora do raio → `422`. Sem `coordinates`, a validação é ignorada (compatibilidade com builds antigos do app).
+**Geofence:** `coordinates` é obrigatório. A distância ao lugar é validada contra `CHECKIN_RADIUS_METERS` (padrão 150 m); fora do raio, ou sem coordenadas, → `422`.
 
 **Atlas trigger legado:** após o deploy do E2, **desative manualmente** o Database Trigger de `checkins` INSERT no Atlas App Services — o MCP do MongoDB não faz isso. Passo a passo + checklist: [`scripts/triggers/README.md`](scripts/triggers/README.md). Se trigger e API rodarem juntos, contadores e selos duplicam.
 
@@ -200,7 +200,7 @@ Body:
 }
 ```
 
-`coordinates` é opcional. Resposta `201`:
+`coordinates` é obrigatório. Resposta `201`:
 
 ```json
 {

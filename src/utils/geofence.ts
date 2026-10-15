@@ -44,8 +44,7 @@ export function resolvePlaceCoordinates(
 }
 
 /**
- * Valida geofence quando o cliente envia coordinates.
- * Sem coordinates no body, não valida (compatibilidade com app atual).
+ * Exige coordinates e recusa o check-in quando a pessoa está fora do raio.
  */
 export function assertWithinCheckinRadius(
     place: Pick<PlaceDocument, "geometry" | "geoLocation">,
@@ -53,7 +52,7 @@ export function assertWithinCheckinRadius(
     radiusMeters: number,
 ): void {
     if (!coordinates) {
-        return;
+        throw new AppError("Check-in requires coordinates", 422);
     }
 
     const placeCoords = resolvePlaceCoordinates(place);

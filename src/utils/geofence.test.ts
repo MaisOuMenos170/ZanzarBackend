@@ -15,7 +15,14 @@ assert.ok(haversineDistanceMeters(placeCoords.geometry.location, nearby) < 200);
 assert.ok(haversineDistanceMeters(placeCoords.geometry.location, farAway) > 5000);
 
 assertWithinCheckinRadius(placeCoords, nearby, 150);
-assertWithinCheckinRadius(placeCoords, undefined, 150);
+
+try {
+  assertWithinCheckinRadius(placeCoords, undefined, 150);
+  assert.fail('expected AppError when coordinates are missing');
+} catch (error) {
+  assert.ok(error instanceof AppError);
+  assert.equal(error.statusCode, 422);
+}
 
 try {
   assertWithinCheckinRadius(placeCoords, farAway, 150);

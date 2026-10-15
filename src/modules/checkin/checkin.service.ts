@@ -256,7 +256,7 @@ async function applyCheckinInTransaction(
             serverReceivedAt: now,
             clientMutationId: body.clientMutationId,
             stampIdGranted: place.zanzar.stampId,
-            ...(body.coordinates ? { coordinates: body.coordinates } : {}),
+            coordinates: body.coordinates,
         }],
         { session },
     );

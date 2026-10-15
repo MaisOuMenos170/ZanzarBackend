@@ -29,6 +29,7 @@ describe("checkInService.checkIn", () => {
             placeId: "ChIJ1",
             datetime: new Date("2026-10-05T18:30:00.000Z"),
             clientMutationId: "mutation-1",
+            coordinates: { lat: -25.428, lng: -49.273, accuracyMeters: 12 },
         });
 
         expect(result).toEqual(cachedResponse);
