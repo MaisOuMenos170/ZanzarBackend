@@ -77,7 +77,7 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 | POST | `/login` | — | JWT (rate limit) |
 | POST | `/logout` | Bearer | Invalida sessão (`tokenVersion`) |
 | GET | `/places` | opcional | Lista lugares (`lat`, `lng`, `radius`, …) |
-| GET | `/places/photo?ref=&maxwidth=` | — | Proxy foto Google (rate limit; `GOOGLE_PLACES_API_KEY`) |
+| GET | `/places/photo?ref=&maxwidth=` | — | Proxy foto Google (sem rate limit; `GOOGLE_PLACES_API_KEY`) |
 | GET | `/places/:placeId` | opcional | Detalhe do lugar |
 | GET | `/itineraries` | Bearer | Roteiros curados |
 | GET | `/itineraries/:slug` | Bearer | Detalhe por slug |
@@ -244,7 +244,7 @@ Só o próprio usuário (`:id` deve ser o do token). `limit` é opcional (1–20
 
 ### `GET /places/photo?ref=&maxwidth=800`
 
-Proxy público para a Google Places Photo API. A chave fica só no servidor (`GOOGLE_PLACES_API_KEY` no `.env`). Resposta binária (`image/jpeg` ou o content-type devolvido pelo Google) com cache de 24 h. `ref` ausente ou maior que 2048 caracteres → `400`. Rate limit por IP. O app iOS carrega essa URL com `AsyncImage`, sem header `Authorization`.
+Proxy público para a Google Places Photo API. A chave fica só no servidor (`GOOGLE_PLACES_API_KEY` no `.env`). Resposta binária (`image/jpeg` ou o content-type devolvido pelo Google) com cache de 24 h. `ref` ausente ou maior que 2048 caracteres → `400`. Sem rate limit (nem o global). O app iOS carrega essa URL com `AsyncImage`, sem header `Authorization`.
 
 O app iOS monta a URL como `{ZanzarAPIBaseURL}/places/photo?ref=...&maxwidth=800` — não carrega mais chave do Google no bundle.
 
