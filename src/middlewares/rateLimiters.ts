@@ -1,3 +1,4 @@
+import type { Request } from "express";
 import { rateLimit, type RateLimitExceededEventHandler } from "express-rate-limit";
 import { logger } from "../utils/logger";
 import { getRequestPath } from "../utils/httpLog";
@@ -45,10 +46,6 @@ export const logoutLimiter = rateLimit({
     handler: rateLimitHandler("logout"),
 });
 
-/** Protects Google Places quota on the public photo proxy. */
-export const placePhotoLimiter = rateLimit({
-    ...authLimiterBase,
-    windowMs: 15 * 60 * 1000,
-    limit: 120,
-    handler: rateLimitHandler("places-photo"),
-});
+/** Google photo proxy calls (one per image on screen) are exempt from the global limiter. */
+export const isPlacePhotoRequest = (req: Request): boolean =>
+    req.method === "GET" && getRequestPath(req) === "/places/photo";
