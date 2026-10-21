@@ -268,7 +268,8 @@ async function applyCheckinInTransaction(
     }
 
     const isNewStamp = !userLean.stamps.some((stamp) => stamp.stampId === place.zanzar.stampId);
-    const userDoc: UserDocument = structuredClone(userLean) as UserDocument;
+    // No structuredClone: it strips ObjectId prototypes, so the $set below would fail to cast.
+    const userDoc: UserDocument = userLean;
 
     userDoc.checkInCount += 1;
     userDoc.stamps.push({
