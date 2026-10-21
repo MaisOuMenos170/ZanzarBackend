@@ -1,0 +1,21 @@
+{
+  "src/schemas/place.ts": [
+    "PlaceAPIResponse em ZanzarProject/Features/LocationMap/Models/LocationMap.swift"
+  ],
+  "src/schemas/user.ts": [
+    "ProfileService.swift"
+  ],
+  "src/schemas/checkin.ts": [
+    "CheckInResult.swift"
+  ],
+  "src/schemas/itinerary.ts": [
+    "ItineraryService.swift"
+  ],
+  "src/schemas/rating.ts": [
+    "RatingPromptService.swift"
+  ],
+  "src/schemas/auth.ts": [
+    "LoginService.swift",
+    "SignUpService.swift"
+  ]
+}

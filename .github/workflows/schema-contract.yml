@@ -1,0 +1,48 @@
+name: Contrato do schema
+
+on:
+  pull_request:
+    paths:
+      - src/schemas/**
+      - scripts/contracts/**
+
+permissions:
+  contents: read
+
+jobs:
+  comment:
+    name: Apontar o cliente Swift
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Montar o comentário
+        run: |
+          git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD > changed.txt
+          node scripts/contracts/comment.mjs changed.txt contract-comment.md
+
+      - name: Comentar no pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          existing=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("## Clientes Swift")))][0].id')
+          if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$existing" \
+              -f body="$(cat contract-comment.md)"
+          else
+            gh pr comment "$PR_NUMBER" --body-file contract-comment.md
+          fi
