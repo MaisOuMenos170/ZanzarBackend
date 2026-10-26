@@ -172,8 +172,19 @@ export const itineraryService = {
             throw new AppError("Itinerary not found", 404);
         }
 
-        const activeItinerary = buildActiveItineraryEmbed(template, new Date());
-        const saved = await userRepository.setActiveItinerary(userId, activeItinerary);
+        const wasAbandoned = (user.inactiveItineraries ?? []).some((inactive) =>
+            inactive.itineraryTemplateId.equals(template._id),
+        );
+        const resumed = wasAbandoned
+            ? await userRepository.resumeInactiveItinerary(userId, template._id)
+            : null;
+        if (resumed) {
+            log.info({ userId, slug }, "Resumed abandoned itinerary");
+        }
+
+        const saved =
+            resumed ??
+            (await userRepository.setActiveItinerary(userId, buildActiveItineraryEmbed(template, new Date())));
         const enriched = await enrichActiveItineraryEmbed(saved);
         log.info({ userId, slug }, "Activated itinerary successfully");
         return enriched;

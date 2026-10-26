@@ -261,7 +261,7 @@ Só o próprio usuário (`:id` deve ser o do token). `limit` é opcional (1–20
 }
 ```
 
-`itinerariesCount` soma roteiro ativo + `inactiveItineraries` + `completedItineraries`. `photoReference` é o `photo_reference` da primeira foto do lugar no Google (ou `null`); `stamp` é `null` quando o lugar não tem selo ativo no `stamp_catalog`; `impressionTag` vem da collection `rating` (ou `null` sem reação).
+`itinerariesCount` soma roteiro ativo + `completedItineraries`; roteiros abandonados (`inactiveItineraries`) não entram na conta. `photoReference` é o `photo_reference` da primeira foto do lugar no Google (ou `null`); `stamp` é `null` quando o lugar não tem selo ativo no `stamp_catalog`; `impressionTag` vem da collection `rating` (ou `null` sem reação).
 
 ### `GET /places/photo?ref=&maxwidth=800`
 
