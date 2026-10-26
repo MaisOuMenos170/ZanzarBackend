@@ -38,6 +38,7 @@ function requireEnv(name: string): string {
 }
 
 const jwtSecret = requireEnv("JWT_SECRET");
+const jwtRefreshSecret = requireEnv("JWT_REFRESH_SECRET");
 requireEnv("MONGODB_URI");
 
 if (!process.env.GOOGLE_PLACES_API_KEY?.trim()) {
@@ -49,6 +50,20 @@ if (isProduction() && jwtSecret.length < MIN_PRODUCTION_JWT_SECRET_LENGTH) {
     { variable: "JWT_SECRET", minLength: MIN_PRODUCTION_JWT_SECRET_LENGTH },
     "JWT_SECRET is too short for production",
   );
+  process.exit(1);
+}
+
+if (isProduction() && jwtRefreshSecret.length < MIN_PRODUCTION_JWT_SECRET_LENGTH) {
+  logger.fatal(
+    { variable: "JWT_REFRESH_SECRET", minLength: MIN_PRODUCTION_JWT_SECRET_LENGTH },
+    "JWT_REFRESH_SECRET is too short for production",
+  );
+  process.exit(1);
+}
+
+// Same secret would let a refresh token pass as an access token.
+if (jwtRefreshSecret === jwtSecret) {
+  logger.fatal("JWT_REFRESH_SECRET must differ from JWT_SECRET");
   process.exit(1);
 }
 

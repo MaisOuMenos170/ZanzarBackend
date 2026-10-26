@@ -9,9 +9,14 @@ export const createUser: RequestHandler = async (req, res) => {
 };
 
 export const loginUser: RequestHandler = async (req, res) => {
-    const token = await authService.login(req.body);
-    res.status(200).json({ token });
+    const tokens = await authService.login(req.body);
+    res.status(200).json(tokens);
 }
+
+export const refreshToken: RequestHandler = async (req, res) => {
+    const tokens = await authService.refresh(req.body.refreshToken);
+    res.status(200).json(tokens);
+};
 
 export const logoutUser: RequestHandler = async (req, res) => {
     const userId = req.user?.id;

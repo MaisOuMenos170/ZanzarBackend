@@ -32,13 +32,19 @@ export const refreshBodySchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+export const authTokensSchema = z.object({
+  token: z.string(),
+  refreshToken: z.string(),
+});
+
 export const accessTokenPayloadSchema = z.object({
-  sub: z.string(),
-  username: z.string(),
+  id: z.string(),
+  email: z.string(),
+  tokenVersion: z.number().int().nonnegative(),
 });
 
 export const refreshTokenPayloadSchema = z.object({
-  sub: z.string(),
+  id: z.string(),
   tokenVersion: z.number().int().nonnegative(),
 });
 
