@@ -74,7 +74,8 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 |--------|------|------|-----------|
 | GET | `/health` | — | Health check |
 | POST | `/register` | — | Criar conta (rate limit) |
-| POST | `/login` | — | JWT (rate limit) |
+| POST | `/login` | — | Access token (1 h) + refresh token (7 d) (rate limit) |
+| POST | `/refresh` | — | Troca um refresh token por um novo par (rate limit) |
 | POST | `/logout` | Bearer | Invalida sessão (`tokenVersion`) |
 | GET | `/places` | opcional | Lista lugares (`lat`, `lng`, `radius`, …) |
 | GET | `/places/photo?ref=&maxwidth=` | — | Proxy foto Google (sem rate limit; `GOOGLE_PLACES_API_KEY`) |
@@ -130,7 +131,7 @@ brew install cloudflared ripgrep
 
 ```bash
 npm install
-cp .env.example .env   # preencher MONGODB_URI, JWT_SECRET, etc.
+cp .env.example .env   # preencher MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET, etc.
 npm run dev
 ```
 
@@ -212,6 +213,26 @@ Body:
 ```
 
 `itineraryProgress` é `null` sem roteiro ativo. Replay com o mesmo `clientMutationId` devolve a mesma resposta (idempotente).
+
+## Autenticação: login e refresh
+
+### `POST /login`
+
+Body `{ "email", "password" }`. Responde `200`:
+
+```json
+{ "token": "<access token, 1 h>", "refreshToken": "<refresh token, 7 d>" }
+```
+
+`token` vai em `Authorization: Bearer <token>`; `refreshToken` só serve em `POST /refresh`. Durações em `src/constants/auth.ts` (`JWT_EXPIRATION`, `JWT_REFRESH_EXPIRATION`).
+
+### `POST /refresh`
+
+Body `{ "refreshToken" }`. Responde `200` com um par novo no mesmo formato do login (`token` + `refreshToken`); o app deve substituir os dois. Responde `401 Invalid refresh token` se o refresh token estiver expirado, adulterado, revogado por logout ou o usuário não existir mais — aí o app volta para o login. Rate limit conta só as tentativas que falham (20 por 15 min por IP).
+
+O app deve chamar `/refresh` ao receber `401` de uma rota autenticada (ou pouco antes de o access token expirar), repetir a requisição original e fazer um único refresh por vez. Erro de rede ou `5xx` no refresh não é motivo para deslogar.
+
+O refresh token é assinado com `JWT_REFRESH_SECRET` (diferente de `JWT_SECRET`), então não vale como access token e vice-versa. Ele carrega `tokenVersion`, igual ao access token, e o logout invalida os dois. Não há armazenamento de refresh tokens no banco: um refresh token já usado continua válido até expirar ou até o logout.
 
 ## Perfil e logout
 
@@ -342,7 +363,7 @@ Dois ambientes no mesmo projeto Railway, cada um com **seu próprio cluster Atla
 
 - Build/start vêm de [`railway.json`](railway.json): `npm run build` (o Nixpacks já instala as dependências antes, inclusive as devDependencies), depois `npm start` (`node dist/index.js`). Healthcheck em `GET /health`. `PORT` é injetado pelo Railway.
 - O signup é bloqueado quando `NODE_ENV=development`. `SIGNUP_ENABLED=true|false` sobrescreve isso (útil para criar contas de teste no dev ou rodar `npm run dev` local com cadastro). Sem `NODE_ENV=development` o cadastro fica liberado.
-- Use `JWT_SECRET` **diferente** em cada ambiente (um token do dev nunca vale em produção). Em `NODE_ENV=production` o servidor não sobe com `JWT_SECRET` de menos de 32 caracteres. Gere com `openssl rand -base64 48`.
+- Use `JWT_SECRET` e `JWT_REFRESH_SECRET` **diferentes** em cada ambiente (um token do dev nunca vale em produção) e diferentes entre si. Em `NODE_ENV=production` o servidor não sobe com nenhum dos dois com menos de 32 caracteres, e não sobe em nenhum ambiente se forem iguais. Gere com `openssl rand -base64 48`.
 - Atlas, por cluster: crie um usuário de banco, mantenha o database `Zanzardb` (os scripts mongosh usam esse nome fixo) e libere o acesso de rede do Railway em **Network Access** (os IPs de saída do Railway são dinâmicos, então na prática `0.0.0.0/0`, a menos que use IP estático).
 - Inicializar cada cluster separadamente. Os scripts leem `ENV_FILE` (ou `~/.mcp-env`), **não** o `.env` do repo — confira qual cluster está apontado antes de rodar:
 

@@ -30,6 +30,15 @@ export const loginLimiter = rateLimit({
     handler: rateLimitHandler("login"),
 });
 
+/** Refresh is unauthenticated and hits the DB; clients refresh about once an hour, so only failed attempts count. */
+export const refreshLimiter = rateLimit({
+    ...authLimiterBase,
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    skipSuccessfulRequests: true,
+    handler: rateLimitHandler("refresh"),
+});
+
 /** Limits account creation / email enumeration per IP. */
 export const registerLimiter = rateLimit({
     ...authLimiterBase,

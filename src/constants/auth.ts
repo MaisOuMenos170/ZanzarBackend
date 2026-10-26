@@ -1,4 +1,5 @@
-export const JWT_EXPIRATION = "7d";
+export const JWT_EXPIRATION = "1h";
+export const JWT_REFRESH_EXPIRATION = "7d";
 
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 30;
