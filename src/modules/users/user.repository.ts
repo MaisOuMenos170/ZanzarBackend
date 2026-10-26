@@ -128,6 +128,59 @@ export const userRepository = {
         }
     },
 
+    // Moves the most recent abandoned itinerary of the template back to active, keeping its progress.
+    // Returns null when the user has an active itinerary or no abandoned one for the template.
+    async resumeInactiveItinerary(
+        userId: string,
+        itineraryTemplateId: Types.ObjectId,
+    ): Promise<NonNullable<User["activeItinerary"]> | null> {
+        log.debug({ userId }, "Resuming inactive itinerary");
+        try {
+            // Update pipelines skip casting, so the template id must already be an ObjectId.
+            const updated = await UserModel.findOneAndUpdate(
+                {
+                    _id: userId,
+                    activeItinerary: null,
+                    "inactiveItineraries.itineraryTemplateId": itineraryTemplateId,
+                },
+                [
+                    {
+                        $set: {
+                            activeItinerary: {
+                                $arrayElemAt: [
+                                    {
+                                        $filter: {
+                                            input: "$inactiveItineraries",
+                                            cond: { $eq: ["$$this.itineraryTemplateId", itineraryTemplateId] },
+                                        },
+                                    },
+                                    -1,
+                                ],
+                            },
+                        },
+                    },
+                    {
+                        $set: {
+                            inactiveItineraries: {
+                                $filter: {
+                                    input: "$inactiveItineraries",
+                                    cond: { $ne: ["$$this", "$activeItinerary"] },
+                                },
+                            },
+                        },
+                    },
+                ],
+                { new: true, projection: { activeItinerary: 1 }, updatePipeline: true },
+            ).lean<Pick<User, "activeItinerary">>();
+
+            log.debug({ userId, resumed: !!updated?.activeItinerary }, "Resumed inactive itinerary");
+            return updated?.activeItinerary ?? null;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to resume inactive itinerary");
+            throw err;
+        }
+    },
+
     async abandonActiveItinerary(userId: string): Promise<void> {
         log.debug({ userId }, "Abandoning active itinerary");
         try {
@@ -146,6 +199,7 @@ export const userRepository = {
                         },
                     },
                 ],
+                { updatePipeline: true },
             );
             if (result.matchedCount === 0) {
                 throw new AppError("No active itinerary", 404);
@@ -178,8 +232,6 @@ export const userRepository = {
                         itinerariesCount: {
                             $add: [
                                 { $size: { $ifNull: ["$completedItineraries", []] } },
-                                { $size: { $ifNull: ["$inactiveItineraries", []] } },
-                                { $cond: [{ $ifNull: ["$activeItinerary", false] }, 1, 0] },
                             ],
                         },
                         stampsCount: { $size: { $ifNull: ["$stamps", []] } },
