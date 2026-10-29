@@ -13,6 +13,11 @@ export const loginUser: RequestHandler = async (req, res) => {
     res.status(200).json(tokens);
 }
 
+export const loginWithApple: RequestHandler = async (req, res) => {
+    const tokens = await authService.loginWithApple(req.body);
+    res.status(200).json(tokens);
+};
+
 export const refreshToken: RequestHandler = async (req, res) => {
     const tokens = await authService.refresh(req.body.refreshToken);
     res.status(200).json(tokens);

@@ -48,6 +48,11 @@ function safeIndex(coll, keys, options = {}) {
 // users
 safeIndex('users', { email: 1 }, { unique: true, name: 'users_email_unique' });
 safeIndex('users', { username: 1 }, { unique: true, name: 'users_username_unique' });
+safeIndex(
+  'users',
+  { appleId: 1 },
+  { unique: true, name: 'users_apple_id_unique', partialFilterExpression: { appleId: { $type: 'string' } } },
+);
 
 safeIndex('places', { place_id: 1 }, { unique: true, name: 'places_place_id_unique' });
 safeIndex('places', { updated_at: 1 }, { name: 'places_updated_at' });

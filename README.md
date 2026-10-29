@@ -75,6 +75,7 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 | GET | `/health` | — | Health check |
 | POST | `/register` | — | Criar conta (rate limit) |
 | POST | `/login` | — | Access token (1 h) + refresh token (7 d) (rate limit) |
+| POST | `/login/apple` | — | Login com Apple: valida o `identityToken` e devolve o mesmo par de tokens do `/login` (rate limit) |
 | POST | `/refresh` | — | Troca um refresh token por um novo par (rate limit) |
 | POST | `/logout` | Bearer | Invalida sessão (`tokenVersion`) |
 | GET | `/places` | opcional | Lista lugares (`lat`, `lng`, `radius`, …) |
@@ -225,6 +226,20 @@ Body `{ "email", "password" }`. Responde `200`:
 ```
 
 `token` vai em `Authorization: Bearer <token>`; `refreshToken` só serve em `POST /refresh`. Durações em `src/constants/auth.ts` (`JWT_EXPIRATION`, `JWT_REFRESH_EXPIRATION`).
+
+### `POST /login/apple`
+
+Body `{ "identityToken", "nonce"?, "fullName"?: { "givenName", "familyName" } }`. Responde `200` com `{ token, refreshToken }`, igual ao `/login`.
+
+O backend valida o `identityToken` (não confia no app): assinatura contra as chaves públicas da Apple (`https://appleid.apple.com/auth/keys`, escolhidas pelo `kid`, só `RS256`), `iss = https://appleid.apple.com`, `aud` = `APPLE_BUNDLE_ID` (aceita vários, separados por vírgula) e `exp`. Qualquer falha → `401 Invalid Apple identity token`. Sem `APPLE_BUNDLE_ID` → `503`. Se o app mandou um `nonce` para a Apple, envie o valor cru em `nonce`: o claim do token precisa bater com ele (ou com o SHA-256 hex dele).
+
+O `sub` do token é o ID do usuário (`users.appleId`, índice único parcial):
+
+- `sub` já vinculado → login.
+- Primeiro login: se já existe conta com o mesmo email **e** `email_verified` é true, a conta é vinculada ao `sub`; com email não verificado → `409`. Sem conta, cria uma (sem `passwordHash`) com `username` = tudo que vem antes do `@` do email. Se esse nome já existir, acrescenta as iniciais do `fullName` (ex.: `tiago` → `tiagotp`); se ainda assim existir, ou não houver `fullName`, acrescenta 4 dígitos. O app precisa pedir o escopo de email à Apple; token sem email num primeiro login → `400`. A criação respeita `SIGNUP_ENABLED` (`403` onde o signup está fechado); login de quem já tem conta funciona sempre.
+- A Apple só entrega o nome ao app na primeira autorização, por isso o `fullName` vem do cliente e só é usado para as iniciais do `username`.
+- Contas criadas pela Apple não têm senha: `POST /login` responde `401` para elas.
+- Rate limit conta só as tentativas que falham (10 por 15 min por IP).
 
 ### `POST /refresh`
 

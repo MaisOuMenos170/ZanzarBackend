@@ -6,7 +6,7 @@ import { rateLimit } from 'express-rate-limit'
 import type { Express } from "express";
 import { logger } from "./utils/logger";
 import { connectDatabase, disconnectDatabase } from "./config/database";
-import { isProduction, isSignupEnabled } from "./config/env";
+import { getAppleAudiences, isProduction, isSignupEnabled } from "./config/env";
 
 // Routes import
 import { healthRouter } from "./modules/health/health.routes";
@@ -43,6 +43,10 @@ requireEnv("MONGODB_URI");
 
 if (!process.env.GOOGLE_PLACES_API_KEY?.trim()) {
   logger.warn("GOOGLE_PLACES_API_KEY is not set — GET /places/photo will return 500 until configured");
+}
+
+if (getAppleAudiences().length === 0) {
+  logger.warn("APPLE_BUNDLE_ID is not set — POST /login/apple will return 503 until configured");
 }
 
 if (isProduction() && jwtSecret.length < MIN_PRODUCTION_JWT_SECRET_LENGTH) {

@@ -57,7 +57,9 @@ const userSchema = new Schema(
             maxlength: USERNAME_MAX_LENGTH,
         },
         email: { type: String, required: true, lowercase: true },
-        passwordHash: { type: String, required: true },
+        // Absent for accounts created through Sign in with Apple, which have no password.
+        passwordHash: { type: String },
+        appleId: { type: String },
         checkInCount: { type: Number, required: true, min: 0, default: 0 },
         tokenVersion: { type: Number, required: true, min: 0, default: 0 },
         stamps: { type: [stampSchema], required: true, default: [] },
@@ -70,6 +72,10 @@ const userSchema = new Schema(
 
 userSchema.index({ email: 1 }, { unique: true, name: "users_email_unique" });
 userSchema.index({ username: 1 }, { unique: true, name: "users_username_unique" });
+userSchema.index(
+    { appleId: 1 },
+    { unique: true, name: "users_apple_id_unique", partialFilterExpression: { appleId: { $type: "string" } } },
+);
 
 export type User = InferSchemaType<typeof userSchema> & { _id: Types.ObjectId };
 export const UserModel = model("User", userSchema);
