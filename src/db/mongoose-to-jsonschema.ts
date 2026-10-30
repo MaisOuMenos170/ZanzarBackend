@@ -7,7 +7,7 @@ import type { Schema } from "mongoose";
  * Limitações:
  * - `Mixed` é tratado como `object` (todos os usos do projeto são objetos).
  * - Só opções declarativas são traduzidas (type, required, enum, match, min/max,
- *   minlength/maxlength e `minItems` via src/models/helpers.ts). Validators com
+ *   minlength/maxlength e `minItems`/`maxItems` via src/models/helpers.ts). Validators com
  *   função arbitrária não têm equivalente no $jsonSchema.
  * - `default`, `lowercase`, `trim` e índices não são aplicados pelo banco.
  * - O validador só protege escritas que não passam pelo Mongoose (seed, scripts, Atlas UI).
@@ -20,7 +20,7 @@ interface SchemaTypeLike {
     isRequired?: boolean;
     enumValues?: unknown[];
     options: Record<string, unknown>;
-    validators: Array<{ minItems?: number }>;
+    validators: Array<{ minItems?: number; maxItems?: number }>;
     schema?: Schema;
     embeddedSchemaType?: SchemaTypeLike;
 }
@@ -87,6 +87,8 @@ function pathSchema(path: SchemaTypeLike): JsonSchema {
         }
         const minItems = path.validators.find((v) => typeof v.minItems === "number")?.minItems;
         if (minItems !== undefined) result.minItems = minItems;
+        const maxItems = path.validators.find((v) => typeof v.maxItems === "number")?.maxItems;
+        if (maxItems !== undefined) result.maxItems = maxItems;
     } else if (path.instance === "Embedded" && path.schema) {
         result = schemaToJsonSchema(path.schema);
     } else {
