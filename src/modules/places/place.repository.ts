@@ -6,7 +6,7 @@ import { AppError } from "../../errors/appError";
 
 const log = logger.child({ module: "places", layer: "repository" });
 
-export type PlaceSummaryDocument = Pick<PlaceDocument, "place_id" | "name" | "photos"> & {
+export type PlaceSummaryDocument = Pick<PlaceDocument, "place_id" | "name" | "images"> & {
     zanzar?: Pick<PlaceDocument["zanzar"], "stampId">;
 };
 
@@ -76,7 +76,7 @@ export const placeRepository = {
         log.debug({ placeIdCount: placeIds.length }, "Fetching places by ids");
         try {
             const places = await PlaceModel.find({ place_id: { $in: placeIds } })
-                .select("place_id name photos zanzar.stampId")
+                .select("place_id name images zanzar.stampId")
                 .lean<PlaceSummaryDocument[]>();
             log.debug({ placeIdCount: placeIds.length, count: places.length }, "Fetched places by ids");
             return places;

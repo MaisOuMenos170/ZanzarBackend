@@ -48,7 +48,7 @@ export const userService = {
                 placeId,
                 placeName: place?.name ?? null,
                 datetime,
-                photoReference: place?.photos?.[0]?.photo_reference ?? null,
+                imageUrl: place?.images?.[0]?.url ?? null,
                 stamp: stamp ? { stampId: stamp.stampId, imageUrl: stamp.imageUrl } : null,
                 impressionTag: parseImpressionTag(impressionTagsByPlaceId.get(placeId)),
             };

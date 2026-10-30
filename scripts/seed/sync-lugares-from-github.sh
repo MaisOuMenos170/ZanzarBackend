@@ -33,6 +33,7 @@ echo "Cache local atualizado: data/lugares.json" >&2
 
 export LUGARES_JSON_PATH="$TMP_JSON"
 export LUGARES_LIB_PATH="$ROOT_DIR/scripts/seed/lugares-lib.js"
+export PLACE_IMAGES_PATH="$ROOT_DIR/data/place-images.json"
 export LUGARES_SOURCE_URL="$LUGARES_URL"
 
 mongosh_run "$ROOT_DIR" "$ROOT_DIR/scripts/seed/sync-lugares-from-github.js"

@@ -71,7 +71,7 @@ export const recentCheckInSchema = z.object({
   placeId: z.string(),
   placeName: z.string().nullable(),
   datetime: z.date(),
-  photoReference: z.string().nullable(),
+  imageUrl: z.string().nullable(),
   stamp: z.object({ stampId: stampIdSchema, imageUrl: z.string() }).nullable(),
   impressionTag: impressionTagFieldSchema.nullable(),
 });

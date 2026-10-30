@@ -12,7 +12,7 @@ describe("userService.getProfile", () => {
         vi.restoreAllMocks();
     });
 
-    it("joins impression tags and photo references into recent check-ins", async () => {
+    it("joins impression tags and the first place image into recent check-ins", async () => {
         vi.spyOn(userRepository, "findProfileSummaryById").mockResolvedValue({
             username: "tiago",
             checkInCount: 1,
@@ -26,7 +26,16 @@ describe("userService.getProfile", () => {
             {
                 place_id: "ChIJ1",
                 name: "Bar do Zé",
-                photos: [{ photo_reference: "AUacSh", height: 100, width: 100 }],
+                images: [
+                    {
+                        url: "https://upload.wikimedia.org/a.jpg",
+                        credit: { author: "Ana", license: "CC BY 4.0", sourceUrl: "https://commons.wikimedia.org/wiki/File:A.jpg" },
+                    },
+                    {
+                        url: "https://upload.wikimedia.org/b.jpg",
+                        credit: { author: "Bia", license: "CC0", sourceUrl: "https://commons.wikimedia.org/wiki/File:B.jpg" },
+                    },
+                ],
                 zanzar: { stampId: "stamp_bar", category: "bar", tags: [], checkInCount: 1, impressionCounts: {} },
             } as any,
         ]);
@@ -59,7 +68,7 @@ describe("userService.getProfile", () => {
         expect(profile.recentCheckIns[0]).toMatchObject({
             placeId: "ChIJ1",
             placeName: "Bar do Zé",
-            photoReference: "AUacSh",
+            imageUrl: "https://upload.wikimedia.org/a.jpg",
             impressionTag: "happy",
             stamp: { stampId: "stamp_bar", imageUrl: "/assets/stamps/bar.png" },
         });

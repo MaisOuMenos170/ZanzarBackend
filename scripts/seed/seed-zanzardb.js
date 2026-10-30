@@ -26,7 +26,10 @@ const stampResults = stampCatalog.map((stamp) =>
   dbx.stamp_catalog.updateOne({ stampId: stamp.stampId }, { $set: stamp }, { upsert: true }),
 );
 
-const rawPlaces = JSON.parse(fs.readFileSync(`${rootDir}/data/lugares.json`, 'utf8'));
+const rawPlaces = mergePlaceImages(
+  JSON.parse(fs.readFileSync(`${rootDir}/data/lugares.json`, 'utf8')),
+  readPlaceImages(`${rootDir}/data/place-images.json`),
+);
 const placeResults = upsertPlaces(dbx, rawPlaces);
 
 // Demo stats so nearby cards and place detail previews match design expectations.
