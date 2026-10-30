@@ -28,6 +28,27 @@ const photoSchema = new Schema(
     { _id: false },
 );
 
+const imageCreditSchema = new Schema(
+    {
+        author: { type: String, required: true, minlength: 1 },
+        license: { type: String, required: true, minlength: 1 },
+        licenseUrl: { type: String, match: /^https:\/\// },
+        sourceUrl: { type: String, required: true, match: /^https:\/\// },
+    },
+    { _id: false },
+);
+
+/** Foto servida por URL própria ou de fonte livre (ex.: Wikimedia Commons), com o crédito que a licença exige. */
+const imageSchema = new Schema(
+    {
+        url: { type: String, required: true, match: /^https:\/\// },
+        width: { type: Number, min: 1 },
+        height: { type: Number, min: 1 },
+        credit: { type: imageCreditSchema, required: true },
+    },
+    { _id: false },
+);
+
 const placeSchema = new Schema(
     {
         place_id: { type: String, required: true },
@@ -62,6 +83,7 @@ const placeSchema = new Schema(
         user_ratings_total: { type: Number, min: 0 },
         price_level: { type: Number, min: 0, max: 4 },
         photos: { type: [photoSchema], default: [] },
+        images: { type: [imageSchema], default: [] },
         zanzar: { type: zanzarSchema, required: true },
         geoLocation: {
             type: {

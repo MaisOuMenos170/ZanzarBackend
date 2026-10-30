@@ -19,6 +19,23 @@ Se o seed falhar com `Document failed validation`, o validador da collection no 
 
 Variável opcional: `LUGARES_URL` (URL alternativa do JSON no sync).
 
+### Fotos dos lugares (`images`)
+
+O app mostra `places.images[]`: URL `https` + crédito (autor, licença, link da fonte). As fotos do Google (`photos[]`) não são mais usadas pelo app: são pagas, vencem e a política do Google proíbe guardá-las.
+
+As imagens ficam em `data/place-images.json` (`{ "<place_id>": [ { url, credit } ] }`) porque o `sync:lugares` sobrescreve o `lugares.json`. `npm run seed` e `npm run sync:lugares` mesclam o manifesto ao catálogo (`place-images.js`), recusam crédito incompleto e nunca apagam imagens de lugares que não estão no manifesto.
+
+Para pontos turísticos há fotos livres na Wikimedia Commons. Escolha o arquivo à mão (a busca por proximidade traz fotos do entorno):
+
+```bash
+npm run images:add -- --place <place_id> --commons "File:Nome.jpg" --commons "File:Outro.jpg"          # simulação
+npm run images:add -- --place <place_id> --commons "File:Nome.jpg" --commons "File:Outro.jpg" --apply  # grava
+```
+
+Aceita CC0, domínio público, CC BY e CC BY-SA (recusa NC e ND). A licença exige mostrar o autor na tela, e o app já mostra. Depois: `npm run db:validate` (uma vez, para o campo `images`) e `npm run seed`.
+
+Para bares, restaurantes e cafés, que não têm foto livre, a foto precisa ser própria ou cedida pelo estabelecimento: ponha a URL e o crédito no manifesto.
+
 - `seed-zanzardb.{js,sh}` — seed local.
 - `sync-lugares-from-github.{js,sh}` — sync remoto.
 - `lugares-lib.js` — lógica compartilhada (lugares.json → documento `places`), carregada via `load()` do mongosh.
