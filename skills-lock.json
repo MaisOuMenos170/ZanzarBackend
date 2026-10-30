@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "test-gap-audit": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/test-gap-audit/SKILL.md",
+      "computedHash": "48b45411d63aee8c841fc6aeaba8d65a5029d15bdc7f43b66b71e4c2ca9ad5e2"
+    }
+  }
+}
