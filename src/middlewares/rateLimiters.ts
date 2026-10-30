@@ -30,6 +30,15 @@ export const loginLimiter = rateLimit({
     handler: rateLimitHandler("login"),
 });
 
+/** Each attempt fetches/verifies against Apple's keys and may create a user, so failed attempts are capped like login. */
+export const appleLoginLimiter = rateLimit({
+    ...authLimiterBase,
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    skipSuccessfulRequests: true,
+    handler: rateLimitHandler("appleLogin"),
+});
+
 /** Refresh is unauthenticated and hits the DB; clients refresh about once an hour, so only failed attempts count. */
 export const refreshLimiter = rateLimit({
     ...authLimiterBase,

@@ -62,6 +62,63 @@ export const userRepository = {
         }
     },
 
+    async findByAppleId(appleId: string): Promise<User | null> {
+        log.debug("Fetching user by Apple id");
+        try {
+            const user = await UserModel.findOne({ appleId }).lean<User>();
+            log.debug({ found: !!user }, "Fetched user by Apple id");
+            return user;
+        } catch (err) {
+            log.error({ err }, "Failed to fetch user by Apple id");
+            throw err;
+        }
+    },
+
+    async existsByUsername(username: string): Promise<boolean> {
+        try {
+            return (await UserModel.exists({ username })) !== null;
+        } catch (err) {
+            log.error({ err }, "Failed to check username availability");
+            throw err;
+        }
+    },
+
+    async createFromApple(data: { appleId: string; email: string; username: string }): Promise<User> {
+        log.debug("Creating user from Apple sign in");
+        try {
+            const model = await UserModel.create(data);
+            log.debug({ userId: model._id }, "Created user from Apple sign in");
+            return model.toObject() as User;
+        } catch (err) {
+            const level = isDuplicateKeyError(err) ? "warn" : "error";
+            log[level]({ err }, "Failed to create user from Apple sign in");
+            throw err;
+        }
+    },
+
+    // Only links an account that has no Apple id yet, so an existing link is never overwritten.
+    async linkAppleId(userId: string, appleId: string): Promise<User> {
+        log.debug({ userId }, "Linking Apple id");
+        try {
+            const user = await UserModel.findOneAndUpdate(
+                { _id: userId, appleId: { $exists: false } },
+                { $set: { appleId } },
+                { new: true },
+            ).lean<User>();
+            if (!user) {
+                throw new AppError("Account is already linked to an Apple ID", 409);
+            }
+            log.debug({ userId }, "Linked Apple id");
+            return user;
+        } catch (err) {
+            if (err instanceof AppError) {
+                throw err;
+            }
+            log.error({ err, userId }, "Failed to link Apple id");
+            throw err;
+        }
+    },
+
     async findActiveItineraryPlaceContext(userId: string): Promise<ActiveItineraryPlaceContext | null> {
         const user = await UserModel.findById(userId).select("activeItinerary").lean<User>();
         const active = user?.activeItinerary;
