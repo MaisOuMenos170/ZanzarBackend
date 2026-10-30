@@ -70,7 +70,7 @@ npm run build && npm start
 
 | Situação | Ferramenta |
 |---|---|
-| Entender fluxo / quem chama quem | codebase-memory (`search_graph`, `trace_path`) e `stacklit.json` (gerado por `stacklit init`, fora do git) |
+| Entender fluxo / quem chama quem | codebase-memory (`search_graph`, `trace_path`) e `stacklit.json` |
 | Contrato com o app | `src/schemas/*` + `scripts/contracts/swift-clients.json` |
 | Biblioteca (Mongoose, Zod, Express, vitest) | Context7 |
 | Lacunas de teste | skill `test-gap-audit` (`.agents/skills`) |
