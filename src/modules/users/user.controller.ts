@@ -10,6 +10,11 @@ export const getUser: RequestHandler = async (req, res) => {
     res.json(userWithoutPassword);
 };
 
+export const deleteUser: RequestHandler = async (req, res) => {
+    await userService.deleteAccount(req.params.id as string);
+    res.status(204).send();
+};
+
 export const getUserProfile: RequestHandler = async (req, res) => {
     const profile = await userService.getProfile(req.params.id as string, res.locals.profileQuery!.limit);
     res.json(profile);

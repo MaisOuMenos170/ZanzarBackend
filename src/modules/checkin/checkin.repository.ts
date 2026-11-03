@@ -1,3 +1,4 @@
+import type { ClientSession } from "mongoose";
 import { CheckinModel } from "../../models";
 import { logger } from "../../utils/logger";
 import { isDuplicateKeyError } from "../../utils/mongoErrors";
@@ -64,6 +65,29 @@ export const checkInRepository = {
             return checkins.map(({ placeId, datetime }) => ({ placeId, datetime }));
         } catch (err) {
             log.error({ err, userId }, "Failed to list latest check-ins for user");
+            throw err;
+        }
+    },
+
+    async listPlaceIdsForUser(userId: string, session?: ClientSession): Promise<string[]> {
+        log.debug({ userId }, "Listing all check-in place ids for user");
+        try {
+            const checkins = await CheckinModel.find({ userId }, "placeId", session ? { session } : undefined).lean();
+            return checkins.map((checkin) => checkin.placeId);
+        } catch (err) {
+            log.error({ err, userId }, "Failed to list all check-in place ids for user");
+            throw err;
+        }
+    },
+
+    async deleteByUserId(userId: string, session?: ClientSession): Promise<number> {
+        log.debug({ userId }, "Deleting check-ins for user");
+        try {
+            const result = await CheckinModel.deleteMany({ userId }, session ? { session } : undefined);
+            log.debug({ userId, deletedCount: result.deletedCount }, "Deleted check-ins for user");
+            return result.deletedCount;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to delete check-ins for user");
             throw err;
         }
     },

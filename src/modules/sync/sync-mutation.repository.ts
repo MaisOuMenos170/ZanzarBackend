@@ -50,4 +50,16 @@ export const syncMutationRepository = {
             throw err;
         }
     },
+
+    async deleteByUserId(userId: string, session?: ClientSession): Promise<number> {
+        log.debug({ userId }, "Deleting sync mutations for user");
+        try {
+            const result = await SyncMutationModel.deleteMany({ userId }, session ? { session } : undefined);
+            log.debug({ userId, deletedCount: result.deletedCount }, "Deleted sync mutations for user");
+            return result.deletedCount;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to delete sync mutations for user");
+            throw err;
+        }
+    },
 };

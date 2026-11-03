@@ -64,6 +64,14 @@ export const logoutLimiter = rateLimit({
     handler: rateLimitHandler("logout"),
 });
 
+/** Account deletion is destructive and runs a multi-collection transaction, so it is capped per IP. */
+export const deleteAccountLimiter = rateLimit({
+    ...authLimiterBase,
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+    handler: rateLimitHandler("deleteAccount"),
+});
+
 /** Google photo proxy calls (one per image on screen) are exempt from the global limiter. */
 export const isPlacePhotoRequest = (req: Request): boolean =>
     req.method === "GET" && getRequestPath(req) === "/places/photo";

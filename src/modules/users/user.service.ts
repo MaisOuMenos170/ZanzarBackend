@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import { AppError } from "../../errors/appError";
 import { logger } from "../../utils/logger";
 import { userRepository } from "./user.repository";
+import { syncMutationRepository } from "../sync/sync-mutation.repository";
 import { checkInRepository } from "../checkin/checkin.repository";
 import { placeRepository } from "../places/place.repository";
 import { ratingRepository } from "../rating/rating.repository";
@@ -77,6 +79,55 @@ export const userService = {
         if (result === "user_not_found") throw new AppError("User not found", 404);
         if (result === "not_saved") throw new AppError("Place is not saved", 404);
         log.info({ userId, placeId }, "Removed saved place successfully");
+    },
+
+    /**
+     * Permanently deletes the user and everything tied to them (check-ins, ratings, sync mutations and the
+     * embedded stamps/saved places/itineraries) in one transaction, rolling place aggregate counters back.
+     * Existing JWTs stop working because a missing user counts as revoked.
+     */
+    async deleteAccount(userId: string): Promise<void> {
+        log.info({ userId }, "Deleting user account");
+        const session = await mongoose.startSession();
+
+        try {
+            await session.withTransaction(async () => {
+                const checkInPlaceIds = await checkInRepository.listPlaceIdsForUser(userId, session);
+                const ratings = await ratingRepository.listPlaceTagsForUser(userId, session);
+
+                const checkIns: Record<string, number> = {};
+                for (const placeId of checkInPlaceIds) {
+                    checkIns[placeId] = (checkIns[placeId] ?? 0) + 1;
+                }
+
+                const impressionsByKey = new Map<string, { placeId: string; tag: string; count: number }>();
+                for (const { placeId, impressionTag } of ratings) {
+                    const key = `${placeId}\u0000${impressionTag}`;
+                    const entry = impressionsByKey.get(key) ?? { placeId, tag: impressionTag, count: 0 };
+                    entry.count += 1;
+                    impressionsByKey.set(key, entry);
+                }
+
+                const deletedCheckIns = await checkInRepository.deleteByUserId(userId, session);
+                const deletedRatings = await ratingRepository.deleteByUserId(userId, session);
+                const deletedSyncMutations = await syncMutationRepository.deleteByUserId(userId, session);
+
+                await placeRepository.decrementCounters(
+                    { checkIns, impressions: [...impressionsByKey.values()] },
+                    session,
+                );
+
+                const deleted = await userRepository.deleteById(userId, session);
+                if (!deleted) throw new AppError("User not found", 404);
+
+                log.info(
+                    { userId, deletedCheckIns, deletedRatings, deletedSyncMutations },
+                    "Deleted user account successfully",
+                );
+            });
+        } finally {
+            await session.endSession();
+        }
     },
 
     async getProfile(userId: string, limit: number): Promise<UserProfile> {
