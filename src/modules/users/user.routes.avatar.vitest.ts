@@ -21,7 +21,7 @@ function createApp(authenticatedUserId = USER_ID) {
     return app;
 }
 
-const avatar = { skin: 8, eyes: 6, eyebrow: 5, hair: 7 };
+const avatar = { skin: 8, eyes: 6, eyebrow: 5, hair: 7, background: "#FFAA00" };
 
 describe("avatar routes", () => {
     afterEach(() => {
@@ -77,7 +77,12 @@ describe("avatar routes", () => {
         });
 
         it.each([
-            ["a layer is missing", { skin: 1, eyes: 1, eyebrow: 1 }],
+            ["a layer is missing", { skin: 1, eyes: 1, eyebrow: 1, background: "#FFAA00" }],
+            ["the background is missing", { skin: 1, eyes: 1, eyebrow: 1, hair: 1 }],
+            ["the background has no leading #", { ...avatar, background: "FFAA00" }],
+            ["the background is a short hex", { ...avatar, background: "#FA0" }],
+            ["the background is not hex", { ...avatar, background: "#GGGGGG" }],
+            ["the background is not a string", { ...avatar, background: 0xffaa00 }],
             ["an id is above the layer range", { ...avatar, skin: 9 }],
             ["an id is zero", { ...avatar, hair: 0 }],
             ["an id is negative", { ...avatar, hair: -1 }],
@@ -115,6 +120,15 @@ describe("avatar routes", () => {
             expect(update).toHaveBeenCalledWith(USER_ID, { hair: 3 });
         });
 
+        it("updates the background alone", async () => {
+            const update = vi.spyOn(userService, "updateAvatar").mockResolvedValue({ ...avatar, background: "#00FF7F" });
+
+            const response = await request(createApp()).patch(`/user/${USER_ID}/avatar`).send({ background: "#00FF7F" });
+
+            expect(response.status).toBe(200);
+            expect(update).toHaveBeenCalledWith(USER_ID, { background: "#00FF7F" });
+        });
+
         it("returns 404 when the user has no avatar", async () => {
             vi.spyOn(userService, "updateAvatar").mockRejectedValue(new AppError("Avatar not found", 404));
 
@@ -128,6 +142,7 @@ describe("avatar routes", () => {
             ["an id is above the layer range", { eyebrow: 6 }],
             ["an id is zero", { skin: 0 }],
             ["an id is not an integer", { skin: 1.5 }],
+            ["the background is not a valid hex color", { background: "red" }],
             ["there is an unknown layer", { mouth: 1 }],
         ])("returns 400 when %s", async (_name, body) => {
             const update = vi.spyOn(userService, "updateAvatar");

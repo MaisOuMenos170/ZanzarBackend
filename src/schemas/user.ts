@@ -5,7 +5,7 @@ import { impressionTagFieldSchema } from './impression-tag.js';
 import { itineraryRouteTypeSchema } from './itinerary.js';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 import { MAX_SAVED_PLACES } from '../constants/saved-places.js';
-import { AVATAR_OPTION_COUNTS } from '../constants/avatar.js';
+import { AVATAR_BACKGROUND_PATTERN, AVATAR_OPTION_COUNTS } from '../constants/avatar.js';
 
 export const userStampSchema = z.object({
   stampId: stampIdSchema,
@@ -45,6 +45,7 @@ export const avatarSchema = z.object({
   eyes: avatarLayerSchema(AVATAR_OPTION_COUNTS.eyes),
   eyebrow: avatarLayerSchema(AVATAR_OPTION_COUNTS.eyebrow),
   hair: avatarLayerSchema(AVATAR_OPTION_COUNTS.hair),
+  background: z.string().regex(AVATAR_BACKGROUND_PATTERN),
 });
 
 export const createAvatarBodySchema = avatarSchema.strict();

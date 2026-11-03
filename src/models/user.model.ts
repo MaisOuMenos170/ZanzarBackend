@@ -3,7 +3,7 @@ import { ITINERARY_ROUTE_TYPES } from "../constants/itinerary-route-type";
 import { STAMP_IDS, ZANZAR_CATEGORIES } from "../constants/zanzar-categories";
 import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "../constants/auth";
 import { MAX_SAVED_PLACES } from "../constants/saved-places";
-import { AVATAR_OPTION_COUNTS } from "../constants/avatar";
+import { AVATAR_BACKGROUND_PATTERN, AVATAR_OPTION_COUNTS } from "../constants/avatar";
 import { maxArrayItems, nonEmptyArray } from "./helpers";
 
 const avatarLayer = (optionCount: number) => ({ type: Number, required: true, min: 1, max: optionCount });
@@ -14,6 +14,7 @@ const avatarSchema = new Schema(
         eyes: avatarLayer(AVATAR_OPTION_COUNTS.eyes),
         eyebrow: avatarLayer(AVATAR_OPTION_COUNTS.eyebrow),
         hair: avatarLayer(AVATAR_OPTION_COUNTS.hair),
+        background: { type: String, required: true, match: AVATAR_BACKGROUND_PATTERN },
     },
     { _id: false },
 );
