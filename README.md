@@ -86,6 +86,7 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 | POST | `/itineraries/:slug/activate` | Bearer | Ativa roteiro (409 se já houver ativo) |
 | POST | `/itineraries/active/abandon` | Bearer | Abandona roteiro ativo |
 | GET | `/user/:id` | Bearer (owner) | Usuário |
+| DELETE | `/user/:id` | Bearer (owner) | Exclui a conta e todos os dados do usuário (`204`); ver "Exclusão de conta" |
 | GET | `/user/:id/profile?limit=` | Bearer (owner) | Perfil enriquecido (`itinerariesCount`, `impressionTag`) |
 | GET | `/user/:id/itinerary` | Bearer (owner) | Roteiro ativo + progresso |
 | GET | `/user/:id/saved-places` | Bearer (owner) | Lugares salvos, do mais recente ao mais antigo |
@@ -290,6 +291,10 @@ O app iOS monta a URL como `{ZanzarAPIBaseURL}/places/photo?ref=...&maxwidth=800
 ### `POST /logout`
 
 Responde `204`. Incrementa `users.tokenVersion`; o JWT carrega esse valor (`login`) e `validateAuthToken` o compara com o banco, então todos os tokens emitidos antes do logout passam a retornar `401`. Tokens antigos sem o campo contam como versão 0.
+
+### `DELETE /user/:id` (exclusão de conta)
+
+Apenas o próprio usuário (`403` caso contrário); limitado a 5 requisições/hora por IP. Em uma única transação MongoDB (exige replica set, como o Atlas) remove os `checkins`, `rating` e `sync_mutations` do usuário e o próprio documento em `users` (que já leva `stamps`, `savedPlaces`, itinerários, `appleId` e `passwordHash`). Os contadores agregados de `places` (`zanzar.checkInCount` e `zanzar.impressionCounts.<tag>`) são decrementados na mesma transação, sem ficar abaixo de zero. Responde `204`; qualquer token já emitido passa a retornar `401`, pois usuário inexistente conta como token revogado. A operação é irreversível.
 
 ## Logging
 
