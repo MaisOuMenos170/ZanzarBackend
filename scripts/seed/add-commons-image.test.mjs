@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { addImages, parseCommonsImage } from './add-commons-image.mjs';
+import { addImages, cleanAuthor, parseCommonsImage } from './add-commons-image.mjs';
 
 const page = (license, artist = '<a href="//commons.wikimedia.org/wiki/User:Ana">Ana &amp; Bia</a>') => ({
   title: 'File:Passeio.jpg',
@@ -47,5 +47,18 @@ const repeated = addImages({ p1: [first] }, 'p1', [first, second]);
 assert.deepEqual(repeated.manifest.p1, [first, second]);
 assert.deepEqual(repeated.added, [second]);
 assert.deepEqual(addImages({}, 'p9', [first]).manifest, { p9: [first] });
+
+// avisos automáticos da Commons não entram no crédito
+assert.equal(cleanAuthor('No machine-readable author provided. Fsolda~ assumed (based on copyright claims).'), 'Fsolda');
+assert.equal(cleanAuthor('Unknown authorUnknown author'), 'Unknown author');
+assert.equal(cleanAuthor('Fsolda~commonswiki'), 'Fsolda');
+// a cidade do fotógrafo não pode parecer a cidade da foto
+assert.equal(cleanAuthor('Monica Kaneko from Sao Paulo, Brasil'), 'Monica Kaneko');
+assert.equal(cleanAuthor('Marinelson Almeida - Traveling through Brazil from Niteroi, Brasil'), 'Marinelson Almeida');
+assert.equal(cleanAuthor('Edson Hwang - User: (WT-shared) Edsonh at wts wikivoyage'), 'Edson Hwang');
+assert.equal(cleanAuthor('Mathieu Bertrand Struck - mathieu.struck@gmail.com'), 'Mathieu Bertrand Struck');
+assert.equal(cleanAuthor('Mário Fromm'), 'Mário Fromm');
+assert.equal(cleanAuthor('Ana & Bia'), 'Ana & Bia');
+assert.equal(parseCommonsImage(page('CC0', 'No machine-readable author provided. Zé')).image.credit.author, 'Zé');
 
 console.log('add-commons-image.test.mjs: ok');

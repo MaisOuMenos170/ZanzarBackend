@@ -36,6 +36,20 @@ function stripHtml(html) {
     .trim();
 }
 
+/** Tira do campo Artist da Commons os avisos automáticos que não fazem parte do nome. */
+export function cleanAuthor(author) {
+  return author
+    .replace(/^No machine-readable author provided\.\s*/i, "")
+    .replace(/\s*~?\s*assumed \(based on copyright claims\)\.?$/i, "")
+    .replace(/~commonswiki$/i, "")
+    // Flickr acrescenta a cidade do fotógrafo ("Ana from Sao Paulo, Brasil"), que parece ser a cidade da foto.
+    .replace(/\s+from\s+[A-ZÀ-Ý][^,]*(,\s*[A-ZÀ-Ý][^,]*)?$/, "")
+    .replace(/\s+-\s+(User:|Traveling through|\S+@\S+).*$/i, "")
+    .replace(/(Unknown author)\1+/gi, "$1")
+    .replace(/[~\s]+$/, "")
+    .trim();
+}
+
 /**
  * Converte a página `imageinfo` da API em uma entrada do manifesto.
  * Devolve { image } ou { error } com o motivo da recusa.
@@ -52,7 +66,7 @@ export function parseCommonsImage(page) {
     return { error: `${title}: licença "${license}" não aceita (use CC0, domínio público, CC BY ou CC BY-SA)` };
   }
 
-  const author = stripHtml(meta.Artist?.value);
+  const author = cleanAuthor(stripHtml(meta.Artist?.value));
   if (!author) return { error: `${title}: a Commons não informa o autor` };
 
   const rawUrl = info.thumburl ?? info.url;
