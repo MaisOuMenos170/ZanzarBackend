@@ -15,6 +15,7 @@ import { authRouter } from "./modules/auth/auth.routes";
 import { placeRouter } from "./modules/places/place.routes";
 import { checkInRouter } from "./modules/checkin/checkin.routes";
 import { ratingRouter } from "./modules/rating/rating.routes";
+import { placeSuggestionRouter } from "./modules/place-suggestions/place-suggestion.routes";
 import { stampsRouter } from "./modules/stamps/stamps.routes";
 import { itineraryRouter } from "./modules/itineraries/itinerary.routes";
 
@@ -102,6 +103,7 @@ app.use(validateAuthToken, itineraryRouter);
 app.use(validateAuthToken, userRouter);
 app.use(validateAuthToken, checkInRouter);
 app.use(validateAuthToken, ratingRouter);
+app.use(validateAuthToken, placeSuggestionRouter);
 app.use(validateAuthToken, stampsRouter);
 
 // Error handler must be registered after the routes

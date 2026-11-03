@@ -19,6 +19,7 @@ const collections = [
   'itineraries',
   'checkins',
   'rating',
+  'place_suggestions',
   'sync_mutations',
 ];
 
@@ -75,6 +76,9 @@ safeIndex('checkins', { userId: 1, datetime: -1 }, { name: 'checkins_user_dateti
 // rating (Rating / Reações no diagrama)
 safeIndex('rating', { userId: 1, placeId: 1 }, { unique: true, name: 'rating_user_place_unique' });
 safeIndex('rating', { placeId: 1, impressionTag: 1 }, { name: 'rating_place_tag' });
+
+// place_suggestions (sugestões de lugares enviadas por usuários)
+safeIndex('place_suggestions', { userId: 1, createdAt: -1 }, { name: 'place_suggestions_user_created' });
 
 // sync_mutations (idempotência offline)
 safeIndex('sync_mutations', { clientMutationId: 1 }, { unique: true, name: 'sync_mutations_clientMutationId_unique' });

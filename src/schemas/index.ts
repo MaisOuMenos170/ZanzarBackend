@@ -6,6 +6,7 @@ export * from './stamp-catalog.js';
 export * from './itinerary.js';
 export * from './checkin.js';
 export * from './rating.js';
+export * from './place-suggestion.js';
 export * from './impression-tag.js';
 export * from './stamp-id.js';
 export * from './sync-mutation.js';

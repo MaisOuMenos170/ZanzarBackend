@@ -1,3 +1,4 @@
+import type { ClientSession } from "mongoose";
 import { RatingModel } from "../../models/rating.model";
 import type { CreateRatingBody } from "../../schemas/rating";
 import { logger } from "../../utils/logger";
@@ -60,6 +61,36 @@ export const ratingRepository = {
             // A unique-index hit is an expected race the service turns into a 409, not a server error.
             const level = isDuplicateKeyError(err) ? "warn" : "error";
             log[level]({ err, ...context }, "Failed to create rating");
+            throw err;
+        }
+    },
+
+    async listPlaceTagsForUser(
+        userId: string,
+        session?: ClientSession,
+    ): Promise<{ placeId: string; impressionTag: string }[]> {
+        log.debug({ userId }, "Listing all ratings for user");
+        try {
+            const ratings = await RatingModel.find(
+                { userId },
+                "placeId impressionTag",
+                session ? { session } : undefined,
+            ).lean();
+            return ratings.map(({ placeId, impressionTag }) => ({ placeId, impressionTag }));
+        } catch (err) {
+            log.error({ err, userId }, "Failed to list all ratings for user");
+            throw err;
+        }
+    },
+
+    async deleteByUserId(userId: string, session?: ClientSession): Promise<number> {
+        log.debug({ userId }, "Deleting ratings for user");
+        try {
+            const result = await RatingModel.deleteMany({ userId }, session ? { session } : undefined);
+            log.debug({ userId, deletedCount: result.deletedCount }, "Deleted ratings for user");
+            return result.deletedCount;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to delete ratings for user");
             throw err;
         }
     },

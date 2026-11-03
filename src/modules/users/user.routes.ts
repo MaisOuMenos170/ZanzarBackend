@@ -2,6 +2,7 @@ import express from "express";
 import type { Router } from "express";
 import {
     createAvatar,
+    deleteUser,
     getAvatar,
     getUser,
     getUserItinerary,
@@ -12,6 +13,7 @@ import {
     savePlace,
     updateAvatar,
 } from "./user.controller";
+import { deleteAccountLimiter } from "../../middlewares/rateLimiters";
 import { requireOwnershipFromParams } from "../../middlewares/requireOwnership";
 import { validateGetProfileQuery } from "../../middlewares/validateGetProfileQuery";
 import { validateSchema } from "../../middlewares/validateSchema";
@@ -20,6 +22,7 @@ import { createAvatarBodySchema, savePlaceBodySchema, updateAvatarBodySchema } f
 export const userRouter: Router = express.Router();
 
 userRouter.get("/user/:id", requireOwnershipFromParams("id"), getUser);
+userRouter.delete("/user/:id", deleteAccountLimiter, requireOwnershipFromParams("id"), deleteUser);
 userRouter.get("/user/:id/profile", requireOwnershipFromParams("id"), validateGetProfileQuery, getUserProfile);
 userRouter.get("/user/:id/itinerary", requireOwnershipFromParams("id"), getUserItinerary);
 userRouter.get("/user/:id/saved-places", requireOwnershipFromParams("id"), listSavedPlaces);

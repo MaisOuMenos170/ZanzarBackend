@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Types, type ClientSession } from "mongoose";
 import { UserModel, User } from "../../models/user.model";
 import type { ItineraryRouteType } from "../../constants/itinerary-route-type";
 import type { ZanzarCategory } from "../../constants/zanzar-categories";
@@ -455,6 +455,18 @@ export const userRepository = {
                 throw err;
             }
             log.error({ err, userId }, "Failed to increment token version");
+            throw err;
+        }
+    },
+
+    async deleteById(userId: string, session?: ClientSession): Promise<boolean> {
+        log.debug({ userId }, "Deleting user");
+        try {
+            const result = await UserModel.deleteOne({ _id: userId }, session ? { session } : undefined);
+            log.debug({ userId, deletedCount: result.deletedCount }, "Deleted user");
+            return result.deletedCount > 0;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to delete user");
             throw err;
         }
     },
