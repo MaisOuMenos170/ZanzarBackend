@@ -33,6 +33,7 @@ Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados).
 | `itineraries` | Itinerary (geral) | Templates de roteiros curados |
 | `checkins` | CheckIns | Visita (`userId`, `placeId`, `datetime`, `coordinates?`, `stampIdGranted`); efeitos aplicados pela API |
 | `rating` | Rating / Reações | Reação pós-visita (`impressionTag`) |
+| `place_suggestions` | Sugestão de lugar | Lugar sugerido por usuário (`userId`, `coordinates {latitude, longitude}`, `address`, `note?`) |
 | `sync_mutations` | — | Idempotência do sync offline |
 
 ### Check-in síncrono (API)
@@ -95,6 +96,8 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 | GET | `/checkIn?placeId=` | Bearer | Check-in existente usuário+lugar |
 | POST | `/rating` | Bearer | Reação pós-visita |
 | GET | `/rating?placeId=` | Bearer | Reação existente |
+| POST | `/place-suggestions` | Bearer | Sugere um lugar (`{ coordinates: { latitude, longitude }, address, note? }`); `201` com o documento criado |
+| GET | `/place-suggestions` | Bearer | Sugestões do usuário autenticado, da mais recente à mais antiga (máx. 100) |
 | GET | `/stamps/:stampId` | Bearer | Metadados do selo |
 
 Rotas após login usam `Authorization: Bearer <token>` exceto `/places`, `/places/photo` e auth público. Detalhes de body/resposta: seções abaixo e código em `src/modules/*/`.

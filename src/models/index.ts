@@ -4,4 +4,5 @@ export * from "./stamp-catalog.model";
 export * from "./itinerary.model";
 export * from "./checkin.model";
 export * from "./rating.model";
+export * from "./place-suggestion.model";
 export * from "./sync-mutation.model";
