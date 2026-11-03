@@ -112,3 +112,9 @@ typings/
 
 
 # End of https://www.gitignore.io/api/node,macos
+# Candidatas de foto para revisão (links temporários)
+data/photos-review/
+# Mapa do código gerado por `stacklit init` (regenerar quando precisar)
+stacklit.json
+stacklit.html
+DEPENDENCIES.md
