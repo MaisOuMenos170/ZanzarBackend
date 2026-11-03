@@ -10,6 +10,11 @@ export type PlaceSummaryDocument = Pick<PlaceDocument, "place_id" | "name" | "ph
     zanzar?: Pick<PlaceDocument["zanzar"], "stampId">;
 };
 
+/** Aggregation expression: max(0, field - count), treating a missing field as 0. */
+function clampedSubtract(field: string, count: number) {
+    return { $max: [0, { $subtract: [{ $ifNull: [`$${field}`, 0] }, count] }] };
+}
+
 export const placeRepository = {
     async findByPlaceId(placeId: string): Promise<PlaceDocument | null> {
         log.debug({ placeId }, "Fetching place by id");
@@ -166,6 +171,55 @@ export const placeRepository = {
                 throw err;
             }
             log.error({ err, placeId, tag }, "Failed to increment place impression count");
+            throw err;
+        }
+    },
+
+    /**
+     * Subtracts the given counts from the places' aggregate counters (never below zero).
+     * Places that no longer exist or have no `zanzar` block are skipped.
+     */
+    async decrementCounters(
+        counts: {
+            checkIns: Record<string, number>;
+            impressions: { placeId: string; tag: string; count: number }[];
+        },
+        session?: ClientSession,
+    ): Promise<void> {
+        const operations = [
+            ...Object.entries(counts.checkIns).map(([placeId, count]) => ({
+                updateOne: {
+                    filter: { place_id: placeId, zanzar: { $exists: true } },
+                    update: [{ $set: { "zanzar.checkInCount": clampedSubtract("zanzar.checkInCount", count) } }],
+                },
+            })),
+            ...counts.impressions.map(({ placeId, tag, count }) => ({
+                updateOne: {
+                    filter: { place_id: placeId, zanzar: { $exists: true } },
+                    update: [
+                        {
+                            $set: {
+                                [`zanzar.impressionCounts.${tag}`]: clampedSubtract(
+                                    `zanzar.impressionCounts.${tag}`,
+                                    count,
+                                ),
+                            },
+                        },
+                    ],
+                },
+            })),
+        ];
+
+        if (operations.length === 0) {
+            return;
+        }
+
+        log.debug({ operationCount: operations.length }, "Decrementing place counters");
+        try {
+            await PlaceModel.bulkWrite(operations, session ? { session } : undefined);
+            log.debug({ operationCount: operations.length }, "Decremented place counters");
+        } catch (err) {
+            log.error({ err, operationCount: operations.length }, "Failed to decrement place counters");
             throw err;
         }
     },
