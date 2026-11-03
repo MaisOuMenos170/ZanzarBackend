@@ -1,6 +1,5 @@
 const DEFAULT_CHECKIN_RADIUS_METERS = 150;
 
-/** NODE_ENV normalized (trimmed, lower-cased) so every environment check reads it the same way. */
 export function getNodeEnv(env: NodeJS.ProcessEnv = process.env): string {
     return env.NODE_ENV?.trim().toLowerCase() ?? "";
 }
@@ -9,16 +8,23 @@ export function isProduction(env: NodeJS.ProcessEnv = process.env): boolean {
     return getNodeEnv(env) === "production";
 }
 
-/**
- * Signup is closed on the development server. `SIGNUP_ENABLED=true|false` overrides that
- * (e.g. to register accounts while running `npm run dev` locally).
- */
 export function isSignupEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
     const override = env.SIGNUP_ENABLED?.trim().toLowerCase();
     if (override === "true") return true;
     if (override === "false") return false;
 
     return getNodeEnv(env) !== "development";
+}
+
+/**
+ * Expected `aud` of Apple identity tokens: the app's bundle ID. `APPLE_BUNDLE_ID` may hold several
+ * comma-separated values (e.g. the app plus a Services ID). Empty when unset.
+ */
+export function getAppleAudiences(env: NodeJS.ProcessEnv = process.env): string[] {
+    return (env.APPLE_BUNDLE_ID ?? "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
 }
 
 export function getCheckinRadiusMeters(): number {

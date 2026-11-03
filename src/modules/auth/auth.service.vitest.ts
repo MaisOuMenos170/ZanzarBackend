@@ -5,6 +5,7 @@ import { userRepository } from "../users/user.repository.js";
 import { AppError } from "../../errors/appError.js";
 import { JWT_EXPIRATION, JWT_REFRESH_EXPIRATION } from "../../constants/auth.js";
 import { signRefreshToken } from "../../utils/jwt.js";
+import * as appleToken from "../../utils/appleIdentityToken.js";
 
 vi.mock("../../utils/bcrypt", () => ({
     comparePassword: vi.fn(async (password: string) => password === "secret12"),
@@ -124,5 +125,148 @@ describe("authService.refresh", () => {
         vi.spyOn(userRepository, "findTokenVersionById").mockResolvedValue(null);
 
         await expectUnauthorized(authService.refresh(refreshToken));
+    });
+});
+
+describe("authService.loginWithApple", () => {
+    const appleInput = { identityToken: "apple-token" };
+    const appleUser = { _id: "user-2", email: "apple@example.com", appleId: "apple-1", tokenVersion: 1 } as any;
+
+    beforeEach(() => {
+        vi.restoreAllMocks();
+        vi.spyOn(appleToken, "verifyAppleIdentityToken").mockResolvedValue({
+            sub: "apple-1",
+            email: "apple@example.com",
+            emailVerified: true,
+        });
+    });
+
+    it("returns tokens for a user already linked to the Apple id", async () => {
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(appleUser);
+        const create = vi.spyOn(userRepository, "createFromApple");
+
+        const { token, refreshToken } = await authService.loginWithApple(appleInput);
+
+        expect(jwt.verify(token, process.env.JWT_SECRET as string)).toMatchObject({ id: "user-2", tokenVersion: 1 });
+        expect(jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string)).toMatchObject({ id: "user-2" });
+        expect(create).not.toHaveBeenCalled();
+    });
+
+    it("rejects an invalid Apple token with 401 without touching the database", async () => {
+        vi.spyOn(appleToken, "verifyAppleIdentityToken").mockRejectedValue(new AppError("Invalid Apple identity token", 401));
+        const find = vi.spyOn(userRepository, "findByAppleId");
+
+        await expectUnauthorized(authService.loginWithApple(appleInput));
+        expect(find).not.toHaveBeenCalled();
+    });
+
+    it("creates a user on the first sign in, using what comes before the @ as the username", async () => {
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(null);
+        vi.spyOn(userRepository, "findByEmail").mockResolvedValue(null);
+        const exists = vi.spyOn(userRepository, "existsByUsername").mockResolvedValue(false);
+        const create = vi.spyOn(userRepository, "createFromApple").mockResolvedValue(appleUser);
+
+        await authService.loginWithApple({ ...appleInput, fullName: { givenName: "Tiago", familyName: "Prestes" } });
+
+        expect(exists).toHaveBeenCalledTimes(1);
+        expect(create).toHaveBeenCalledWith({ appleId: "apple-1", email: "apple@example.com", username: "apple" });
+    });
+
+    it("appends the initials of the full name when the username is taken", async () => {
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(null);
+        vi.spyOn(userRepository, "findByEmail").mockResolvedValue(null);
+        vi.spyOn(userRepository, "existsByUsername").mockImplementation(async (username) => username === "apple");
+        const create = vi.spyOn(userRepository, "createFromApple").mockResolvedValue(appleUser);
+
+        await authService.loginWithApple({ ...appleInput, fullName: { givenName: "Tiago Batista", familyName: "Álvares Prestes" } });
+
+        expect(create.mock.calls[0][0].username).toBe("appletbap");
+    });
+
+    it("adds a number as a last resort when there is no full name or the initials are taken too", async () => {
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(null);
+        vi.spyOn(userRepository, "findByEmail").mockResolvedValue(null);
+        vi.spyOn(userRepository, "existsByUsername").mockImplementation(
+            async (username) => username === "apple" || username === "appletp",
+        );
+        const create = vi.spyOn(userRepository, "createFromApple").mockResolvedValue(appleUser);
+
+        await authService.loginWithApple({ ...appleInput, fullName: { givenName: "Tiago", familyName: "Prestes" } });
+        await authService.loginWithApple(appleInput);
+
+        expect(create.mock.calls[0][0].username).toMatch(/^appletp\d{4}$/);
+        expect(create.mock.calls[1][0].username).toMatch(/^apple\d{4}$/);
+    });
+
+    it("keeps the username within the length limits", async () => {
+        vi.spyOn(appleToken, "verifyAppleIdentityToken").mockResolvedValue({
+            sub: "apple-1",
+            email: `${"a".repeat(40)}@example.com`,
+            emailVerified: true,
+        });
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(null);
+        vi.spyOn(userRepository, "findByEmail").mockResolvedValue(null);
+        vi.spyOn(userRepository, "existsByUsername").mockResolvedValue(false);
+        const create = vi.spyOn(userRepository, "createFromApple").mockResolvedValue(appleUser);
+
+        await authService.loginWithApple(appleInput);
+
+        expect(create.mock.calls[0][0].username).toBe("a".repeat(30));
+    });
+
+    it("links the Apple id to an existing account when the email is verified", async () => {
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(null);
+        vi.spyOn(userRepository, "findByEmail").mockResolvedValue(user);
+        const link = vi.spyOn(userRepository, "linkAppleId").mockResolvedValue(user);
+        const create = vi.spyOn(userRepository, "createFromApple");
+
+        await authService.loginWithApple(appleInput);
+
+        expect(link).toHaveBeenCalledWith("user-1", "apple-1");
+        expect(create).not.toHaveBeenCalled();
+    });
+
+    it("refuses to link an existing account when the email is not verified", async () => {
+        vi.spyOn(appleToken, "verifyAppleIdentityToken").mockResolvedValue({
+            sub: "apple-1",
+            email: "tiago@example.com",
+            emailVerified: false,
+        });
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(null);
+        vi.spyOn(userRepository, "findByEmail").mockResolvedValue(user);
+        const link = vi.spyOn(userRepository, "linkAppleId");
+
+        const error = await authService.loginWithApple(appleInput).catch((err) => err);
+
+        expect((error as AppError).statusCode).toBe(409);
+        expect(link).not.toHaveBeenCalled();
+    });
+
+    it("answers 400 when a new user has no email in the token", async () => {
+        vi.spyOn(appleToken, "verifyAppleIdentityToken").mockResolvedValue({ sub: "apple-1", emailVerified: false });
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(null);
+
+        const error = await authService.loginWithApple(appleInput).catch((err) => err);
+
+        expect((error as AppError).statusCode).toBe(400);
+    });
+
+    it("does not create accounts where signup is disabled", async () => {
+        vi.stubEnv("SIGNUP_ENABLED", "false");
+        vi.spyOn(userRepository, "findByAppleId").mockResolvedValue(null);
+        vi.spyOn(userRepository, "findByEmail").mockResolvedValue(null);
+        const create = vi.spyOn(userRepository, "createFromApple");
+
+        const error = await authService.loginWithApple(appleInput).catch((err) => err);
+
+        expect((error as AppError).statusCode).toBe(403);
+        expect(create).not.toHaveBeenCalled();
+        vi.unstubAllEnvs();
+    });
+
+    it("password login is refused for an Apple-only account (no passwordHash)", async () => {
+        vi.spyOn(userRepository, "findByEmail").mockResolvedValue({ ...appleUser, passwordHash: undefined });
+
+        await expectUnauthorized(authService.login({ email: appleUser.email, password: "secret12" }));
     });
 });
