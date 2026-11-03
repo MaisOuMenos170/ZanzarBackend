@@ -5,6 +5,7 @@ import { impressionTagFieldSchema } from './impression-tag.js';
 import { itineraryRouteTypeSchema } from './itinerary.js';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 import { MAX_SAVED_PLACES } from '../constants/saved-places.js';
+import { AVATAR_OPTION_COUNTS } from '../constants/avatar.js';
 
 export const userStampSchema = z.object({
   stampId: stampIdSchema,
@@ -35,6 +36,23 @@ export const savedPlaceSchema = userSavedPlaceSchema.extend({
 });
 
 export const savedPlacesSchema = z.array(savedPlaceSchema);
+
+const avatarLayerSchema = (optionCount: number) =>
+  z.number().int().min(1).max(optionCount);
+
+export const avatarSchema = z.object({
+  skin: avatarLayerSchema(AVATAR_OPTION_COUNTS.skin),
+  eyes: avatarLayerSchema(AVATAR_OPTION_COUNTS.eyes),
+  eyebrow: avatarLayerSchema(AVATAR_OPTION_COUNTS.eyebrow),
+  hair: avatarLayerSchema(AVATAR_OPTION_COUNTS.hair),
+});
+
+export const createAvatarBodySchema = avatarSchema.strict();
+
+export const updateAvatarBodySchema = avatarSchema
+  .partial()
+  .strict()
+  .refine((body) => Object.keys(body).length > 0, { message: 'At least one avatar layer is required' });
 
 export const itineraryPlaceProgressSchema = z.object({
   placeId: z.string().min(1).optional(),
@@ -73,6 +91,7 @@ export const userDocumentSchema = z.object({
   tokenVersion: z.number().int().nonnegative().default(0),
   stamps: z.array(userStampSchema).default([]),
   savedPlaces: z.array(userSavedPlaceSchema).max(MAX_SAVED_PLACES).default([]),
+  avatar: avatarSchema.optional(),
   activeItinerary: userItineraryEmbedSchema.nullable().default(null),
   inactiveItineraries: z.array(userItineraryEmbedSchema).default([]),
   completedItineraries: z.array(completedItineraryEmbedSchema).default([]),
@@ -109,6 +128,9 @@ export type UserStamp = z.infer<typeof userStampSchema>;
 export type UserSavedPlace = z.infer<typeof userSavedPlaceSchema>;
 export type SavePlaceBody = z.infer<typeof savePlaceBodySchema>;
 export type SavedPlace = z.infer<typeof savedPlaceSchema>;
+export type Avatar = z.infer<typeof avatarSchema>;
+export type CreateAvatarBody = z.infer<typeof createAvatarBodySchema>;
+export type UpdateAvatarBody = z.infer<typeof updateAvatarBodySchema>;
 export type UserItineraryEmbed = z.infer<typeof userItineraryEmbedSchema>;
 export type GetProfileQuery = z.infer<typeof getProfileQuerySchema>;
 export type ProfileSummary = z.infer<typeof profileSummarySchema>;

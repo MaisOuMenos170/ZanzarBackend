@@ -3,7 +3,20 @@ import { ITINERARY_ROUTE_TYPES } from "../constants/itinerary-route-type";
 import { STAMP_IDS, ZANZAR_CATEGORIES } from "../constants/zanzar-categories";
 import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "../constants/auth";
 import { MAX_SAVED_PLACES } from "../constants/saved-places";
+import { AVATAR_OPTION_COUNTS } from "../constants/avatar";
 import { maxArrayItems, nonEmptyArray } from "./helpers";
+
+const avatarLayer = (optionCount: number) => ({ type: Number, required: true, min: 1, max: optionCount });
+
+const avatarSchema = new Schema(
+    {
+        skin: avatarLayer(AVATAR_OPTION_COUNTS.skin),
+        eyes: avatarLayer(AVATAR_OPTION_COUNTS.eyes),
+        eyebrow: avatarLayer(AVATAR_OPTION_COUNTS.eyebrow),
+        hair: avatarLayer(AVATAR_OPTION_COUNTS.hair),
+    },
+    { _id: false },
+);
 
 const stampSchema = new Schema(
     {
@@ -75,6 +88,8 @@ const userSchema = new Schema(
         // Não é `required` de propósito: usuários anteriores a esta feature não têm o campo,
         // e um validador `required` no Atlas rejeitaria qualquer escrita neles.
         savedPlaces: { type: [savedPlaceSchema], default: [], validate: maxArrayItems(MAX_SAVED_PLACES) },
+        // Não é `required` de propósito: usuários anteriores a esta feature não têm o campo (ausente = sem avatar).
+        avatar: { type: avatarSchema },
         activeItinerary: { type: itinerarySchema, default: null },
         inactiveItineraries: { type: [itinerarySchema], required: true, default: [] },
         completedItineraries: { type: [completedItinerarySchema], required: true, default: [] },

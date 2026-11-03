@@ -4,7 +4,7 @@ import type { ItineraryRouteType } from "../../constants/itinerary-route-type";
 import type { ZanzarCategory } from "../../constants/zanzar-categories";
 import type { StampId } from "../../constants/zanzar-categories";
 import { MAX_SAVED_PLACES } from "../../constants/saved-places";
-import type { ProfileSummary } from "../../schemas/user";
+import type { Avatar, ProfileSummary, UpdateAvatarBody } from "../../schemas/user";
 import { AppError } from "../../errors/appError";
 import { CreateUserInput } from "./schema/createUserSchema";
 import { hashPassword } from "../../utils/bcrypt";
@@ -44,6 +44,7 @@ export type AddSavedPlaceResult =
     | { status: "user_not_found" | "limit_reached" };
 
 export type RemoveSavedPlaceResult = "removed" | "not_saved" | "user_not_found";
+
 
 // Emails are PII, so lookups by email are logged without the address.
 export const userRepository = {
@@ -372,6 +373,59 @@ export const userRepository = {
             return status;
         } catch (err) {
             log.error({ err, userId, placeId }, "Failed to remove saved place");
+            throw err;
+        }
+    },
+
+    // `null` means the user does not exist.
+    async findAvatarById(userId: string): Promise<{ avatar: Avatar | null } | null> {
+        log.debug({ userId }, "Fetching avatar");
+        try {
+            const user = await UserModel.findById(userId).select("avatar").lean<Pick<User, "avatar">>();
+            log.debug({ userId, found: !!user, hasAvatar: !!user?.avatar }, "Fetched avatar");
+            return user ? { avatar: user.avatar ?? null } : null;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to fetch avatar");
+            throw err;
+        }
+    },
+
+    // `avatar: null` matches a missing field, so "only if there is none" is atomic with the write.
+    async createAvatar(userId: string, avatar: Avatar): Promise<boolean> {
+        log.debug({ userId }, "Creating avatar");
+        try {
+            const result = await UserModel.updateOne({ _id: userId, avatar: null }, { $set: { avatar } });
+            log.debug({ userId, created: result.modifiedCount > 0 }, "Created avatar");
+            return result.modifiedCount > 0;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to create avatar");
+            throw err;
+        }
+    },
+
+    async updateAvatar(userId: string, layers: UpdateAvatarBody): Promise<Avatar | null> {
+        log.debug({ userId, layers: Object.keys(layers) }, "Updating avatar");
+        try {
+            const $set = Object.fromEntries(Object.entries(layers).map(([layer, id]) => [`avatar.${layer}`, id]));
+            const user = await UserModel.findOneAndUpdate({ _id: userId, avatar: { $ne: null } }, { $set }, { new: true })
+                .select("avatar")
+                .lean<Pick<User, "avatar">>();
+            log.debug({ userId, updated: !!user?.avatar }, "Updated avatar");
+            return user?.avatar ?? null;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to update avatar");
+            throw err;
+        }
+    },
+
+    async removeAvatar(userId: string): Promise<boolean> {
+        log.debug({ userId }, "Removing avatar");
+        try {
+            const result = await UserModel.updateOne({ _id: userId, avatar: { $ne: null } }, { $unset: { avatar: "" } });
+            log.debug({ userId, removed: result.modifiedCount > 0 }, "Removed avatar");
+            return result.modifiedCount > 0;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to remove avatar");
             throw err;
         }
     },
