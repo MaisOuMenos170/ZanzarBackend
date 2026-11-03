@@ -5,6 +5,7 @@ import { getPhotoStorage, type PhotoStorage } from "../photo-storage";
 import { userPhotoModerationRepository, userPhotoRepository, type ModerationUpdate } from "../user-photo.repository";
 import { ContextLayer, DuplicateLayer, QualityLayer } from "./basic-layers";
 import { FaceLayer } from "./face-layer";
+import { VisionLayer, visionConfigFromEnv } from "./vision-layer";
 import { decide, runLayerSafely, type LayerResult, type ModerationLayer } from "./moderation-layer";
 
 const log = logger.child({ module: "userPhotos", layer: "moderation" });
@@ -21,9 +22,12 @@ export interface ModerationDependencies {
     now: () => Date;
 }
 
-let visionLayerFactory: (() => ModerationLayer | null) = () => null;
+let visionLayerFactory: () => ModerationLayer | null = () => {
+    const config = visionConfigFromEnv();
+    return config ? new VisionLayer(config) : null;
+};
 
-/** Lets the vision layer (chosen in a later step) plug in without this file knowing its provider. */
+/** Tests replace the vision layer with this. */
 export function setVisionLayerFactory(factory: () => ModerationLayer | null) {
     visionLayerFactory = factory;
 }
