@@ -6,3 +6,5 @@ export * from "./checkin.model";
 export * from "./rating.model";
 export * from "./place-suggestion.model";
 export * from "./sync-mutation.model";
+export * from "./user-photo.model";
+export * from "./user-photo-event.model";

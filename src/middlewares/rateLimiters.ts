@@ -72,6 +72,19 @@ export const deleteAccountLimiter = rateLimit({
     handler: rateLimitHandler("deleteAccount"),
 });
 
+/**
+ * Anti-abuse cap on photo uploads, per authenticated user (mounted after `validateAuthToken`).
+ * There is no quota on how many photos someone may share; this only stops floods.
+ */
+export const photoUploadLimiter = rateLimit({
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    windowMs: 10 * 60 * 1000,
+    limit: 20,
+    keyGenerator: (req) => `user:${String(req.user?.id)}`,
+    handler: rateLimitHandler("photoUpload"),
+});
+
 /** Google photo proxy calls (one per image on screen) are exempt from the global limiter. */
 export const isPlacePhotoRequest = (req: Request): boolean =>
     req.method === "GET" && getRequestPath(req) === "/places/photo";
