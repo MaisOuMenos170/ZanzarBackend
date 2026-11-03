@@ -32,7 +32,7 @@ export const savedPlaceParamsSchema = z.object({
 /** Item devolvido pela API: o lugar salvo enriquecido com dados do lugar. */
 export const savedPlaceSchema = userSavedPlaceSchema.extend({
   placeName: z.string().nullable(),
-  photoReference: z.string().nullable(),
+  imageUrl: z.string().nullable(),
 });
 
 export const savedPlacesSchema = z.array(savedPlaceSchema);

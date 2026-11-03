@@ -23,7 +23,7 @@ const savedPlace = {
     placeId: "ChIJ1",
     savedAt: new Date("2026-10-05T18:30:00.000Z"),
     placeName: "Bar do Zé",
-    photoReference: null,
+    imageUrl: null,
 };
 
 describe("saved places routes", () => {
