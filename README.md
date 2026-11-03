@@ -271,7 +271,7 @@ Só o próprio usuário (`:id` deve ser o do token). `limit` é opcional (1–20
       "placeId": "ChIJ...",
       "placeName": "Bar do Zé",
       "datetime": "2026-10-05T18:30:00.000Z",
-      "photoReference": "AUacSh...",
+      "imageUrl": "https://cdn.jsdelivr.net/gh/.../bar-do-ze-1.jpg",
       "stamp": { "stampId": "bar", "imageUrl": "/assets/stamps/bar.png" },
       "impressionTag": "happy"
     }
@@ -279,7 +279,7 @@ Só o próprio usuário (`:id` deve ser o do token). `limit` é opcional (1–20
 }
 ```
 
-`itinerariesCount` soma roteiro ativo + `completedItineraries`; roteiros abandonados (`inactiveItineraries`) não entram na conta. `photoReference` é o `photo_reference` da primeira foto do lugar no Google (ou `null`); `stamp` é `null` quando o lugar não tem selo ativo no `stamp_catalog`; `impressionTag` vem da collection `rating` (ou `null` sem reação).
+`itinerariesCount` soma roteiro ativo + `completedItineraries`; roteiros abandonados (`inactiveItineraries`) não entram na conta. `imageUrl` é a URL da primeira foto do lugar em `images[]` (ou `null`); o mesmo vale para os lugares salvos; `stamp` é `null` quando o lugar não tem selo ativo no `stamp_catalog`; `impressionTag` vem da collection `rating` (ou `null` sem reação).
 
 ### `GET /places/photo?ref=&maxwidth=800`
 
