@@ -20,6 +20,7 @@ import { stampsRouter } from "./modules/stamps/stamps.routes";
 import { itineraryRouter } from "./modules/itineraries/itinerary.routes";
 import { userPhotoRouter } from "./modules/user-photos/user-photo.routes";
 import { devPhotoFilesRouter } from "./modules/user-photos/dev-photo-files.routes";
+import { moderationWorker } from "./modules/user-photos/moderation/moderation.service";
 
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
@@ -125,10 +126,12 @@ connectDatabase()
         "Server is running",
       );
     });
+    moderationWorker.start();
 
     for (const signal of ["SIGTERM", "SIGINT"] as const) {
       process.once(signal, () => {
         logger.info({ signal }, "Shutting down: finishing in-flight requests, then closing MongoDB");
+        moderationWorker.stop();
         // Don't hang until the orchestrator's SIGKILL if a request never finishes.
         setTimeout(() => process.exit(1), SHUTDOWN_TIMEOUT_MS).unref();
         server.close(async () => {

@@ -16,6 +16,7 @@ import { logger } from "../../utils/logger";
 import { isDuplicateKeyError } from "../../utils/mongoErrors";
 import { placeRepository } from "../places/place.repository";
 import { hammingDistance, processUploadedPhoto } from "./image-processing";
+import { moderationWorker } from "./moderation/moderation.service";
 import { getPhotoStorage, type PhotoStorage } from "./photo-storage";
 import { userPhotoRepository, type DuplicateCandidate } from "./user-photo.repository";
 
@@ -215,6 +216,7 @@ export const userPhotoService = {
             toStatus: "pending",
             details: { isVerifiedCheckIn: photo.isVerifiedCheckIn, termsVersion: USER_PHOTO_TERMS_VERSION },
         });
+        moderationWorker.wake();
         return toResponse(photo, storage, true);
     },
 

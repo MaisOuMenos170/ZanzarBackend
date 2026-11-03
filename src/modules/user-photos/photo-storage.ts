@@ -44,7 +44,7 @@ export class SupabasePhotoStorage implements PhotoStorage {
         return { Authorization: `Bearer ${this.serviceKey}`, apikey: this.serviceKey, ...extra };
     }
 
-    private async request(method: string, urlPath: string, body?: string | Uint8Array, headers: Record<string, string> = {}) {
+    private async request(method: string, urlPath: string, body?: string | Blob, headers: Record<string, string> = {}) {
         const response = await fetch(`${this.baseUrl}/storage/v1/${urlPath}`, { method, body, headers: this.headers(headers) });
         if (!response.ok) {
             log.error({ method, status: response.status }, "Storage request failed");
@@ -55,7 +55,7 @@ export class SupabasePhotoStorage implements PhotoStorage {
 
     private async put(bucket: string, key: string, data: Buffer) {
         assertSafeKey(key);
-        await this.request("POST", `object/${bucket}/${key}`, new Uint8Array(data), {
+        await this.request("POST", `object/${bucket}/${key}`, new Blob([new Uint8Array(data)]), {
             "Content-Type": "image/jpeg",
             "x-upsert": "false",
             "Cache-Control": "max-age=31536000",
