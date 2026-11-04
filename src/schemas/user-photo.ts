@@ -11,7 +11,8 @@ export type AcceptPhotoTermsBody = z.infer<typeof acceptPhotoTermsBodySchema>;
 
 /** Query of `POST /places/:placeId/photos`; the body is the image itself. */
 export const uploadPhotoQuerySchema = z.object({
-    checkInId: objectIdSchema.optional(),
+    /** "true" when the photo is sent from a check-in: the server finds the user's check-in at the place itself. */
+    fromCheckIn: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
     showAuthorName: z.enum(["true", "false"]).default("true").transform((value) => value === "true"),
 });
 

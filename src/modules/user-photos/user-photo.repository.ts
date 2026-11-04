@@ -42,9 +42,9 @@ export const userPhotoRepository = {
         await UserPhotoEventModel.create(event);
     },
 
-    async isUserCheckInAtPlace(checkInId: string, userId: string, placeId: string): Promise<boolean> {
-        const checkIn = await CheckinModel.exists({ _id: checkInId, userId, placeId });
-        return checkIn !== null;
+    async findUserCheckInAtPlace(userId: string, placeId: string): Promise<Types.ObjectId | null> {
+        const checkIn = await CheckinModel.findOne({ userId, placeId }, { _id: 1 }).lean<{ _id: Types.ObjectId }>();
+        return checkIn?._id ?? null;
     },
 
     async getPhotoEligibility(userId: string) {

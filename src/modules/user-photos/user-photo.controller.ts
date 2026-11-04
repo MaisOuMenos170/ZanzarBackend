@@ -26,7 +26,7 @@ export const uploadPhoto: RequestHandler = async (req, res) => {
         userId,
         placeId: placeId.data,
         image: req.body,
-        checkInId: query.data.checkInId,
+        fromCheckIn: query.data.fromCheckIn,
         showAuthorName: query.data.showAuthorName,
     });
     res.status(201).json(photo);

@@ -56,7 +56,7 @@ describe("userPhotoService.uploadPhoto", () => {
         vi.spyOn(userPhotoRepository, "create").mockImplementation(async (doc) =>
             ({ ...doc, reportCount: 0, createdAt: new Date("2026-11-03T12:00:00Z"), updatedAt: new Date() }) as never);
         vi.spyOn(userPhotoRepository, "recordEvent").mockResolvedValue();
-        vi.spyOn(userPhotoRepository, "isUserCheckInAtPlace").mockResolvedValue(true);
+        vi.spyOn(userPhotoRepository, "findUserCheckInAtPlace").mockResolvedValue(new Types.ObjectId());
     });
 
     afterEach(() => {
@@ -65,7 +65,7 @@ describe("userPhotoService.uploadPhoto", () => {
     });
 
     it("stores a pending photo privately and never publishes it on upload", async () => {
-        const result = await userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), showAuthorName: true });
+        const result = await userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), fromCheckIn: false, showAuthorName: true });
 
         expect(result.status).toBe("pending");
         expect(result.isVerifiedCheckIn).toBe(false);
@@ -77,31 +77,39 @@ describe("userPhotoService.uploadPhoto", () => {
         expect(userPhotoRepository.recordEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "uploaded", toStatus: "pending" }));
     });
 
-    it("marks the photo as verified when it comes with the user's own check-in at the place", async () => {
-        const checkInId = new Types.ObjectId().toString();
-        const result = await userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), checkInId, showAuthorName: false });
+    it("marks the photo as verified with the server-found check-in of this user at the place", async () => {
+        const checkInId = new Types.ObjectId();
+        vi.mocked(userPhotoRepository.findUserCheckInAtPlace).mockResolvedValue(checkInId);
+        const result = await userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), fromCheckIn: true, showAuthorName: false });
 
         expect(result.isVerifiedCheckIn).toBe(true);
         expect(result.showAuthorName).toBe(false);
-        expect(userPhotoRepository.isUserCheckInAtPlace).toHaveBeenCalledWith(checkInId, USER_ID, PLACE_ID);
+        expect(userPhotoRepository.findUserCheckInAtPlace).toHaveBeenCalledWith(USER_ID, PLACE_ID);
+        expect(vi.mocked(userPhotoRepository.create).mock.calls[0][0].checkInId).toBe(checkInId);
     });
 
-    it("refuses someone else's check-in", async () => {
-        vi.mocked(userPhotoRepository.isUserCheckInAtPlace).mockResolvedValue(false);
+    it("refuses a 'from check-in' upload when the user never checked in there", async () => {
+        vi.mocked(userPhotoRepository.findUserCheckInAtPlace).mockResolvedValue(null);
         const error = await refusal(userPhotoService.uploadPhoto({
-            userId: USER_ID, placeId: PLACE_ID, image: await photo(), checkInId: new Types.ObjectId().toString(), showAuthorName: true,
+            userId: USER_ID, placeId: PLACE_ID, image: await photo(), fromCheckIn: true, showAuthorName: true,
         }));
         expect(error.code).toBe("invalid_check_in");
         expect(storage.privateFiles.size).toBe(0);
     });
 
+    it("does not look up check-ins for a photo sent without one", async () => {
+        const result = await userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), fromCheckIn: false, showAuthorName: true });
+        expect(result.isVerifiedCheckIn).toBe(false);
+        expect(userPhotoRepository.findUserCheckInAtPlace).not.toHaveBeenCalled();
+    });
+
     it("refuses an upload without the current terms, or without a declared adult age", async () => {
         vi.mocked(userPhotoRepository.getPhotoEligibility).mockResolvedValue({ ...eligible, photoTerms: { version: "old", acceptedAt: new Date() } });
-        expect((await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), showAuthorName: true }))).code)
+        expect((await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), fromCheckIn: false, showAuthorName: true }))).code)
             .toBe("terms_required");
 
         vi.mocked(userPhotoRepository.getPhotoEligibility).mockResolvedValue({ photoTerms: eligible.photoTerms });
-        expect((await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), showAuthorName: true }))).code)
+        expect((await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), fromCheckIn: false, showAuthorName: true }))).code)
             .toBe("age_declaration_required");
         expect(storage.privateFiles.size).toBe(0);
     });
@@ -117,34 +125,34 @@ describe("userPhotoService.uploadPhoto", () => {
         };
         vi.mocked(userPhotoRepository.listDuplicateCandidates).mockResolvedValue([stored]);
 
-        const exact = await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: original, showAuthorName: true }));
+        const exact = await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: original, fromCheckIn: false, showAuthorName: true }));
         expect(exact.statusCode).toBe(409);
         expect(exact.code).toBe("duplicate_photo");
         expect(exact.message).not.toContain(stored._id.toString());
 
         const reencoded = await sharp(original).jpeg({ quality: 35 }).resize(800).toBuffer();
-        const near = await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: reencoded, showAuthorName: true }));
+        const near = await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: reencoded, fromCheckIn: false, showAuthorName: true }));
         expect(near.code).toBe("duplicate_photo");
         expect(storage.privateFiles.size).toBe(0);
     });
 
     it("turns a race on the unique file hash into a duplicate error and removes the stored files", async () => {
         vi.mocked(userPhotoRepository.create).mockRejectedValue(Object.assign(new Error("E11000"), { code: 11000 }));
-        const error = await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), showAuthorName: true }));
+        const error = await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), fromCheckIn: false, showAuthorName: true }));
         expect(error.code).toBe("duplicate_photo");
         expect(storage.privateFiles.size).toBe(0);
     });
 
     it("answers 503 when no storage is configured", async () => {
         setPhotoStorageForTesting(null);
-        const error = await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), showAuthorName: true }));
+        const error = await refusal(userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: await photo(), fromCheckIn: false, showAuthorName: true }));
         expect(error.statusCode).toBe(503);
         expect(error.code).toBe("photo_uploads_disabled");
     });
 
     it("records a failed quality layer for a blurred photo instead of publishing it", async () => {
         const blurred = await sharp(await photo()).blur(16).toBuffer();
-        await userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: blurred, showAuthorName: true });
+        await userPhotoService.uploadPhoto({ userId: USER_ID, placeId: PLACE_ID, image: blurred, fromCheckIn: false, showAuthorName: true });
         const created = vi.mocked(userPhotoRepository.create).mock.calls[0][0];
         expect(created.status).toBe("pending");
         expect(created.moderation[0]).toMatchObject({ layer: "quality", verdict: "fail", reason: "low_quality" });

@@ -35,14 +35,14 @@ describe("POST /places/:placeId/photos", () => {
         const body = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
 
         const response = await request(createApp())
-            .post("/places/ChIJ-place/photos?showAuthorName=false&checkInId=64b0000000000000000000aa")
+            .post("/places/ChIJ-place/photos?showAuthorName=false&fromCheckIn=true")
             .set("Content-Type", "image/jpeg")
             .send(body);
 
         expect(response.status).toBe(201);
         expect(response.body.status).toBe("pending");
         expect(upload).toHaveBeenCalledWith(expect.objectContaining({
-            userId: USER_ID, placeId: "ChIJ-place", showAuthorName: false, checkInId: "64b0000000000000000000aa",
+            userId: USER_ID, placeId: "ChIJ-place", showAuthorName: false, fromCheckIn: true,
         }));
         expect(Buffer.compare(upload.mock.calls[0][0].image, body)).toBe(0);
     });
@@ -59,10 +59,10 @@ describe("POST /places/:placeId/photos", () => {
         expect(upload).not.toHaveBeenCalled();
     });
 
-    it("rejects an empty body and a malformed check-in id", async () => {
+    it("rejects an empty body and malformed options", async () => {
         vi.spyOn(userPhotoService, "uploadPhoto").mockResolvedValue(photoResponse);
         expect((await request(createApp()).post("/places/ChIJ-place/photos")).body.code).toBe("missing_image");
-        const bad = await request(createApp()).post("/places/ChIJ-place/photos?checkInId=nope")
+        const bad = await request(createApp()).post("/places/ChIJ-place/photos?fromCheckIn=maybe")
             .set("Content-Type", "image/jpeg").send(Buffer.from([1, 2, 3]));
         expect(bad.status).toBe(400);
     });

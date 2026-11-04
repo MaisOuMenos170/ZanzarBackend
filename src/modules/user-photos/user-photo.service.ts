@@ -26,7 +26,7 @@ export interface UploadPhotoInput {
     userId: string;
     placeId: string;
     image: Buffer;
-    checkInId?: string;
+    fromCheckIn: boolean;
     showAuthorName: boolean;
 }
 
@@ -134,9 +134,9 @@ export const userPhotoService = {
         const place = await placeRepository.findByPlaceId(input.placeId);
         if (!place) throw new AppError("Place not found", 404);
 
-        if (input.checkInId
-            && !(await userPhotoRepository.isUserCheckInAtPlace(input.checkInId, input.userId, input.placeId))) {
-            throw new AppError("Check-in does not belong to this user and place", 422, "invalid_check_in");
+        const checkInId = input.fromCheckIn ? await userPhotoRepository.findUserCheckInAtPlace(input.userId, input.placeId) : null;
+        if (input.fromCheckIn && !checkInId) {
+            throw new AppError("No check-in of this user at this place", 422, "invalid_check_in");
         }
 
         const processed = await processUploadedPhoto(input.image);
@@ -168,8 +168,8 @@ export const userPhotoService = {
                 userId: new Types.ObjectId(input.userId),
                 // Nothing is ever published straight from upload: the moderation worker decides.
                 status: "pending",
-                isVerifiedCheckIn: Boolean(input.checkInId),
-                checkInId: input.checkInId ? new Types.ObjectId(input.checkInId) : undefined,
+                isVerifiedCheckIn: checkInId !== null,
+                checkInId: checkInId ?? undefined,
                 showAuthorName: input.showAuthorName,
                 termsVersion: USER_PHOTO_TERMS_VERSION,
                 storageKey,
