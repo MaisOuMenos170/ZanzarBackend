@@ -19,8 +19,10 @@ import { placeSuggestionRouter } from "./modules/place-suggestions/place-suggest
 import { stampsRouter } from "./modules/stamps/stamps.routes";
 import { itineraryRouter } from "./modules/itineraries/itinerary.routes";
 import { userPhotoRouter } from "./modules/user-photos/user-photo.routes";
+import { userPhotoCommunityRouter, userPhotoPublicRouter } from "./modules/user-photos/user-photo-community.routes";
 import { devPhotoFilesRouter } from "./modules/user-photos/dev-photo-files.routes";
 import { moderationWorker } from "./modules/user-photos/moderation/moderation.service";
+import { userPhotoCommunityService } from "./modules/user-photos/user-photo-community.service";
 
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
@@ -103,7 +105,9 @@ app.use(healthRouter);
 app.use(authRouter);
 app.use(placeRouter);
 app.use(devPhotoFilesRouter);
+app.use(userPhotoPublicRouter);
 app.use(validateAuthToken, userPhotoRouter);
+app.use(validateAuthToken, userPhotoCommunityRouter);
 app.use(validateAuthToken, itineraryRouter);
 app.use(validateAuthToken, userRouter);
 app.use(validateAuthToken, checkInRouter);
@@ -127,6 +131,10 @@ connectDatabase()
       );
     });
     moderationWorker.start();
+    // Retention of rejected photos' files (docs/fotos-de-usuario-decisao.md): checked hourly.
+    setInterval(() => {
+      userPhotoCommunityService.purgeExpiredRejected().catch((err) => logger.error({ err }, "Photo retention job failed"));
+    }, 60 * 60 * 1000).unref();
 
     for (const signal of ["SIGTERM", "SIGINT"] as const) {
       process.once(signal, () => {

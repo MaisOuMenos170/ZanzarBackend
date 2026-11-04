@@ -76,6 +76,15 @@ const ageDeclarationSchema = new Schema(
     { _id: false },
 );
 
+/** Someone this user blocked: their photos are hidden from this user. */
+const blockedUserSchema = new Schema(
+    {
+        userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        blockedAt: { type: Date, required: true },
+    },
+    { _id: false },
+);
+
 const userSchema = new Schema(
     {
         username: {
@@ -99,6 +108,7 @@ const userSchema = new Schema(
         completedItineraries: { type: [completedItinerarySchema], required: true, default: [] },
         photoTerms: { type: photoTermsAcceptanceSchema },
         ageDeclaration: { type: ageDeclarationSchema },
+        blockedUsers: { type: [blockedUserSchema], default: undefined },
     },
     { timestamps: true, collection: "users" },
 );

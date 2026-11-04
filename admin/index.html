@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Revisão de fotos</title>
+<style>
+  :root { --bg: #f6f5f2; --card: #fff; --ink: #1d1d1b; --muted: #6b6b66; --line: #e2e0da; --ok: #1f7a3f; --bad: #a3261b; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #161615; --card: #22221f; --ink: #f1efe9; --muted: #a7a49b; --line: #3a3934; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+  header { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 17px; margin: 0 auto 0 0; }
+  main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+  form.login { max-width: 320px; margin: 60px auto; display: grid; gap: 10px; }
+  input, select, button { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  button { cursor: pointer; }
+  button.approve { border-color: var(--ok); color: var(--ok); }
+  button.reject, button.remove { border-color: var(--bad); color: var(--bad); }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--line); }
+  .card .body { padding: 12px; display: grid; gap: 6px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .layers { font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .layers span { border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+  .layers .fail, .layers .error { border-color: var(--bad); color: var(--bad); }
+  .layers .doubt { border-style: dashed; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 12px 12px; }
+  .empty, .error-box { text-align: center; color: var(--muted); padding: 40px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Revisão de fotos do Lero</h1>
+  <select id="status" aria-label="Fila" hidden>
+    <option value="needs_review">Precisam de revisão</option>
+    <option value="pending">Em processamento</option>
+    <option value="approved">Publicadas</option>
+    <option value="rejected">Reprovadas</option>
+    <option value="removed">Removidas</option>
+  </select>
+  <button id="reload" hidden>Atualizar</button>
+  <button id="logout" hidden>Sair</button>
+</header>
+<main id="main">
+  <form class="login" id="login">
+    <p class="muted">Entre com uma conta da equipe (e-mail e senha do app).</p>
+    <input name="email" type="email" placeholder="E-mail" autocomplete="username" required>
+    <input name="password" type="password" placeholder="Senha" autocomplete="current-password" required>
+    <button type="submit">Entrar</button>
+    <p class="muted" id="login-error" role="alert"></p>
+  </form>
+</main>
+<template id="card">
+  <article class="card">
+    <img alt="Foto enviada">
+    <div class="body">
+      <strong class="place"></strong>
+      <span class="muted meta"></span>
+      <span class="reason"></span>
+      <div class="layers"></div>
+      <span class="muted reports"></span>
+    </div>
+    <div class="actions">
+      <button class="approve">Aprovar</button>
+      <select class="reason-select" aria-label="Motivo">
+        <option value="nudity">Nudez</option>
+        <option value="violence">Violência</option>
+        <option value="minors">Menores</option>
+        <option value="face_prominent">Pessoa reconhecível</option>
+        <option value="personal_data">Dados pessoais</option>
+        <option value="offensive_text">Texto ofensivo</option>
+        <option value="watermark">Marca d'água ou foto de terceiros</option>
+        <option value="not_the_place">Não é do lugar</option>
+        <option value="low_quality">Qualidade ruim</option>
+        <option value="other">Outro</option>
+      </select>
+      <button class="reject">Reprovar</button>
+      <button class="remove">Remover</button>
+    </div>
+  </article>
+</template>
+<script src="admin.js"></script>
+</body>
+</html>

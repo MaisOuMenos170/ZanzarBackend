@@ -31,3 +31,12 @@ export const MIN_BRIGHTNESS = 25;
 
 /** Lifetime of a signed URL to a photo that is not public (the author's own pending photo, the review queue). */
 export const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+/** Reports from this many different people take an approved photo down to `needs_review` until a human looks. */
+export const REPORTS_TO_HIDE = 3;
+
+/** Rejected photos keep their hashes (so they cannot be sent again) but their files are deleted after this. */
+export const REJECTED_FILES_RETENTION_DAYS = 30;
+
+/** Most photos of one place the public list returns; the app shows at most 5 together with the curated ones. */
+export const PUBLIC_PHOTOS_LIMIT = 20;

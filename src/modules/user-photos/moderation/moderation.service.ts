@@ -47,7 +47,7 @@ export function defaultModerationDependencies(): ModerationDependencies {
     };
 }
 
-async function publish(photo: UserPhoto, storage: PhotoStorage, jpeg: Buffer, thumbnail: Buffer) {
+export async function publishPhoto(photo: UserPhoto, storage: PhotoStorage, jpeg: Buffer, thumbnail: Buffer) {
     // A photo approved again after re-moderation keeps its public names.
     const publicKey = photo.publicKey ?? `${randomUUID()}.jpg`;
     const publicThumbnailKey = photo.publicThumbnailKey ?? `${randomUUID()}.jpg`;
@@ -72,7 +72,7 @@ export async function moderatePhoto(photo: UserPhoto, deps: ModerationDependenci
     const moderation = results.map((r) => ({ ...r, checkedAt: now }));
     let update: ModerationUpdate = { status: decision.status, moderation };
     if (decision.status === "approved") {
-        update = { ...update, ...(await publish(photo, deps.storage, jpeg, thumbnail)), decidedAt: now, decidedBy: "system" };
+        update = { ...update, ...(await publishPhoto(photo, deps.storage, jpeg, thumbnail)), decidedAt: now, decidedBy: "system" };
     } else {
         update = { ...update, decisionReason: decision.reason, ...(decision.status === "rejected" ? { decidedAt: now, decidedBy: "system" } : {}) };
     }

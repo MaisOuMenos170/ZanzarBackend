@@ -46,6 +46,8 @@ const userPhotoSchema = new Schema(
         decidedBy: { type: String, enum: ["system", "admin"] },
         reviewerId: { type: Schema.Types.ObjectId, ref: "User" },
         reportCount: { type: Number, required: true, min: 0, default: 0 },
+        /** Set when the retention job deleted the files of a rejected photo; the hashes stay to block re-uploads. */
+        filesPurgedAt: { type: Date },
         /** When the moderation worker claimed the photo; lets a crashed run be picked up again. */
         processingStartedAt: { type: Date },
     },
@@ -55,6 +57,7 @@ const userPhotoSchema = new Schema(
 userPhotoSchema.index({ placeId: 1, status: 1, createdAt: -1 }, { name: "user_photos_place_status" });
 userPhotoSchema.index({ userId: 1, createdAt: -1 }, { name: "user_photos_user_created" });
 userPhotoSchema.index({ status: 1, createdAt: 1 }, { name: "user_photos_status_created" });
+userPhotoSchema.index({ status: 1, decidedAt: 1 }, { name: "user_photos_status_decided" });
 // Unique: two uploads of the exact same file can never both be stored, even when they race.
 userPhotoSchema.index({ sha256: 1 }, { unique: true, name: "user_photos_sha256_unique" });
 
