@@ -1,0 +1,478 @@
+{
+  "ChIJFWlvqB_k3JQR7jsyAF9M8vU": {
+    "name": "Museu Oscar Niemeyer | MON",
+    "applePlaceId": "I5D3BFB40A2C6630A",
+    "appleName": "Oscar Niemeyer Museum",
+    "distanceMeters": 34,
+    "status": "ok"
+  },
+  "ChIJQSAIRdTm3JQR3EBLwWaWlGk": {
+    "name": "Parque Tanguá",
+    "applePlaceId": "ICF60178ACB7E6A09",
+    "appleName": "Parque Tanguá",
+    "distanceMeters": 197,
+    "status": "ok"
+  },
+  "ChIJpZGdeVTh3JQRR5bFBDNffy8": {
+    "name": "Bosque Gutierrez",
+    "applePlaceId": "I1E1ACF6A2A6B7E0C",
+    "appleName": "Bosque Gutierrez",
+    "distanceMeters": 98,
+    "status": "ok"
+  },
+  "ChIJxYnV2Qf73JQR0ASXvKNB7mA": {
+    "name": "Bosque Alemão",
+    "applePlaceId": "I2D547A67194970B6",
+    "appleName": "Bosque Alemão",
+    "distanceMeters": 176,
+    "status": "ok"
+  },
+  "ChIJ_ZZeGwDh3JQR_B3VA1wF7ec": {
+    "name": "Mirante Praça Barcelona",
+    "applePlaceId": "ID4C8EDD099237168",
+    "appleName": "Mirante Praça Barcelona",
+    "distanceMeters": 0,
+    "status": "ok"
+  },
+  "ChIJAQBsX8vm3JQRAugvDTcW0Jk": {
+    "name": "Burek Grill",
+    "applePlaceId": "IAC39862F3BA7123",
+    "appleName": "Burek Grill",
+    "distanceMeters": 13,
+    "status": "ok"
+  },
+  "ChIJ2X14xlbh3JQRMslmczesGV0": {
+    "name": "Schnaps Bar",
+    "applePlaceId": "I4DB05C217B2478FE",
+    "appleName": "Schnaps Bar",
+    "distanceMeters": 9,
+    "status": "ok"
+  },
+  "ChIJO4taPrXm3JQRTPhFQf_T8Rc": {
+    "name": "Bosque Zaninelli I UNILIVRE",
+    "applePlaceId": "I415CBF8881F61A4F",
+    "appleName": "Bosque Zaninelli (Unilivre)",
+    "distanceMeters": 298,
+    "status": "ok"
+  },
+  "ChIJkbSf5VT73JQRcLsZmef8Q90": {
+    "name": "Costelão Brasília",
+    "applePlaceId": "I91E19F88F7095206",
+    "appleName": "Restaurante & Costelão Brasília",
+    "distanceMeters": 38,
+    "status": "ok"
+  },
+  "ChIJfxqcEw3k3JQRsVaoyTDOZKA": {
+    "name": "Restaurante Gato Preto",
+    "applePlaceId": "I489C59F0E4702ED4",
+    "appleName": "Restaurante Gato Preto",
+    "distanceMeters": 10,
+    "status": "ok"
+  },
+  "ChIJx62W133k3JQRwq-5IgDkFmM": {
+    "name": "Bek's Bar",
+    "applePlaceId": "I122369C2CF3E356B",
+    "appleName": "Bek's Bar",
+    "distanceMeters": 5,
+    "status": "ok"
+  },
+  "ChIJtxP_sVDh3JQRi6b2CUIbFac": {
+    "name": "Rua Deputado Chafic Curi",
+    "applePlaceId": null,
+    "appleName": "Rua Deputado Chafic Curi",
+    "distanceMeters": 7,
+    "status": "revisar"
+  },
+  "ChIJF9hKy23n3JQRwtmM2-iEG-Y": {
+    "name": "Museu Egípcio e Rosacruz - Tutankhamon",
+    "applePlaceId": null,
+    "appleName": null,
+    "distanceMeters": null,
+    "status": "revisar"
+  },
+  "ChIJeUBfgxvk3JQRUXSh7ycAc_s": {
+    "name": "R. Mateus Leme, 1224",
+    "applePlaceId": null,
+    "appleName": "Rua Mateus Leme, 1224",
+    "distanceMeters": 8,
+    "status": "revisar"
+  },
+  "ChIJZUG4uTDk3JQRzI4OwwvOhPU": {
+    "name": "Edifício El Cashbah",
+    "applePlaceId": "IFCF579CF64168DA1",
+    "appleName": "El Cashbah",
+    "distanceMeters": 5,
+    "status": "ok"
+  },
+  "ChIJOT0RQIfk3JQRHV8cqZ3RKZw": {
+    "name": "Costelão Água Verde",
+    "applePlaceId": "ID12B477AB511127E",
+    "appleName": "Costelão Havana",
+    "distanceMeters": 4,
+    "status": "ok"
+  },
+  "ChIJZ2aeCRLk3JQRvDAX1BUsBJo": {
+    "name": "Cavalo Babão",
+    "applePlaceId": "I40BDCE142388A835",
+    "appleName": "Cavalo Babão",
+    "distanceMeters": 10,
+    "status": "ok"
+  },
+  "ChIJLQCsBQ_j3JQRqUU7Pw_kzZI": {
+    "name": "Sforno Trattoria e Pizzaria | Caranguejo em Curitiba",
+    "applePlaceId": null,
+    "appleName": null,
+    "distanceMeters": null,
+    "status": "revisar"
+  },
+  "ChIJbyW3HRLk3JQR9Od-AJCxkmQ": {
+    "name": "Arcádia - Sebo & Café - Vinis, Livros, Dvds, Cds",
+    "applePlaceId": null,
+    "appleName": null,
+    "distanceMeters": null,
+    "status": "revisar"
+  },
+  "ChIJKWpDaRLk3JQRSaxCYmuUspc": {
+    "name": "Memorial de Curitiba",
+    "applePlaceId": "I6FA45E96EF9F43E9",
+    "appleName": "Memorial de Curitiba",
+    "distanceMeters": 30,
+    "status": "ok"
+  },
+  "ChIJJxOyglvl3JQRijqeBfsu42Y": {
+    "name": "Ruínas de São Francisco",
+    "applePlaceId": "IF3DC0A134C0E0970",
+    "appleName": "Ruinas de Sao Francisco",
+    "distanceMeters": 1,
+    "status": "ok"
+  },
+  "ChIJp1_LiN_j3JQRUx7PRRpC7WQ": {
+    "name": "Parque Barigui",
+    "applePlaceId": "I5BE1CC8F59907E74",
+    "appleName": "Parque Municipal Barigui",
+    "distanceMeters": 151,
+    "status": "ok"
+  },
+  "ChIJcZ4sdtjj3JQRW71FjdK1KFY": {
+    "name": "Parque Barigui",
+    "applePlaceId": "I5BE1CC8F59907E74",
+    "appleName": "Parque Municipal Barigui",
+    "distanceMeters": 455,
+    "status": "ok"
+  },
+  "ChIJNWbp1QDl3JQRVFbc_cVeLRo": {
+    "name": "Jardim Botânico Municipal de Curitiba",
+    "applePlaceId": null,
+    "appleName": "Mercado Municipal de Curitiba",
+    "distanceMeters": 1812,
+    "status": "revisar"
+  },
+  "ChIJjeoMzKDm3JQRjo7sKcYAxYY": {
+    "name": "Bosque Papa João Paulo II",
+    "applePlaceId": "IB51BF7DF85A94C4E",
+    "appleName": "Bosque João Paulo II",
+    "distanceMeters": 206,
+    "status": "ok"
+  },
+  "ChIJtcLuEcLm3JQRnnLawWWhF-A": {
+    "name": "Parque São Lourenço",
+    "applePlaceId": "I349A0CDFD517AC5F",
+    "appleName": "Parque São Lourenço",
+    "distanceMeters": 332,
+    "status": "ok"
+  },
+  "ChIJj6MAL_3n3JQR4iXBcCpsJTU": {
+    "name": "Memorial Paranista",
+    "applePlaceId": "I145CE1CE441B0086",
+    "appleName": "Memorial Paranista",
+    "distanceMeters": 78,
+    "status": "ok"
+  },
+  "ChIJ23FEvFLh3JQRcAN4eoPeko0": {
+    "name": "Portal do Bosque Alemão",
+    "applePlaceId": null,
+    "appleName": null,
+    "distanceMeters": null,
+    "status": "revisar"
+  },
+  "ChIJOSofdLXh3JQRb6Wgt64Wxh0": {
+    "name": "Parque Tingui",
+    "applePlaceId": "I44F26855FBC6E363",
+    "appleName": "Parque Tingui",
+    "distanceMeters": 634,
+    "status": "ok"
+  },
+  "ChIJdfpFv8wC3ZQRKyqJ1TOimew": {
+    "name": "Represa do Passaúna",
+    "applePlaceId": "IA69484A5C745C979",
+    "appleName": "Represa do Rio Passaúna",
+    "distanceMeters": 254,
+    "status": "ok"
+  },
+  "ChIJVbyydhTk3JQR3rEscng0WJ4": {
+    "name": "Passeio Público",
+    "applePlaceId": "I422CA54732618E20",
+    "appleName": "Passeio Publico",
+    "distanceMeters": 41,
+    "status": "ok"
+  },
+  "ChIJcdQcyMfl3JQRrAFsIVknfeM": {
+    "name": "Bosque de Portugal 🇵🇹",
+    "applePlaceId": "IDBCB4F24A76B7309",
+    "appleName": "Bosque de Portugal",
+    "distanceMeters": 380,
+    "status": "ok"
+  },
+  "ChIJA0KXnIjj3JQRk20FWL4rEI8": {
+    "name": "Praça do Japão",
+    "applePlaceId": "IA6DB916B5BA784EE",
+    "appleName": "Japan Square",
+    "distanceMeters": 25,
+    "status": "ok"
+  },
+  "ChIJRa87mHHm3JQRmN5GBeKQfqI": {
+    "name": "Parque General Iberê de Matos (Parque Bacacheri)",
+    "applePlaceId": null,
+    "appleName": "Rua Avelino Matos Machado",
+    "distanceMeters": 354580,
+    "status": "revisar"
+  },
+  "ChIJ8--USBPk3JQRlTz-mPPpGHI": {
+    "name": "Sesc Paço da Liberdade",
+    "applePlaceId": "I5DD22F13CBEFE3EA",
+    "appleName": "Sesc",
+    "distanceMeters": 9,
+    "status": "ok"
+  },
+  "ChIJv7u9lzrl3JQRuObisKj8YmQ": {
+    "name": "Royalty Café",
+    "applePlaceId": "I59ACDB9FCA509C08",
+    "appleName": "Royalty Quality Coffee",
+    "distanceMeters": 14,
+    "status": "ok"
+  },
+  "ChIJJ2IExOXn3JQRJhbl1XdVu2c": {
+    "name": "Meguro Café メグロカフェ",
+    "applePlaceId": null,
+    "appleName": null,
+    "distanceMeters": null,
+    "status": "revisar"
+  },
+  "ChIJc3cRQRLk3JQRwZm09a0UJpg": {
+    "name": "Bar do Alemão",
+    "applePlaceId": "I23C23D0B6DC6153F",
+    "appleName": "Bar do Alemão",
+    "distanceMeters": 16,
+    "status": "ok"
+  },
+  "ChIJ0z5BbQjl3JQRG7f6PdRCb2U": {
+    "name": "Olga Speakeasy",
+    "applePlaceId": "IA504FF9AA56C8869",
+    "appleName": "Olga Speakeasy",
+    "distanceMeters": 8,
+    "status": "ok"
+  },
+  "ChIJnxQ0jg3k3JQRHdDMdGDP1yY": {
+    "name": "Cantina e Pizzaria Baviera",
+    "applePlaceId": "I2CADA6191761F18E",
+    "appleName": "Baviera",
+    "distanceMeters": 1,
+    "status": "ok"
+  },
+  "ChIJhb9ZfVbh3JQRLzqgbcqbi0E": {
+    "name": "Museu da Vida da Pastoral da Criança",
+    "applePlaceId": null,
+    "appleName": null,
+    "distanceMeters": null,
+    "status": "revisar"
+  },
+  "ChIJV5nIeA7k3JQRgFtWpJe_Ay4": {
+    "name": "Museu Paranaense | MUPA",
+    "applePlaceId": null,
+    "appleName": "Kabupaten Seluma",
+    "distanceMeters": 15566419,
+    "status": "revisar"
+  },
+  "ChIJ-bVZwmvk3JQRBVoEj9XahTo": {
+    "name": "Museu da Imagem e do Som | MIS",
+    "applePlaceId": "IA5A0A62EF23F6E65",
+    "appleName": "Image and Sound Museum of Paraná",
+    "distanceMeters": 11,
+    "status": "ok"
+  },
+  "ChIJa4YmlBzk3JQRS4OdSageFLA": {
+    "name": "Museu do Holocausto",
+    "applePlaceId": "I7F3EFF5F254DC21A",
+    "appleName": "Museu do Holocausto",
+    "distanceMeters": 38,
+    "status": "ok"
+  },
+  "ChIJI5jNWHTl3JQR7j4xPuFl97o": {
+    "name": "Museu de História Natural Capão da Imbuia",
+    "applePlaceId": "I1B3241193C80823F",
+    "appleName": "MHNCI - Museu de História Natural Capão da Imbuia",
+    "distanceMeters": 195,
+    "status": "ok"
+  },
+  "ChIJtznvcm3k3JQRvfi2FTbDewA": {
+    "name": "MAC - Museu de Arte Contemporânea do Paraná",
+    "applePlaceId": "I10CEE246AB24DBF",
+    "appleName": "Museu de Arte Contemporânea do Paraná - Mac",
+    "distanceMeters": 23,
+    "status": "ok"
+  },
+  "ChIJiw3yZ2jk3JQRg9MJOP8f60U": {
+    "name": "Museu Ferroviário",
+    "applePlaceId": "IB254DB4A5295F4B",
+    "appleName": "Railway Museum",
+    "distanceMeters": 18,
+    "status": "ok"
+  },
+  "ChIJcXlQj9_j3JQRmEmD99mVLCE": {
+    "name": "Museu do Automóvel de Curitiba",
+    "applePlaceId": "I17DA257C3693A722",
+    "appleName": "Museu do Automovel",
+    "distanceMeters": 12,
+    "status": "ok"
+  },
+  "ChIJ14HG3BPk3JQRT1W3nomwWok": {
+    "name": "Museu da Fotografia Cidade de Curitiba",
+    "applePlaceId": "IEC49D1B2C629E478",
+    "appleName": "Museu da Fotografia Cidade de Curitiba",
+    "distanceMeters": 337,
+    "status": "ok"
+  },
+  "ChIJo8UcFYDj3JQR84S_oGdfyxU": {
+    "name": "MAI - Museu de Arte Indígena",
+    "applePlaceId": "I6A30AAC1225686EA",
+    "appleName": "Museu de Arte Indigena",
+    "distanceMeters": 43,
+    "status": "ok"
+  },
+  "ChIJBbTg4uPl3JQR8If_C8zbboM": {
+    "name": "Museu Planeta Água",
+    "applePlaceId": "IAB0F09E13C9E2109",
+    "appleName": "Museu Planeta Água",
+    "distanceMeters": 44,
+    "status": "ok"
+  },
+  "ChIJKb3zyRPk3JQRSFeyinHEksU": {
+    "name": "Semente de Girassol",
+    "applePlaceId": "I262D2BA9F6F062F0",
+    "appleName": "Semente de Girassol",
+    "distanceMeters": 126,
+    "status": "ok"
+  },
+  "ChIJrRZVCxPk3JQRklihwPYGiJM": {
+    "name": "R. São Francisco, 171",
+    "applePlaceId": null,
+    "appleName": "Rua São Francisco, 171",
+    "distanceMeters": 1,
+    "status": "revisar"
+  },
+  "ChIJnwaDeWX73JQR47GrVeHFlwk": {
+    "name": "Café Flor de Laranjeira",
+    "applePlaceId": "I3273F5BC8AB56341",
+    "appleName": "Flor de Laranjeira Café",
+    "distanceMeters": 3,
+    "status": "ok"
+  },
+  "ChIJrzqodBPk3JQRVGhS1QIiRuc": {
+    "name": "Jokers",
+    "applePlaceId": "IB3D2CF7F9150452D",
+    "appleName": "Jokers",
+    "distanceMeters": 8,
+    "status": "ok"
+  },
+  "ChIJJRo3hmPl3JQRP9_IeVWP5ME": {
+    "name": "Mural Poty Lazzarotto: Imagens da Cidade",
+    "applePlaceId": null,
+    "appleName": null,
+    "distanceMeters": null,
+    "status": "revisar"
+  },
+  "ChIJVciw-WXk3JQREi-fISnUIto": {
+    "name": "Universidade Tecnológica Federal do Paraná | Campus Curitiba - Sede Centro",
+    "applePlaceId": "IABD1F8CC98DCAA7E",
+    "appleName": "Universidade Tecnológica Federal do Paraná - Câmpus Curitiba - Sede Centro",
+    "distanceMeters": 85,
+    "status": "ok"
+  },
+  "ChIJg8dYLmLl3JQRvrXKeXom6us": {
+    "name": "Gambei Curitiba",
+    "applePlaceId": null,
+    "appleName": "Curitiba",
+    "distanceMeters": 1037,
+    "status": "revisar"
+  },
+  "ChIJz8bf0x_k3JQRn7YKlBLeLD8": {
+    "name": "Curitiba Sunset",
+    "applePlaceId": "I1A8E5AC739CE14E7",
+    "appleName": "Curitiba Sunset Café",
+    "distanceMeters": 26,
+    "status": "ok"
+  },
+  "ChIJRxiuaBLk3JQRV7ydc2O3y28": {
+    "name": "Al Beek",
+    "applePlaceId": "IDB131EDAEFAB968C",
+    "appleName": "Al Beek Gastronomia Arabe",
+    "distanceMeters": 31,
+    "status": "ok"
+  },
+  "ChIJD2i-e0Hk3JQRG_PzgNgY5rs": {
+    "name": "Lanches Missal Shawarma",
+    "applePlaceId": "IDEB4E019138C8132",
+    "appleName": "Lanches Missal Shawarma",
+    "distanceMeters": 7,
+    "status": "ok"
+  },
+  "ChIJi-dKvorj3JQRXctwoAzT6Sg": {
+    "name": "James Bar e Garden",
+    "applePlaceId": null,
+    "appleName": "James Ave",
+    "distanceMeters": 9771941,
+    "status": "revisar"
+  },
+  "ChIJ9RRCEhLk3JQR5IhhhMgqF0w": {
+    "name": "Verdant",
+    "applePlaceId": "I2597AD6BA4D810DD",
+    "appleName": "Verdant",
+    "distanceMeters": 8,
+    "status": "ok"
+  },
+  "ChIJmaC9fXnk3JQRfxMJQrRcpdA": {
+    "name": "Taisho Sushi",
+    "applePlaceId": "I5D7F80AF7327D9CB",
+    "appleName": "Taisho Sushi",
+    "distanceMeters": 9,
+    "status": "ok"
+  },
+  "ChIJt_BpOgLl3JQRKGRDtE125Ck": {
+    "name": "Cine Passeio",
+    "applePlaceId": "I36375FF82DE0B844",
+    "appleName": "Cine Passeio",
+    "distanceMeters": 5,
+    "status": "ok"
+  },
+  "ChIJHWw9BxLk3JQRlgEqD_1u3Uw": {
+    "name": "Matias Bar",
+    "applePlaceId": "I9C2B44807BF39E1",
+    "appleName": "Matias Bar",
+    "distanceMeters": 14,
+    "status": "ok"
+  },
+  "ChIJB19rfIfl3JQRwEdPccNWka8": {
+    "name": "Queroquero Comida e Bar",
+    "applePlaceId": "IDDAFF0207E75D30E",
+    "appleName": "Queroquero Comida e Bar",
+    "distanceMeters": 0,
+    "status": "ok"
+  },
+  "ChIJN_IIGQDl3JQRFFu4KtEv9Tk": {
+    "name": "É Dino Cultural",
+    "applePlaceId": "I92539D29DF7CE7AF",
+    "appleName": "É Dino Cultural",
+    "distanceMeters": 0,
+    "status": "ok"
+  }
+}
