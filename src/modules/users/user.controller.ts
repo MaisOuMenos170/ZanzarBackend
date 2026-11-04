@@ -1,6 +1,11 @@
 import { RequestHandler } from "express";
 import { AppError } from "../../errors/appError";
-import { savedPlaceParamsSchema, type SavePlaceBody } from "../../schemas/user";
+import {
+    savedPlaceParamsSchema,
+    type CreateAvatarBody,
+    type SavePlaceBody,
+    type UpdateAvatarBody,
+} from "../../schemas/user";
 import { itineraryService } from "../itineraries/itinerary.service";
 import { userService } from "./user.service";
 
@@ -43,5 +48,25 @@ export const removeSavedPlace: RequestHandler = async (req, res) => {
     }
 
     await userService.removeSavedPlace(req.params.id as string, paramsResult.data.placeId);
+    res.status(204).send();
+};
+
+export const getAvatar: RequestHandler = async (req, res) => {
+    const avatar = await userService.getAvatar(req.params.id as string);
+    res.status(200).json(avatar);
+};
+
+export const createAvatar: RequestHandler = async (req, res) => {
+    const avatar = await userService.createAvatar(req.params.id as string, req.body as CreateAvatarBody);
+    res.status(201).json(avatar);
+};
+
+export const updateAvatar: RequestHandler = async (req, res) => {
+    const avatar = await userService.updateAvatar(req.params.id as string, req.body as UpdateAvatarBody);
+    res.status(200).json(avatar);
+};
+
+export const removeAvatar: RequestHandler = async (req, res) => {
+    await userService.removeAvatar(req.params.id as string);
     res.status(204).send();
 };
