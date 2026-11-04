@@ -19,6 +19,7 @@ import { hammingDistance, processUploadedPhoto } from "./image-processing";
 import { moderationWorker } from "./moderation/moderation.service";
 import { getPhotoStorage, type PhotoStorage } from "./photo-storage";
 import { userPhotoRepository, type DuplicateCandidate } from "./user-photo.repository";
+import { userPhotoCommunityRepository } from "./user-photo-community.repository";
 
 const log = logger.child({ module: "userPhotos", layer: "service" });
 
@@ -61,7 +62,7 @@ function requireStorage(): PhotoStorage {
     return storage;
 }
 
-async function toResponse(photo: UserPhoto, storage: PhotoStorage, viewerIsAuthor: boolean): Promise<UserPhotoResponse> {
+async function toResponse(photo: UserPhoto, storage: PhotoStorage, viewerIsAuthor: boolean, placeName: string | null = null): Promise<UserPhotoResponse> {
     let url: string | null = null;
     let thumbnailUrl: string | null = null;
     if (photo.status === "approved" && photo.publicKey && photo.publicThumbnailKey) {
@@ -76,6 +77,7 @@ async function toResponse(photo: UserPhoto, storage: PhotoStorage, viewerIsAutho
     return {
         id: photo._id.toString(),
         placeId: photo.placeId,
+        placeName,
         status: photo.status,
         isVerifiedCheckIn: photo.isVerifiedCheckIn,
         showAuthorName: photo.showAuthorName,
@@ -217,12 +219,13 @@ export const userPhotoService = {
             details: { isVerifiedCheckIn: photo.isVerifiedCheckIn, termsVersion: USER_PHOTO_TERMS_VERSION },
         });
         moderationWorker.wake();
-        return toResponse(photo, storage, true);
+        return toResponse(photo, storage, true, place.name ?? null);
     },
 
     async listOwnPhotos(userId: string): Promise<UserPhotoResponse[]> {
         const storage = requireStorage();
         const photos = await userPhotoRepository.listByUser(userId);
-        return Promise.all(photos.map((photo) => toResponse(photo, storage, true)));
+        const names = await userPhotoCommunityRepository.placeNames([...new Set(photos.map((p) => p.placeId))]);
+        return Promise.all(photos.map((photo) => toResponse(photo, storage, true, names.get(photo.placeId) ?? null)));
     },
 };

@@ -10,7 +10,7 @@ import { userPhotoService } from "./user-photo.service.js";
 const USER_ID = "64b000000000000000000001";
 const OTHER_USER_ID = "64b000000000000000000002";
 const photoResponse = {
-    id: "p1", placeId: "ChIJ-place", status: "pending" as const, isVerifiedCheckIn: false, showAuthorName: true,
+    id: "p1", placeId: "ChIJ-place", placeName: "Bar", status: "pending" as const, isVerifiedCheckIn: false, showAuthorName: true,
     width: 1200, height: 900, url: "https://x/private.jpg", thumbnailUrl: "https://x/t.jpg", decisionReason: null,
     createdAt: "2026-11-03T12:00:00.000Z", decidedAt: null,
 };

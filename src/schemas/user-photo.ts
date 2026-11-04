@@ -19,6 +19,7 @@ export const uploadPhotoQuerySchema = z.object({
 export const userPhotoResponseSchema = z.object({
     id: z.string(),
     placeId: z.string(),
+    placeName: z.string().nullable(),
     status: z.enum(USER_PHOTO_STATUSES),
     isVerifiedCheckIn: z.boolean(),
     showAuthorName: z.boolean(),
