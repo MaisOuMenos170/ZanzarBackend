@@ -23,7 +23,7 @@ ZanzarBackend/
 
 ## Collections (database `Zanzardb`)
 
-Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados).
+Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados);
 
 | Collection | Diagrama / Notion | Descrição |
 |---|---|---|
