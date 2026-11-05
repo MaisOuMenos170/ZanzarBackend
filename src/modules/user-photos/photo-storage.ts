@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { PUBLIC_PHOTO_CACHE_SECONDS } from "../../constants/user-photos";
 import { AppError } from "../../errors/appError";
 import { logger } from "../../utils/logger";
 
@@ -58,7 +59,7 @@ export class SupabasePhotoStorage implements PhotoStorage {
         await this.request("POST", `object/${bucket}/${key}`, new Blob([new Uint8Array(data)]), {
             "Content-Type": "image/jpeg",
             "x-upsert": "false",
-            "Cache-Control": "max-age=31536000",
+            "Cache-Control": `max-age=${PUBLIC_PHOTO_CACHE_SECONDS}`,
         });
     }
 

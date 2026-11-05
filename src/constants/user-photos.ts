@@ -29,6 +29,12 @@ export const POSSIBLE_DUPLICATE_MAX_DISTANCE = 17;
 export const MIN_SHARPNESS = 40;
 export const MIN_BRIGHTNESS = 25;
 
+/**
+ * How long the storage CDN may cache a public photo. Measured on Supabase Free: a deleted object keeps being
+ * served from the CDN until this expires, so a photo taken down stays reachable (by its random URL) this long.
+ */
+export const PUBLIC_PHOTO_CACHE_SECONDS = 10 * 60;
+
 /** Lifetime of a signed URL to a photo that is not public (the author's own pending photo, the review queue). */
 export const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
