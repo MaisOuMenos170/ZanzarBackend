@@ -18,11 +18,14 @@ if (!jsonPath) {
   throw new Error('LUGARES_JSON_PATH não definido');
 }
 
-const rawPlaces = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+const catalog = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
-if (!Array.isArray(rawPlaces)) {
+if (!Array.isArray(catalog)) {
   throw new Error('lugares.json deve ser um array JSON');
 }
+
+// As imagens próprias ficam em data/place-images.json: o JSON do GitHub não as conhece.
+const rawPlaces = mergePlaceImages(catalog, readPlaceImages(process.env.PLACE_IMAGES_PATH));
 
 const placeResults = syncPlaces(dbx, rawPlaces);
 

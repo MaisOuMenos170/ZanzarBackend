@@ -10,6 +10,9 @@ const inferencePath =
     : 'scripts/seed/lugares-inference.js');
 load(inferencePath);
 
+const placeImagesLibPath = inferencePath.replace(/lugares-inference\.js$/, 'place-images.js');
+load(placeImagesLibPath);
+
 const PLACE_FIELD_KEYS = [
   'place_id',
   'name',
@@ -28,6 +31,7 @@ const PLACE_FIELD_KEYS = [
   'user_ratings_total',
   'price_level',
   'photos',
+  'images',
   'added_at',
   'updated_at',
 ];

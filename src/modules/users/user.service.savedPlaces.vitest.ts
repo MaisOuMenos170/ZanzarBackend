@@ -8,7 +8,7 @@ import { MAX_SAVED_PLACES } from "../../constants/saved-places.js";
 const place = {
     place_id: "ChIJ1",
     name: "Bar do Zé",
-    photos: [{ photo_reference: "AUacSh", height: 100, width: 100 }],
+    images: [{ url: "https://cdn.example.com/bar-do-ze-1.jpg", credit: { author: "Ana", license: "CC BY 4.0" } }],
 } as any;
 
 describe("userService saved places", () => {
@@ -31,13 +31,13 @@ describe("userService saved places", () => {
                     placeId: "ChIJ-gone",
                     savedAt: new Date("2026-10-03T10:00:00.000Z"),
                     placeName: null,
-                    photoReference: null,
+                    imageUrl: null,
                 },
                 {
                     placeId: "ChIJ1",
                     savedAt: new Date("2026-10-01T10:00:00.000Z"),
                     placeName: "Bar do Zé",
-                    photoReference: "AUacSh",
+                    imageUrl: "https://cdn.example.com/bar-do-ze-1.jpg",
                 },
             ]);
         });

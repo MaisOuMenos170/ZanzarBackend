@@ -18,6 +18,23 @@ export const placePhotoSchema = z.object({
   width: z.number().int().positive(),
 });
 
+const httpsUrlSchema = z.url({ protocol: /^https$/ });
+
+export const placeImageCreditSchema = z.object({
+  author: z.string().min(1),
+  license: z.string().min(1),
+  licenseUrl: httpsUrlSchema.optional(),
+  sourceUrl: httpsUrlSchema,
+});
+
+/** Foto própria ou de fonte livre. O crédito é obrigatório porque as licenças (CC BY, CC BY-SA) exigem atribuição. */
+export const placeImageSchema = z.object({
+  url: httpsUrlSchema,
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  credit: placeImageCreditSchema,
+});
+
 export const geoPointSchema = z.object({
   type: z.literal('Point'),
   coordinates: z.tuple([z.number(), z.number()]),
@@ -54,6 +71,7 @@ export const placeDocumentSchema = z.object({
   user_ratings_total: z.number().int().nonnegative().optional(),
   price_level: z.number().int().min(0).max(4).optional(),
   photos: z.array(placePhotoSchema).default([]),
+  images: z.array(placeImageSchema).default([]),
   zanzar: zanzarExtensionSchema,
   geoLocation: geoPointSchema.optional(),
   added_at: isoDateTimeSchema,
@@ -70,6 +88,7 @@ export const placeNearbySchema = placeDocumentSchema.extend({
   userContext: placeUserContextSchema.nullable(),
 });
 
+export type PlaceImage = z.infer<typeof placeImageSchema>;
 export type PlaceDocument = z.infer<typeof placeDocumentSchema>;
 export type PlaceNearbyDocument = z.infer<typeof placeNearbySchema>;
 export type PlaceUserContext = z.infer<typeof placeUserContextSchema>;
