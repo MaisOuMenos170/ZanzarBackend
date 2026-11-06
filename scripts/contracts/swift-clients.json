@@ -17,5 +17,10 @@
   "src/schemas/auth.ts": [
     "LoginService.swift",
     "SignUpService.swift"
+  ],
+  "src/schemas/user-photo.ts": [
+    "UserPhotosService.swift",
+    "UserPhotoAPIResponse.swift",
+    "PlaceUserPhotoAPIResponse.swift"
   ]
 }

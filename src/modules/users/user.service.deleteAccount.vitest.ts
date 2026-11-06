@@ -6,6 +6,10 @@ import { checkInRepository } from "../checkin/checkin.repository.js";
 import { ratingRepository } from "../rating/rating.repository.js";
 import { syncMutationRepository } from "../sync/sync-mutation.repository.js";
 import { placeRepository } from "../places/place.repository.js";
+import { Types } from "mongoose";
+import { userPhotoCommunityRepository } from "../user-photos/user-photo-community.repository.js";
+import { userPhotoRepository } from "../user-photos/user-photo.repository.js";
+import { setPhotoStorageForTesting, type PhotoStorage } from "../user-photos/photo-storage.js";
 
 const USER_ID = "64b000000000000000000001";
 
@@ -19,6 +23,37 @@ describe("userService.deleteAccount", () => {
         vi.restoreAllMocks();
         session.endSession.mockClear();
         vi.spyOn(mongoose, "startSession").mockResolvedValue(session as never);
+        vi.spyOn(userPhotoCommunityRepository, "listByAuthor").mockResolvedValue([]);
+        vi.spyOn(userPhotoCommunityRepository, "deleteAllOfUser").mockResolvedValue(0);
+    });
+
+    it("deletes the user's photos with the account and their files once the transaction committed", async () => {
+        vi.spyOn(checkInRepository, "listPlaceIdsForUser").mockResolvedValue([]);
+        vi.spyOn(ratingRepository, "listPlaceTagsForUser").mockResolvedValue([]);
+        vi.spyOn(checkInRepository, "deleteByUserId").mockResolvedValue(0);
+        vi.spyOn(ratingRepository, "deleteByUserId").mockResolvedValue(0);
+        vi.spyOn(syncMutationRepository, "deleteByUserId").mockResolvedValue(0);
+        vi.spyOn(placeRepository, "decrementCounters").mockResolvedValue();
+        vi.spyOn(userRepository, "deleteById").mockResolvedValue(true);
+        const photo = {
+            _id: new Types.ObjectId(), placeId: "p1", status: "approved",
+            storageKey: "a.jpg", thumbnailKey: "a-thumb.jpg", publicKey: "b.jpg", publicThumbnailKey: "c.jpg",
+        };
+        vi.mocked(userPhotoCommunityRepository.listByAuthor).mockResolvedValue([photo as never]);
+        const recordEvent = vi.spyOn(userPhotoRepository, "recordEvent").mockResolvedValue();
+        const remove = vi.fn().mockResolvedValue(undefined);
+        setPhotoStorageForTesting({ remove } as unknown as PhotoStorage);
+
+        try {
+            await userService.deleteAccount(USER_ID);
+        } finally {
+            setPhotoStorageForTesting(undefined);
+        }
+
+        expect(userPhotoCommunityRepository.deleteAllOfUser).toHaveBeenCalledWith(USER_ID, session);
+        expect(remove).toHaveBeenCalledWith({ privateKeys: ["a.jpg", "a-thumb.jpg"], publicKeys: ["b.jpg", "c.jpg"] });
+        expect(recordEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "account_deleted" }));
+        expect(recordEvent.mock.calls[0][0]).not.toHaveProperty("actorId");
     });
 
     it("deletes all user data inside the transaction and rolls back place counters", async () => {

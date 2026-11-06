@@ -71,6 +71,34 @@ const completedItinerarySchema = new Schema(
     { _id: false },
 );
 
+/** Acceptance of the photo terms; required (at the current version) before any photo upload. */
+const photoTermsAcceptanceSchema = new Schema(
+    {
+        version: { type: String, required: true },
+        acceptedAt: { type: Date, required: true },
+    },
+    { _id: false },
+);
+
+/** Self-declared age check. Only the outcome is kept, never the birth date (data minimisation). */
+const ageDeclarationSchema = new Schema(
+    {
+        isAdult: { type: Boolean, required: true },
+        declaredAt: { type: Date, required: true },
+        method: { type: String, enum: ["self_declared"], required: true },
+    },
+    { _id: false },
+);
+
+/** Someone this user blocked: their photos are hidden from this user. */
+const blockedUserSchema = new Schema(
+    {
+        userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        blockedAt: { type: Date, required: true },
+    },
+    { _id: false },
+);
+
 const userSchema = new Schema(
     {
         username: {
@@ -94,6 +122,9 @@ const userSchema = new Schema(
         activeItinerary: { type: itinerarySchema, default: null },
         inactiveItineraries: { type: [itinerarySchema], required: true, default: [] },
         completedItineraries: { type: [completedItinerarySchema], required: true, default: [] },
+        photoTerms: { type: photoTermsAcceptanceSchema },
+        ageDeclaration: { type: ageDeclarationSchema },
+        blockedUsers: { type: [blockedUserSchema], default: undefined },
     },
     { timestamps: true, collection: "users" },
 );

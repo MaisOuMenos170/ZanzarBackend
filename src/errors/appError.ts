@@ -2,6 +2,8 @@ export class AppError extends Error {
     constructor(
         message: string,
         public readonly statusCode: number = 500,
+        /** Stable machine-readable reason the app can branch on (e.g. `duplicate_photo`). */
+        public readonly code?: string,
     ) {
         super(message);
         this.name = "AppError";

@@ -118,3 +118,5 @@ data/photos-review/
 stacklit.json
 stacklit.html
 DEPENDENCIES.md
+# Fotos de usuário gravadas pelo storage local (PHOTO_STORAGE=disk)
+.data/

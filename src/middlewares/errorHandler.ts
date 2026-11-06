@@ -6,9 +6,9 @@ import { getRequestPath } from '../utils/httpLog';
 const log = logger.child({ module: 'errorHandler' });
 
 // Maps known database errors to client-facing status codes and messages.
-function normalizeError(err: any): { statusCode: number; message: string; details?: unknown } {
+function normalizeError(err: any): { statusCode: number; message: string; code?: string; details?: unknown } {
     if (err instanceof AppError) {
-        return { statusCode: err.statusCode, message: err.message };
+        return { statusCode: err.statusCode, message: err.message, code: err.code };
     }
     // MongoDB "Document failed validation" (schema validator on the collection)
     if (err?.code === 121) {
@@ -38,7 +38,7 @@ function normalizeError(err: any): { statusCode: number; message: string; detail
 export function errorHandler(
     err: any, req: Request, res: Response, next: NextFunction
 ) {
-    const { statusCode, message, details } = normalizeError(err);
+    const { statusCode, message, code, details } = normalizeError(err);
     const isProduction = process.env.NODE_ENV === 'production';
 
     const fields = { statusCode, method: req.method, path: getRequestPath(req) };
@@ -51,6 +51,7 @@ export function errorHandler(
     res.status(statusCode).json({
         success: false,
         message: statusCode >= 500 && isProduction ? 'Internal Server Error' : message,
+        ...(code ? { code } : {}),
         ...(isProduction ? {} : { details, stack: err.stack })
     });
 };

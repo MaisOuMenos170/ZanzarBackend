@@ -1,4 +1,8 @@
 import mongoose from "mongoose";
+import type { UserPhoto } from "../../models";
+import { getPhotoStorage } from "../user-photos/photo-storage";
+import { userPhotoCommunityRepository } from "../user-photos/user-photo-community.repository";
+import { userPhotoRepository } from "../user-photos/user-photo.repository";
 import { AppError } from "../../errors/appError";
 import { logger } from "../../utils/logger";
 import { userRepository } from "./user.repository";
@@ -26,6 +30,29 @@ function toSavedPlace(entry: { placeId: string; savedAt: Date }, place?: PlaceSu
         placeName: place?.name ?? null,
         imageUrl: place?.images?.[0]?.url ?? null,
     };
+}
+
+/**
+ * After the account is gone, deletes the files of its photos and leaves an audit line per photo (no author id).
+ * Runs outside the transaction because storage cannot roll back; a failure is logged and the files are orphaned
+ * under random names that nothing links to any more.
+ */
+async function removeDeletedAccountPhotoFiles(photos: UserPhoto[]) {
+    if (photos.length === 0) return;
+    const storage = getPhotoStorage();
+    for (const photo of photos) {
+        try {
+            await storage?.remove({
+                privateKeys: [photo.storageKey, photo.thumbnailKey],
+                publicKeys: [photo.publicKey, photo.publicThumbnailKey].filter((k): k is string => Boolean(k)),
+            });
+            await userPhotoRepository.recordEvent({
+                photoId: photo._id, placeId: photo.placeId, action: "account_deleted", actor: "user", fromStatus: photo.status,
+            });
+        } catch (err) {
+            log.error({ err, photoId: photo._id.toString() }, "Failed to delete the files of a deleted account's photo");
+        }
+    }
 }
 
 export const userService = {
@@ -133,9 +160,13 @@ export const userService = {
     async deleteAccount(userId: string): Promise<void> {
         log.info({ userId }, "Deleting user account");
         const session = await mongoose.startSession();
+        let photos: UserPhoto[] = [];
 
         try {
             await session.withTransaction(async () => {
+                photos = await userPhotoCommunityRepository.listByAuthor(userId, session);
+                await userPhotoCommunityRepository.deleteAllOfUser(userId, session);
+
                 const checkInPlaceIds = await checkInRepository.listPlaceIdsForUser(userId, session);
                 const ratings = await ratingRepository.listPlaceTagsForUser(userId, session);
 
@@ -172,6 +203,8 @@ export const userService = {
         } finally {
             await session.endSession();
         }
+
+        await removeDeletedAccountPhotoFiles(photos);
     },
 
     async getProfile(userId: string, limit: number): Promise<UserProfile> {
