@@ -14,7 +14,7 @@ import { stampsRepository } from "../stamps/stamps.repository";
 import { impressionTagFieldSchema } from "../../schemas/impression-tag";
 import { MAX_SAVED_PLACES } from "../../constants/saved-places";
 import type { PlaceSummaryDocument } from "../places/place.repository";
-import type { RecentCheckIn, SavedPlace, UserProfile } from "../../schemas/user";
+import type { Avatar, CreateAvatarBody, RecentCheckIn, SavedPlace, UpdateAvatarBody, UserProfile } from "../../schemas/user";
 
 const log = logger.child({ module: "users", layer: "service" });
 
@@ -106,6 +106,50 @@ export const userService = {
         if (result === "user_not_found") throw new AppError("User not found", 404);
         if (result === "not_saved") throw new AppError("Place is not saved", 404);
         log.info({ userId, placeId }, "Removed saved place successfully");
+    },
+
+    async getAvatar(userId: string): Promise<Avatar> {
+        log.info({ userId }, "Fetching avatar");
+        const user = await userRepository.findAvatarById(userId);
+        if (!user) throw new AppError("User not found", 404);
+        if (!user.avatar) throw new AppError("Avatar not found", 404);
+        log.info({ userId }, "Fetched avatar successfully");
+        return user.avatar;
+    },
+
+    async createAvatar(userId: string, body: CreateAvatarBody): Promise<Avatar> {
+        log.info({ userId }, "Creating avatar");
+        const created = await userRepository.createAvatar(userId, body);
+        if (!created) {
+            const user = await userRepository.findAvatarById(userId);
+            if (!user) throw new AppError("User not found", 404);
+            throw new AppError("Avatar already exists", 409);
+        }
+        log.info({ userId }, "Created avatar successfully");
+        return body;
+    },
+
+    async updateAvatar(userId: string, body: UpdateAvatarBody): Promise<Avatar> {
+        log.info({ userId }, "Updating avatar");
+        const avatar = await userRepository.updateAvatar(userId, body);
+        if (!avatar) {
+            const user = await userRepository.findAvatarById(userId);
+            if (!user) throw new AppError("User not found", 404);
+            throw new AppError("Avatar not found", 404);
+        }
+        log.info({ userId }, "Updated avatar successfully");
+        return avatar;
+    },
+
+    async removeAvatar(userId: string): Promise<void> {
+        log.info({ userId }, "Removing avatar");
+        const removed = await userRepository.removeAvatar(userId);
+        if (!removed) {
+            const user = await userRepository.findAvatarById(userId);
+            if (!user) throw new AppError("User not found", 404);
+            throw new AppError("Avatar not found", 404);
+        }
+        log.info({ userId }, "Removed avatar successfully");
     },
 
     /**
