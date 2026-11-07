@@ -3,7 +3,7 @@ import { userService } from "./user.service.js";
 import { userRepository } from "./user.repository.js";
 
 const USER_ID = "64b000000000000000000001";
-const avatar = { skin: 7, eyes: 5, eyebrow: 4, hair: 6, background: "#FFAA00" };
+const avatar = { skin: 7, eyes: 5, eyebrow: 4, eyelash: 3, hair: 6, background: "#FFAA00" };
 
 describe("userService avatar", () => {
     afterEach(() => {

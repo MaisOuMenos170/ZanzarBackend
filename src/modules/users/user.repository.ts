@@ -4,6 +4,7 @@ import type { ItineraryRouteType } from "../../constants/itinerary-route-type";
 import type { ZanzarCategory } from "../../constants/zanzar-categories";
 import type { StampId } from "../../constants/zanzar-categories";
 import { MAX_SAVED_PLACES } from "../../constants/saved-places";
+import { AVATAR_DEFAULT_EYELASH } from "../../constants/avatar";
 import type { Avatar, ProfileSummary, UpdateAvatarBody } from "../../schemas/user";
 import { AppError } from "../../errors/appError";
 import { CreateUserInput } from "./schema/createUserSchema";
@@ -12,6 +13,12 @@ import { logger } from "../../utils/logger";
 import { isDuplicateKeyError } from "../../utils/mongoErrors";
 
 const log = logger.child({ module: "users", layer: "repository" });
+
+/** Avatares gravados antes dos cílios existirem não têm o campo: foram todos desenhados com o primeiro. */
+const withEyelash = (avatar: Omit<Avatar, "eyelash"> & { eyelash?: number | null }): Avatar => ({
+    ...avatar,
+    eyelash: avatar.eyelash ?? AVATAR_DEFAULT_EYELASH,
+});
 
 export type ActiveItineraryPlaceContext =
     | { routeType: "fixed"; incompletePlaceIds: string[] }
@@ -383,7 +390,7 @@ export const userRepository = {
         try {
             const user = await UserModel.findById(userId).select("avatar").lean<Pick<User, "avatar">>();
             log.debug({ userId, found: !!user, hasAvatar: !!user?.avatar }, "Fetched avatar");
-            return user ? { avatar: user.avatar ?? null } : null;
+            return user ? { avatar: user.avatar ? withEyelash(user.avatar) : null } : null;
         } catch (err) {
             log.error({ err, userId }, "Failed to fetch avatar");
             throw err;
@@ -411,7 +418,7 @@ export const userRepository = {
                 .select("avatar")
                 .lean<Pick<User, "avatar">>();
             log.debug({ userId, updated: !!user?.avatar }, "Updated avatar");
-            return user?.avatar ?? null;
+            return user?.avatar ? withEyelash(user.avatar) : null;
         } catch (err) {
             log.error({ err, userId }, "Failed to update avatar");
             throw err;

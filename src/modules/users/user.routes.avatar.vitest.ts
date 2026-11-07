@@ -21,7 +21,7 @@ function createApp(authenticatedUserId = USER_ID) {
     return app;
 }
 
-const avatar = { skin: 8, eyes: 6, eyebrow: 5, hair: 7, background: "#FFAA00" };
+const avatar = { skin: 8, eyes: 6, eyebrow: 5, eyelash: 5, hair: 7, background: "#FFAA00" };
 
 describe("avatar routes", () => {
     afterEach(() => {
@@ -68,6 +68,26 @@ describe("avatar routes", () => {
             expect(create).toHaveBeenCalledWith(USER_ID, avatar);
         });
 
+        it("accepts 0 (none) for the eyelash and the hair", async () => {
+            const noExtras = { ...avatar, eyelash: 0, hair: 0 };
+            const create = vi.spyOn(userService, "createAvatar").mockResolvedValue(noExtras);
+
+            const response = await request(createApp()).post(`/user/${USER_ID}/avatar`).send(noExtras);
+
+            expect(response.status).toBe(201);
+            expect(create).toHaveBeenCalledWith(USER_ID, noExtras);
+        });
+
+        it("defaults the eyelash to 1 for app versions that do not send it", async () => {
+            const { eyelash: _eyelash, ...withoutEyelash } = avatar;
+            const create = vi.spyOn(userService, "createAvatar").mockResolvedValue({ ...avatar, eyelash: 1 });
+
+            const response = await request(createApp()).post(`/user/${USER_ID}/avatar`).send(withoutEyelash);
+
+            expect(response.status).toBe(201);
+            expect(create).toHaveBeenCalledWith(USER_ID, { ...withoutEyelash, eyelash: 1 });
+        });
+
         it("returns 409 when the avatar already exists", async () => {
             vi.spyOn(userService, "createAvatar").mockRejectedValue(new AppError("Avatar already exists", 409));
 
@@ -77,15 +97,17 @@ describe("avatar routes", () => {
         });
 
         it.each([
-            ["a layer is missing", { skin: 1, eyes: 1, eyebrow: 1, background: "#FFAA00" }],
-            ["the background is missing", { skin: 1, eyes: 1, eyebrow: 1, hair: 1 }],
+            ["a layer is missing", { skin: 1, eyes: 1, eyebrow: 1, eyelash: 1, background: "#FFAA00" }],
+            ["the background is missing", { skin: 1, eyes: 1, eyebrow: 1, eyelash: 1, hair: 1 }],
             ["the background has no leading #", { ...avatar, background: "FFAA00" }],
             ["the background is a short hex", { ...avatar, background: "#FA0" }],
             ["the background is not hex", { ...avatar, background: "#GGGGGG" }],
             ["the background is not a string", { ...avatar, background: 0xffaa00 }],
             ["an id is above the layer range", { ...avatar, skin: 9 }],
-            ["an id is zero", { ...avatar, hair: 0 }],
+            ["a required layer id is zero", { ...avatar, skin: 0 }],
+            ["an optional layer id is above the range", { ...avatar, eyelash: 6 }],
             ["an id is negative", { ...avatar, hair: -1 }],
+            ["an optional layer id is negative", { ...avatar, eyelash: -1 }],
             ["an id is not an integer", { ...avatar, eyes: 1.5 }],
             ["an id is not a number", { ...avatar, eyebrow: "1" }],
             ["there is an unknown layer", { ...avatar, mouth: 1 }],
@@ -120,6 +142,15 @@ describe("avatar routes", () => {
             expect(update).toHaveBeenCalledWith(USER_ID, { hair: 3 });
         });
 
+        it("accepts 0 (none) to turn the hair and the eyelash off", async () => {
+            const update = vi.spyOn(userService, "updateAvatar").mockResolvedValue({ ...avatar, hair: 0, eyelash: 0 });
+
+            const response = await request(createApp()).patch(`/user/${USER_ID}/avatar`).send({ hair: 0, eyelash: 0 });
+
+            expect(response.status).toBe(200);
+            expect(update).toHaveBeenCalledWith(USER_ID, { hair: 0, eyelash: 0 });
+        });
+
         it("updates the background alone", async () => {
             const update = vi.spyOn(userService, "updateAvatar").mockResolvedValue({ ...avatar, background: "#00FF7F" });
 
@@ -140,6 +171,7 @@ describe("avatar routes", () => {
         it.each([
             ["the body is empty", {}],
             ["an id is above the layer range", { eyebrow: 6 }],
+            ["an optional layer id is above the range", { eyelash: 6 }],
             ["an id is zero", { skin: 0 }],
             ["an id is not an integer", { skin: 1.5 }],
             ["the background is not a valid hex color", { background: "red" }],

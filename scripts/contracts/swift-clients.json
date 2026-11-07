@@ -3,7 +3,8 @@
     "PlaceAPIResponse em ZanzarProject/Features/LocationMap/Models/LocationMap.swift"
   ],
   "src/schemas/user.ts": [
-    "ProfileService.swift"
+    "ProfileService.swift",
+    "AvatarService.swift"
   ],
   "src/schemas/checkin.ts": [
     "CheckInResult.swift"

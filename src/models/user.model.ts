@@ -3,17 +3,29 @@ import { ITINERARY_ROUTE_TYPES } from "../constants/itinerary-route-type";
 import { STAMP_IDS, ZANZAR_CATEGORIES } from "../constants/zanzar-categories";
 import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "../constants/auth";
 import { MAX_SAVED_PLACES } from "../constants/saved-places";
-import { AVATAR_BACKGROUND_PATTERN, AVATAR_OPTION_COUNTS } from "../constants/avatar";
+import {
+    AVATAR_BACKGROUND_PATTERN,
+    AVATAR_DEFAULT_EYELASH,
+    AVATAR_OPTION_COUNTS,
+    avatarLayerMin,
+    type AvatarLayer,
+} from "../constants/avatar";
 import { maxArrayItems, nonEmptyArray } from "./helpers";
 
-const avatarLayer = (optionCount: number) => ({ type: Number, required: true, min: 1, max: optionCount });
+const avatarLayer = (layer: AvatarLayer) => ({
+    type: Number,
+    required: true,
+    min: avatarLayerMin(layer),
+    max: AVATAR_OPTION_COUNTS[layer],
+});
 
 const avatarSchema = new Schema(
     {
-        skin: avatarLayer(AVATAR_OPTION_COUNTS.skin),
-        eyes: avatarLayer(AVATAR_OPTION_COUNTS.eyes),
-        eyebrow: avatarLayer(AVATAR_OPTION_COUNTS.eyebrow),
-        hair: avatarLayer(AVATAR_OPTION_COUNTS.hair),
+        skin: avatarLayer("skin"),
+        eyes: avatarLayer("eyes"),
+        eyebrow: avatarLayer("eyebrow"),
+        eyelash: { ...avatarLayer("eyelash"), required: false, default: AVATAR_DEFAULT_EYELASH },
+        hair: avatarLayer("hair"),
         background: { type: String, required: true, match: AVATAR_BACKGROUND_PATTERN },
     },
     { _id: false },
