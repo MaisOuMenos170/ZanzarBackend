@@ -5,7 +5,6 @@ import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "../constants/auth";
 import { MAX_SAVED_PLACES } from "../constants/saved-places";
 import {
     AVATAR_BACKGROUND_PATTERN,
-    AVATAR_DEFAULT_EYELASH,
     AVATAR_OPTION_COUNTS,
     avatarLayerMin,
     type AvatarLayer,
@@ -24,7 +23,7 @@ const avatarSchema = new Schema(
         skin: avatarLayer("skin"),
         eyes: avatarLayer("eyes"),
         eyebrow: avatarLayer("eyebrow"),
-        eyelash: { ...avatarLayer("eyelash"), required: false, default: AVATAR_DEFAULT_EYELASH },
+        eyelash: avatarLayer("eyelash"),
         hair: avatarLayer("hair"),
         background: { type: String, required: true, match: AVATAR_BACKGROUND_PATTERN },
     },

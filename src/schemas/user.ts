@@ -7,7 +7,6 @@ import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 import { MAX_SAVED_PLACES } from '../constants/saved-places.js';
 import {
   AVATAR_BACKGROUND_PATTERN,
-  AVATAR_DEFAULT_EYELASH,
   AVATAR_OPTION_COUNTS,
   avatarLayerMin,
   type AvatarLayer,
@@ -56,11 +55,7 @@ export const avatarSchema = z.object({
   background: z.string().regex(AVATAR_BACKGROUND_PATTERN),
 });
 
-// Versões do app anteriores aos cílios não enviam o campo: assumem o primeiro, como eram desenhados.
-// O default só vale na criação; no PATCH um campo ausente não pode virar `1` e sobrescrever os cílios.
-export const createAvatarBodySchema = avatarSchema
-  .extend({ eyelash: avatarLayerSchema('eyelash').default(AVATAR_DEFAULT_EYELASH) })
-  .strict();
+export const createAvatarBodySchema = avatarSchema.strict();
 
 export const updateAvatarBodySchema = avatarSchema
   .partial()

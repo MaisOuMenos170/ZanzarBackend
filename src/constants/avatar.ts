@@ -14,9 +14,6 @@ export const AVATAR_OPTIONAL_LAYERS: readonly AvatarLayer[] = ["eyelash", "hair"
 /** Primeiro ID válido da camada: 0 ("nenhum") nas opcionais, 1 nas demais. */
 export const avatarLayerMin = (layer: AvatarLayer): number => (AVATAR_OPTIONAL_LAYERS.includes(layer) ? AVATAR_NO_OPTION : 1);
 
-/** Avatares criados antes dos cílios existirem foram todos desenhados com o primeiro. */
-export const AVATAR_DEFAULT_EYELASH = 1;
-
 /** Imagens por camada no app; o ID guardado vai de `avatarLayerMin` até `count`. */
 export const AVATAR_OPTION_COUNTS: Record<AvatarLayer, number> = {
     skin: 8,

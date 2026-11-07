@@ -78,16 +78,6 @@ describe("avatar routes", () => {
             expect(create).toHaveBeenCalledWith(USER_ID, noExtras);
         });
 
-        it("defaults the eyelash to 1 for app versions that do not send it", async () => {
-            const { eyelash: _eyelash, ...withoutEyelash } = avatar;
-            const create = vi.spyOn(userService, "createAvatar").mockResolvedValue({ ...avatar, eyelash: 1 });
-
-            const response = await request(createApp()).post(`/user/${USER_ID}/avatar`).send(withoutEyelash);
-
-            expect(response.status).toBe(201);
-            expect(create).toHaveBeenCalledWith(USER_ID, { ...withoutEyelash, eyelash: 1 });
-        });
-
         it("returns 409 when the avatar already exists", async () => {
             vi.spyOn(userService, "createAvatar").mockRejectedValue(new AppError("Avatar already exists", 409));
 
@@ -98,6 +88,7 @@ describe("avatar routes", () => {
 
         it.each([
             ["a layer is missing", { skin: 1, eyes: 1, eyebrow: 1, eyelash: 1, background: "#FFAA00" }],
+            ["the eyelash is missing", { skin: 1, eyes: 1, eyebrow: 1, hair: 1, background: "#FFAA00" }],
             ["the background is missing", { skin: 1, eyes: 1, eyebrow: 1, eyelash: 1, hair: 1 }],
             ["the background has no leading #", { ...avatar, background: "FFAA00" }],
             ["the background is a short hex", { ...avatar, background: "#FA0" }],

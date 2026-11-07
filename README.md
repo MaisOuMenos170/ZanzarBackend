@@ -93,8 +93,8 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 | GET | `/user/:id/saved-places` | Bearer (owner) | Lugares salvos, do mais recente ao mais antigo |
 | POST | `/user/:id/saved-places` | Bearer (owner) | Salva um lugar (`{ "placeId" }`); `201` novo, `200` já salvo, `404` lugar inexistente, `409` limite de 200 |
 | DELETE | `/user/:id/saved-places/:placeId` | Bearer (owner) | Remove da lista (`204`; `404` se não estava salvo) |
-| GET | `/user/:id/avatar` | Bearer | Avatar `{ skin, eyes, eyebrow, eyelash, hair, background }` (IDs das imagens locais: 1-based, e `0` = nenhum em `eyelash` e `hair`; `eyelash` ausente em avatares antigos equivale a `1`; `background` é uma cor hex `#RRGGBB`); qualquer usuário autenticado pode ler; `404` se não tem avatar |
-| POST | `/user/:id/avatar` | Bearer (owner) | Cria o avatar (todas as camadas; `eyelash` é opcional e assume `1`); `201`, `400` ID fora do intervalo da camada, `409` já existe |
+| GET | `/user/:id/avatar` | Bearer | Avatar `{ skin, eyes, eyebrow, eyelash, hair, background }` (IDs das imagens locais: 1-based, e `0` = nenhum em `eyelash` e `hair`; `background` é uma cor hex `#RRGGBB`); qualquer usuário autenticado pode ler; `404` se não tem avatar |
+| POST | `/user/:id/avatar` | Bearer (owner) | Cria o avatar (todas as camadas); `201`, `400` ID fora do intervalo da camada, `409` já existe |
 | PATCH | `/user/:id/avatar` | Bearer (owner) | Altera só as camadas enviadas e devolve o avatar completo (`200`; `404` se não tem avatar) |
 | DELETE | `/user/:id/avatar` | Bearer (owner) | Remove o avatar (`204`; `404` se não tem) |
 | POST | `/checkIn` | Bearer | Check-in síncrono (idempotente, geofence opcional) |
