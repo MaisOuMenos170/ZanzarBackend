@@ -3,6 +3,15 @@ import { ITINERARY_ROUTE_TYPES } from "../constants/itinerary-route-type";
 import { ZANZAR_CATEGORIES } from "../constants/zanzar-categories";
 import { nonEmptyArray } from "./helpers";
 
+/** Quem completou o roteiro, só o id: o avatar é lido de `users` na hora, para nunca ficar velho. */
+const recentCompleterSchema = new Schema(
+    {
+        userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        completedAt: { type: Date, required: true },
+    },
+    { _id: false },
+);
+
 const itinerarySchema = new Schema(
     {
         slug: { type: String, required: true },
@@ -17,6 +26,8 @@ const itinerarySchema = new Schema(
         objectives: { type: [String], required: true, default: [] },
         placeIds: { type: [String], required: true, default: [] },
         completedCount: { type: Number, required: true, min: 0, default: 0 },
+        /** Últimos RECENT_COMPLETERS_STORED usuários que completaram, do mais antigo ao mais recente. */
+        recentCompleters: { type: [recentCompleterSchema], default: [] },
         coverImageUrl: { type: String },
         isPublished: { type: Boolean, required: true, default: false },
         createdBy: { type: String },

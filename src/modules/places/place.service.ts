@@ -3,11 +3,40 @@ import { checkInRepository } from "../checkin/checkin.repository";
 import { userRepository, type ActiveItineraryPlaceContext } from "../users/user.repository";
 import { logger } from "../../utils/logger";
 import { placeRepository } from "./place.repository";
-import type { GetPlacesQuery, PlaceDocument, PlaceNearbyDocument, PlaceUserContext } from "../../schemas/place";
+import { ratingRepository } from "../rating/rating.repository";
+import { loadVisibleAvatars, pickAvatars } from "../users/avatar-lookup";
+import { IMPRESSION_TAGS } from "../../constants/impression-tags";
+import {
+    IMPRESSION_AVATARS_FETCH_PER_TAG,
+    IMPRESSION_AVATARS_PER_TAG,
+} from "../../constants/avatar-highlights";
+import type {
+    GetPlacesQuery,
+    ImpressionAvatars,
+    PlaceDocument,
+    PlaceNearbyDocument,
+    PlaceUserContext,
+} from "../../schemas/place";
 
 const log = logger.child({ module: "places", layer: "service" });
 
-export type PlaceWithUserContext = PlaceDocument & { userContext: PlaceUserContext | null };
+export type PlaceWithUserContext = PlaceDocument & {
+    userContext: PlaceUserContext | null;
+    impressionAvatars: ImpressionAvatars;
+};
+
+/** Últimos avatares por reação. Uma consulta de ids por tag + uma de avatares; sempre devolve todas as tags. */
+async function loadImpressionAvatars(placeId: string, viewerId?: string): Promise<ImpressionAvatars> {
+    const idsByTag = await ratingRepository.listLatestUserIdsByTag(
+        placeId,
+        IMPRESSION_TAGS,
+        IMPRESSION_AVATARS_FETCH_PER_TAG,
+    );
+    const avatars = await loadVisibleAvatars([...idsByTag.values()].flat(), viewerId);
+    return Object.fromEntries(
+        IMPRESSION_TAGS.map((tag) => [tag, pickAvatars(idsByTag.get(tag) ?? [], avatars, IMPRESSION_AVATARS_PER_TAG)]),
+    );
+}
 
 export const placeService = {
     async getNearby(query: GetPlacesQuery, userId?: string): Promise<PlaceNearbyDocument[]> {
@@ -50,17 +79,20 @@ export const placeService = {
         }
 
         if (!userId) {
+            const impressionAvatars = await loadImpressionAvatars(placeId);
             log.info({ placeId }, "Fetched place successfully");
-            return { ...place, userContext: null };
+            return { ...place, userContext: null, impressionAvatars };
         }
 
-        const [checkedInPlaceIds, itineraryContext] = await Promise.all([
+        const [checkedInPlaceIds, itineraryContext, impressionAvatars] = await Promise.all([
             checkInRepository.listPlaceIdsByUser(userId, [placeId]),
             userRepository.findActiveItineraryPlaceContext(userId),
+            loadImpressionAvatars(placeId, userId),
         ]);
 
         const enriched: PlaceWithUserContext = {
             ...place,
+            impressionAvatars,
             userContext: buildUserContext(
                 place,
                 new Set(checkedInPlaceIds),

@@ -6,6 +6,7 @@ import { checkInRepository } from "../checkin/checkin.repository.js";
 import { ratingRepository } from "../rating/rating.repository.js";
 import { syncMutationRepository } from "../sync/sync-mutation.repository.js";
 import { placeRepository } from "../places/place.repository.js";
+import { itineraryRepository } from "../itineraries/itinerary.repository.js";
 import { Types } from "mongoose";
 import { userPhotoCommunityRepository } from "../user-photos/user-photo-community.repository.js";
 import { userPhotoRepository } from "../user-photos/user-photo.repository.js";
@@ -25,6 +26,8 @@ describe("userService.deleteAccount", () => {
         vi.spyOn(mongoose, "startSession").mockResolvedValue(session as never);
         vi.spyOn(userPhotoCommunityRepository, "listByAuthor").mockResolvedValue([]);
         vi.spyOn(userPhotoCommunityRepository, "deleteAllOfUser").mockResolvedValue(0);
+        vi.spyOn(userRepository, "listCompletedTemplateIds").mockResolvedValue([]);
+        vi.spyOn(itineraryRepository, "removeCompleter").mockResolvedValue(undefined);
     });
 
     it("deletes the user's photos with the account and their files once the transaction committed", async () => {
@@ -99,5 +102,25 @@ describe("userService.deleteAccount", () => {
 
         await expect(userService.deleteAccount(USER_ID)).rejects.toMatchObject({ statusCode: 404 });
         expect(session.endSession).toHaveBeenCalled();
+    });
+
+    it("removes the user from the itineraries they completed before deleting the account", async () => {
+        const templateId = new Types.ObjectId();
+        vi.spyOn(checkInRepository, "listPlaceIdsForUser").mockResolvedValue([]);
+        vi.spyOn(ratingRepository, "listPlaceTagsForUser").mockResolvedValue([]);
+        vi.spyOn(checkInRepository, "deleteByUserId").mockResolvedValue(0);
+        vi.spyOn(ratingRepository, "deleteByUserId").mockResolvedValue(0);
+        vi.spyOn(syncMutationRepository, "deleteByUserId").mockResolvedValue(0);
+        vi.spyOn(placeRepository, "decrementCounters").mockResolvedValue();
+        vi.mocked(userRepository.listCompletedTemplateIds).mockResolvedValue([templateId]);
+        const order: string[] = [];
+        vi.mocked(itineraryRepository.removeCompleter).mockImplementation(async () => { order.push("remove"); });
+        vi.spyOn(userRepository, "deleteById").mockImplementation(async () => { order.push("delete"); return true; });
+
+        await userService.deleteAccount(USER_ID);
+
+        expect(userRepository.listCompletedTemplateIds).toHaveBeenCalledWith(USER_ID, session);
+        expect(itineraryRepository.removeCompleter).toHaveBeenCalledWith(USER_ID, [templateId], session);
+        expect(order).toEqual(["remove", "delete"]);
     });
 });

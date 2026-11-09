@@ -3,6 +3,7 @@ import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 import { stampIdSchema } from './stamp-id.js';
 import { impressionTagFieldSchema } from './impression-tag.js';
 import { googlePlaceIdSchema, isoDateTimeSchema } from './common.js';
+import { avatarSchema } from './avatar.js';
 
 export const zanzarExtensionSchema = z.object({
   category: z.enum(ZANZAR_CATEGORIES),
@@ -83,7 +84,10 @@ export const placeUserContextSchema = z.object({
   isInActiveItinerary: z.boolean(),
 });
 
-export const placeNearbySchema = placeDocumentSchema.extend({
+/** Avatares das últimas pessoas que reagiram, por reação (até 3 por tag, mais recente primeiro). Só no detalhe do lugar. */
+export const impressionAvatarsSchema = z.record(z.string(), z.array(avatarSchema));
+
+export const placeNearbySchema =placeDocumentSchema.extend({
   distanceMeters: z.number().nonnegative(),
   userContext: placeUserContextSchema.nullable(),
 });
@@ -91,6 +95,7 @@ export const placeNearbySchema = placeDocumentSchema.extend({
 export type PlaceImage = z.infer<typeof placeImageSchema>;
 export type PlaceDocument = z.infer<typeof placeDocumentSchema>;
 export type PlaceNearbyDocument = z.infer<typeof placeNearbySchema>;
-export type PlaceUserContext = z.infer<typeof placeUserContextSchema>;
+export type ImpressionAvatars = z.infer<typeof impressionAvatarsSchema>;
+export type PlaceUserContext =z.infer<typeof placeUserContextSchema>;
 export type GetPlacesQuery = z.infer<typeof getPlacesQuerySchema>;
 export type ZanzarExtension = z.infer<typeof zanzarExtensionSchema>;

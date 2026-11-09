@@ -9,6 +9,7 @@ import { userRepository } from "./user.repository";
 import { syncMutationRepository } from "../sync/sync-mutation.repository";
 import { checkInRepository } from "../checkin/checkin.repository";
 import { placeRepository } from "../places/place.repository";
+import { itineraryRepository } from "../itineraries/itinerary.repository";
 import { ratingRepository } from "../rating/rating.repository";
 import { stampsRepository } from "../stamps/stamps.repository";
 import { impressionTagFieldSchema } from "../../schemas/impression-tag";
@@ -191,6 +192,10 @@ export const userService = {
                     { checkIns, impressions: [...impressionsByKey.values()] },
                     session,
                 );
+
+                // Lido antes de apagar o usuário: desfaz a contribuição dele nos roteiros que completou.
+                const completedTemplateIds = await userRepository.listCompletedTemplateIds(userId, session);
+                await itineraryRepository.removeCompleter(userId, completedTemplateIds, session);
 
                 const deleted = await userRepository.deleteById(userId, session);
                 if (!deleted) throw new AppError("User not found", 404);

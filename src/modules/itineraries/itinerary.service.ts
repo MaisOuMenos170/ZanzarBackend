@@ -11,6 +11,8 @@ import type {
 import { itineraryRepository } from "./itinerary.repository";
 import { placeRepository } from "../places/place.repository";
 import { userRepository, type ActiveItineraryEmbedInput } from "../users/user.repository";
+import { loadVisibleAvatars, pickAvatars } from "../users/avatar-lookup";
+import { RECENT_COMPLETERS_SHOWN } from "../../constants/avatar-highlights";
 
 const log = logger.child({ module: "itineraries", layer: "service" });
 
@@ -104,7 +106,7 @@ export const itineraryService = {
         return items;
     },
 
-    async getBySlug(slug: string): Promise<ItineraryDetail> {
+    async getBySlug(slug: string, viewerId?: string): Promise<ItineraryDetail> {
         log.info({ slug }, "Fetching itinerary detail");
         const template = await itineraryRepository.findPublishedBySlug(slug);
         if (!template) {
@@ -137,6 +139,10 @@ export const itineraryService = {
             }
         }
 
+        // Guardado do mais antigo ao mais recente; a API mostra o mais recente primeiro.
+        const completerIds = (template.recentCompleters ?? []).map((entry) => entry.userId).reverse();
+        const avatars = await loadVisibleAvatars(completerIds, viewerId);
+
         const detail: ItineraryDetail = {
             slug: template.slug,
             name: template.name,
@@ -146,6 +152,7 @@ export const itineraryService = {
             objectives: template.objectives,
             placesCount: template.routeType === "fixed" ? places.length : placesCountFor(template),
             completedCount: template.completedCount,
+            recentCompleters: pickAvatars(completerIds, avatars, RECENT_COMPLETERS_SHOWN),
             coverImageUrl: template.coverImageUrl ?? undefined,
             places,
             ...(template.routeType === "free"

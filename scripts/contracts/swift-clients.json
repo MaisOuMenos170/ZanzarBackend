@@ -6,6 +6,9 @@
     "ProfileService.swift",
     "AvatarService.swift"
   ],
+  "src/schemas/avatar.ts": [
+    "AvatarService.swift"
+  ],
   "src/schemas/checkin.ts": [
     "CheckInResult.swift"
   ],
