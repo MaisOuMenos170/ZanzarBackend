@@ -5,7 +5,12 @@ import { impressionTagFieldSchema } from './impression-tag.js';
 import { itineraryRouteTypeSchema } from './itinerary.js';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 import { MAX_SAVED_PLACES } from '../constants/saved-places.js';
-import { AVATAR_BACKGROUND_PATTERN, AVATAR_OPTION_COUNTS } from '../constants/avatar.js';
+import {
+  AVATAR_BACKGROUND_PATTERN,
+  AVATAR_OPTION_COUNTS,
+  avatarLayerMin,
+  type AvatarLayer,
+} from '../constants/avatar.js';
 
 export const userStampSchema = z.object({
   stampId: stampIdSchema,
@@ -37,14 +42,16 @@ export const savedPlaceSchema = userSavedPlaceSchema.extend({
 
 export const savedPlacesSchema = z.array(savedPlaceSchema);
 
-const avatarLayerSchema = (optionCount: number) =>
-  z.number().int().min(1).max(optionCount);
+/** Camadas opcionais (cílios, cabelo) aceitam 0 = "nenhum"; as demais vão de 1 ao total de imagens. */
+const avatarLayerSchema = (layer: AvatarLayer) =>
+  z.number().int().min(avatarLayerMin(layer)).max(AVATAR_OPTION_COUNTS[layer]);
 
 export const avatarSchema = z.object({
-  skin: avatarLayerSchema(AVATAR_OPTION_COUNTS.skin),
-  eyes: avatarLayerSchema(AVATAR_OPTION_COUNTS.eyes),
-  eyebrow: avatarLayerSchema(AVATAR_OPTION_COUNTS.eyebrow),
-  hair: avatarLayerSchema(AVATAR_OPTION_COUNTS.hair),
+  skin: avatarLayerSchema('skin'),
+  eyes: avatarLayerSchema('eyes'),
+  eyebrow: avatarLayerSchema('eyebrow'),
+  eyelash: avatarLayerSchema('eyelash'),
+  hair: avatarLayerSchema('hair'),
   background: z.string().regex(AVATAR_BACKGROUND_PATTERN),
 });
 
