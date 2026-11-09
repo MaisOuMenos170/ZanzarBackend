@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { objectIdSchema, isoDateTimeSchema, slugSchema, googlePlaceIdSchema, coordinatesSchema } from './common.js';
+import { avatarSchema } from './avatar.js';
 import { ITINERARY_ROUTE_TYPES } from '../constants/itinerary-route-type.js';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 
@@ -67,6 +68,8 @@ export const itineraryDetailSchema = z.object({
   targetCount: z.number().int().min(1).optional(),
   placesCount: z.number().int().positive(),
   completedCount: z.number().int().nonnegative(),
+  /** Avatares de quem completou por último (mais recente primeiro, até 5). Sem id nem nome. */
+  recentCompleters: z.array(avatarSchema),
   coverImageUrl: z.string().optional(),
   places: z.array(itineraryDetailPlaceSchema),
 });

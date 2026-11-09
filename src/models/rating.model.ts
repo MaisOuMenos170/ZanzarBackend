@@ -20,7 +20,8 @@ const ratingSchema = new Schema(
 );
 
 ratingSchema.index({ userId: 1, placeId: 1 }, { unique: true, name: "rating_user_place_unique" });
-ratingSchema.index({ placeId: 1, impressionTag: 1 }, { name: "rating_place_tag" });
+// Cobre contagem por tag e "últimas reações por tag" (avatares no detalhe do lugar).
+ratingSchema.index({ placeId: 1, impressionTag: 1, createdAt: -1 }, { name: "rating_place_tag_created" });
 
 export type Rating = InferSchemaType<typeof ratingSchema> & { _id: Types.ObjectId };
 export const RatingModel = model("Rating", ratingSchema);

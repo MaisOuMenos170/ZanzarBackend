@@ -390,6 +390,59 @@ export const userRepository = {
         }
     },
 
+    /**
+     * Avatares atuais de vários usuários, em uma consulta. Quem não tem avatar ou está em `excludeIds`
+     * (ex.: bloqueados pelo viewer) não aparece no mapa. Só devolve as camadas, nunca id/nome.
+     */
+    async findAvatarsByIds(
+        userIds: Types.ObjectId[],
+        excludeIds: Types.ObjectId[] = [],
+    ): Promise<Map<string, Avatar>> {
+        if (userIds.length === 0) {
+            return new Map();
+        }
+        log.debug({ count: userIds.length, excluded: excludeIds.length }, "Fetching avatars by ids");
+        try {
+            const users = await UserModel.find({
+                _id: excludeIds.length > 0 ? { $in: userIds, $nin: excludeIds } : { $in: userIds },
+                avatar: { $exists: true, $ne: null },
+            })
+                .select("avatar")
+                .lean<{ _id: Types.ObjectId; avatar?: Avatar }[]>();
+            const byId = new Map<string, Avatar>();
+            for (const user of users) {
+                if (user.avatar) {
+                    const { skin, eyes, eyebrow, eyelash, hair, background } = user.avatar;
+                    byId.set(user._id.toString(), { skin, eyes, eyebrow, eyelash, hair, background });
+                }
+            }
+            log.debug({ found: byId.size }, "Fetched avatars by ids");
+            return byId;
+        } catch (err) {
+            log.error({ err }, "Failed to fetch avatars by ids");
+            throw err;
+        }
+    },
+
+    /** Templates de roteiro distintos que o usuário já completou (para ajustar contadores ao apagar a conta). */
+    async listCompletedTemplateIds(userId: string, session?: ClientSession): Promise<Types.ObjectId[]> {
+        log.debug({ userId }, "Listing completed itinerary templates");
+        try {
+            const query = UserModel.findById(userId).select("completedItineraries.itineraryTemplateId");
+            const user = await (session ? query.session(session) : query).lean<{
+                completedItineraries?: { itineraryTemplateId: Types.ObjectId }[];
+            }>();
+            const unique = new Map<string, Types.ObjectId>();
+            for (const entry of user?.completedItineraries ?? []) {
+                unique.set(entry.itineraryTemplateId.toString(), entry.itineraryTemplateId);
+            }
+            return [...unique.values()];
+        } catch (err) {
+            log.error({ err, userId }, "Failed to list completed itinerary templates");
+            throw err;
+        }
+    },
+
     // `avatar: null` matches a missing field, so "only if there is none" is atomic with the write.
     async createAvatar(userId: string, avatar: Avatar): Promise<boolean> {
         log.debug({ userId }, "Creating avatar");

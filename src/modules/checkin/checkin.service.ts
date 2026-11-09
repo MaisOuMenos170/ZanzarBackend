@@ -14,6 +14,7 @@ import { CheckinModel } from "../../models/checkin.model";
 import { UserModel } from "../../models/user.model";
 import { assertWithinCheckinRadius } from "../../utils/geofence";
 import { placeRepository } from "../places/place.repository";
+import { itineraryRepository } from "../itineraries/itinerary.repository";
 import { syncMutationRepository } from "../sync/sync-mutation.repository";
 import { checkInRepository } from "./checkin.repository";
 import { logger } from "../../utils/logger";
@@ -281,6 +282,13 @@ async function applyCheckinInTransaction(
         datetime: body.datetime,
     });
 
+    // Lido antes do trigger: ao completar, ele zera `activeItinerary` e empurra para `completedItineraries`.
+    // Em runtime o id é um ObjectId (documento lean), embora o tipo Zod diga string: compara como string.
+    const activeTemplateId = userDoc.activeItinerary ? String(userDoc.activeItinerary.itineraryTemplateId) : null;
+    const completedBefore =
+        activeTemplateId !== null &&
+        userDoc.completedItineraries.some((entry) => String(entry.itineraryTemplateId) === activeTemplateId);
+
     const { itineraryCompleted, itineraryProgress } = applyItineraryProgressFromCheckin(
         userDoc,
         place,
@@ -301,6 +309,11 @@ async function applyCheckinInTransaction(
         },
         { session },
     );
+
+    // Cada pessoa conta uma vez por roteiro, mesmo que ele seja reativado e concluído de novo.
+    if (itineraryCompleted && activeTemplateId && !completedBefore) {
+        await itineraryRepository.recordCompletion(activeTemplateId, userId, now, session);
+    }
 
     await placeRepository.incrementCheckInCount(body.placeId, session);
 

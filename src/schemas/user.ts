@@ -5,12 +5,10 @@ import { impressionTagFieldSchema } from './impression-tag.js';
 import { itineraryRouteTypeSchema } from './itinerary.js';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 import { MAX_SAVED_PLACES } from '../constants/saved-places.js';
-import {
-  AVATAR_BACKGROUND_PATTERN,
-  AVATAR_OPTION_COUNTS,
-  avatarLayerMin,
-  type AvatarLayer,
-} from '../constants/avatar.js';
+import { avatarSchema, type Avatar } from './avatar.js';
+
+// O schema do avatar mora em avatar.ts (itinerary.ts e place.ts o usam sem ciclo com user.ts).
+export { avatarSchema };
 
 export const userStampSchema = z.object({
   stampId: stampIdSchema,
@@ -41,19 +39,6 @@ export const savedPlaceSchema = userSavedPlaceSchema.extend({
 });
 
 export const savedPlacesSchema = z.array(savedPlaceSchema);
-
-/** Camadas opcionais (cílios, cabelo) aceitam 0 = "nenhum"; as demais vão de 1 ao total de imagens. */
-const avatarLayerSchema = (layer: AvatarLayer) =>
-  z.number().int().min(avatarLayerMin(layer)).max(AVATAR_OPTION_COUNTS[layer]);
-
-export const avatarSchema = z.object({
-  skin: avatarLayerSchema('skin'),
-  eyes: avatarLayerSchema('eyes'),
-  eyebrow: avatarLayerSchema('eyebrow'),
-  eyelash: avatarLayerSchema('eyelash'),
-  hair: avatarLayerSchema('hair'),
-  background: z.string().regex(AVATAR_BACKGROUND_PATTERN),
-});
 
 export const createAvatarBodySchema = avatarSchema.strict();
 
@@ -136,7 +121,7 @@ export type UserStamp = z.infer<typeof userStampSchema>;
 export type UserSavedPlace = z.infer<typeof userSavedPlaceSchema>;
 export type SavePlaceBody = z.infer<typeof savePlaceBodySchema>;
 export type SavedPlace = z.infer<typeof savedPlaceSchema>;
-export type Avatar = z.infer<typeof avatarSchema>;
+export type { Avatar };
 export type CreateAvatarBody = z.infer<typeof createAvatarBodySchema>;
 export type UpdateAvatarBody = z.infer<typeof updateAvatarBodySchema>;
 export type UserItineraryEmbed = z.infer<typeof userItineraryEmbedSchema>;

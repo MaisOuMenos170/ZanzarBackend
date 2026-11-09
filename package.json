@@ -21,6 +21,7 @@
     "tunnel": "bash scripts/dev/dev-tunnel.sh",
     "typecheck": "tsc --noEmit",
     "db:migrate:geo": "bash scripts/migrations/migrate-places-geolocation.sh",
+    "db:backfill:completers": "tsx scripts/migrations/backfill-itinerary-completers.ts",
     "photos:remoderate": "tsx scripts/user-photos/remoderate.ts"
   },
   "keywords": [],

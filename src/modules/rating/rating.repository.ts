@@ -1,4 +1,4 @@
-import type { ClientSession } from "mongoose";
+import type { ClientSession, Types } from "mongoose";
 import { RatingModel } from "../../models/rating.model";
 import type { CreateRatingBody } from "../../schemas/rating";
 import { logger } from "../../utils/logger";
@@ -33,6 +33,34 @@ export const ratingRepository = {
             return ratings;
         } catch (err) {
             log.error({ err, userId }, "Failed to fetch ratings by user and places");
+            throw err;
+        }
+    },
+
+    /**
+     * Ids de quem reagiu por último, por tag (mais recente primeiro). Uma consulta indexada por tag
+     * (`rating_place_tag_created`), em paralelo.
+     */
+    async listLatestUserIdsByTag(
+        placeId: string,
+        tags: readonly string[],
+        limitPerTag: number,
+    ): Promise<Map<string, Types.ObjectId[]>> {
+        log.debug({ placeId, limitPerTag }, "Listing latest reactors by tag");
+        try {
+            const entries = await Promise.all(
+                tags.map(async (tag) => {
+                    const ratings = await RatingModel.find({ placeId, impressionTag: tag })
+                        .sort({ createdAt: -1 })
+                        .limit(limitPerTag)
+                        .select("userId")
+                        .lean<{ userId: Types.ObjectId }[]>();
+                    return [tag, ratings.map((rating) => rating.userId)] as const;
+                }),
+            );
+            return new Map(entries);
+        } catch (err) {
+            log.error({ err, placeId }, "Failed to list latest reactors by tag");
             throw err;
         }
     },

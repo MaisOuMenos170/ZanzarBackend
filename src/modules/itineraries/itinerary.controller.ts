@@ -14,7 +14,7 @@ export const getItineraryBySlug: RequestHandler = async (req, res) => {
         throw new AppError("Invalid itinerary slug", 400);
     }
 
-    const itinerary = await itineraryService.getBySlug(slugResult.data);
+    const itinerary = await itineraryService.getBySlug(slugResult.data, req.user?.id);
     res.status(200).json(itinerary);
 };
 

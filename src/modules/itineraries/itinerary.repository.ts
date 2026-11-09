@@ -1,3 +1,5 @@
+import type { ClientSession, Types } from "mongoose";
+import { RECENT_COMPLETERS_STORED } from "../../constants/avatar-highlights";
 import { ItineraryModel, type Itinerary } from "../../models/itinerary.model";
 import { logger } from "../../utils/logger";
 
@@ -14,6 +16,61 @@ export const itineraryRepository = {
             return itineraries;
         } catch (err) {
             log.error({ err }, "Failed to list published itineraries");
+            throw err;
+        }
+    },
+
+    /** Conta uma conclusão e guarda o usuário entre os mais recentes (os RECENT_COMPLETERS_STORED últimos). */
+    async recordCompletion(
+        templateId: Types.ObjectId | string,
+        userId: Types.ObjectId | string,
+        completedAt: Date,
+        session?: ClientSession,
+    ): Promise<void> {
+        log.debug({ templateId: templateId.toString() }, "Recording itinerary completion");
+        try {
+            await ItineraryModel.updateOne(
+                { _id: templateId },
+                {
+                    $inc: { completedCount: 1 },
+                    $push: {
+                        recentCompleters: {
+                            $each: [{ userId, completedAt }],
+                            $slice: -RECENT_COMPLETERS_STORED,
+                        },
+                    },
+                },
+                session ? { session } : undefined,
+            );
+        } catch (err) {
+            log.error({ err, templateId: templateId.toString() }, "Failed to record itinerary completion");
+            throw err;
+        }
+    },
+
+    /** Desfaz a contribuição de um usuário (conta apagada): contador dos templates que completou e lista de recentes. */
+    async removeCompleter(
+        userId: Types.ObjectId | string,
+        completedTemplateIds: Types.ObjectId[],
+        session?: ClientSession,
+    ): Promise<void> {
+        log.debug({ templates: completedTemplateIds.length }, "Removing user from itinerary completions");
+        const options = session ? { session } : undefined;
+        try {
+            if (completedTemplateIds.length > 0) {
+                await ItineraryModel.updateMany(
+                    { _id: { $in: completedTemplateIds }, completedCount: { $gt: 0 } },
+                    { $inc: { completedCount: -1 } },
+                    options,
+                );
+            }
+            await ItineraryModel.updateMany(
+                { "recentCompleters.userId": userId },
+                { $pull: { recentCompleters: { userId } } },
+                options,
+            );
+        } catch (err) {
+            log.error({ err }, "Failed to remove user from itinerary completions");
             throw err;
         }
     },
