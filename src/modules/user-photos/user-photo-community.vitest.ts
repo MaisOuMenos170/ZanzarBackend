@@ -233,7 +233,7 @@ describe("routes", () => {
     it("serves the review page as static files", async () => {
         const response = await request(app(null)).get("/admin/");
         expect(response.status).toBe(200);
-        expect(response.text).toContain("Revisão de fotos do Lero");
+        expect(response.text).toContain("Revisão do Lero");
         expect(response.headers["content-security-policy"]).toContain("img-src 'self' https:");
     });
 });

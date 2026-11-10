@@ -33,7 +33,7 @@ Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados);
 | `itineraries` | Itinerary (geral) | Templates de roteiros curados |
 | `checkins` | CheckIns | Visita (`userId`, `placeId`, `datetime`, `coordinates?`, `stampIdGranted`); efeitos aplicados pela API |
 | `rating` | Rating / Reações | Reação pós-visita (`impressionTag`) |
-| `place_suggestions` | Sugestão de lugar | Lugar sugerido por usuário (`userId`, `coordinates {latitude, longitude}`, `address`, `note?`) |
+| `place_suggestions` | Sugestão de lugar | Lugar sugerido por usuário, moderado: `status` (`pending`/`needs_review`/`approved`/`rejected`), `osm` (objeto do OpenStreetMap), `moderation[]`, `decisionReason`, `placeId` do lugar criado. Aprovado cria o `place` com `place_id` `osm:<tipo>/<id>` e `source: "community"` |
 | `sync_mutations` | — | Idempotência do sync offline |
 
 ### Check-in síncrono (API)
@@ -101,8 +101,11 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 | GET | `/checkIn?placeId=` | Bearer | Check-in existente usuário+lugar |
 | POST | `/rating` | Bearer | Reação pós-visita |
 | GET | `/rating?placeId=` | Bearer | Reação existente |
-| POST | `/place-suggestions` | Bearer | Sugere um lugar (`{ coordinates: { latitude, longitude }, address, note? }`); `201` com o documento criado |
-| GET | `/place-suggestions` | Bearer | Sugestões do usuário autenticado, da mais recente à mais antiga (máx. 100) |
+| GET | `/place-suggestions/search?q=&lat=&lng=` | Bearer | Busca lugares no OpenStreetMap (Curitiba e região); 10/min por usuário |
+| POST | `/place-suggestions` | Bearer | Sugere um lugar. Corpo `{ osmType, osmId, note? }` (o servidor consulta o OpenStreetMap e modera na hora) ou, para versões antigas e "não encontrei", `{ coordinates, address, note? }` (sempre revisão humana). `201` com `status`; 5 por dia por usuário |
+| GET | `/place-suggestions` | Bearer | Sugestões do usuário autenticado com `status`, `decisionReason` e `placeId` (máx. 100) |
+| GET | `/admin/api/place-suggestions?status=` | Admin | Fila de moderação de sugestões (`ADMIN_USER_IDS`) |
+| POST | `/admin/api/place-suggestions/:id/decision` | Admin | `{ action: approve\|reject, reason?, expectedStatus }`; aprovar cria o lugar |
 | GET | `/stamps/:stampId` | Bearer | Metadados do selo |
 
 Rotas após login usam `Authorization: Bearer <token>` exceto `/places`, `/places/photo` e auth público. Detalhes de body/resposta: seções abaixo e código em `src/modules/*/`.

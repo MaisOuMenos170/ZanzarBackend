@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate:geo": "bash scripts/migrations/migrate-places-geolocation.sh",
     "db:backfill:completers": "tsx scripts/migrations/backfill-itinerary-completers.ts",
+    "db:backfill:suggestions": "tsx scripts/migrations/backfill-place-suggestion-status.ts",
     "photos:remoderate": "tsx scripts/user-photos/remoderate.ts"
   },
   "keywords": [],

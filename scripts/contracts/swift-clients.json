@@ -22,6 +22,9 @@
     "LoginService.swift",
     "SignUpService.swift"
   ],
+  "src/schemas/place-suggestion.ts": [
+    "PlaceSuggestionService.swift"
+  ],
   "src/schemas/user-photo.ts": [
     "UserPhotosService.swift",
     "UserPhotoAPIResponse.swift",
