@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Revisão de fotos</title>
+<title>Revisão do Lero</title>
 <style>
   :root { --bg: #f6f5f2; --card: #fff; --ink: #1d1d1b; --muted: #6b6b66; --line: #e2e0da; --ok: #1f7a3f; --bad: #a3261b; }
   @media (prefers-color-scheme: dark) { :root { --bg: #161615; --card: #22221f; --ink: #f1efe9; --muted: #a7a49b; --line: #3a3934; } }
@@ -33,7 +33,11 @@
 </head>
 <body>
 <header>
-  <h1>Revisão de fotos do Lero</h1>
+  <h1>Revisão do Lero</h1>
+  <select id="kind" aria-label="O que revisar" hidden>
+    <option value="photos">Fotos</option>
+    <option value="places">Lugares sugeridos</option>
+  </select>
   <select id="status" aria-label="Fila" hidden>
     <option value="needs_review">Precisam de revisão</option>
     <option value="pending">Em processamento</option>
@@ -79,6 +83,31 @@
       </select>
       <button class="reject">Reprovar</button>
       <button class="remove">Remover</button>
+    </div>
+  </article>
+</template>
+<template id="place-card">
+  <article class="card">
+    <div class="body">
+      <strong class="place"></strong>
+      <span class="muted meta"></span>
+      <span class="address"></span>
+      <span class="note"></span>
+      <span class="reason"></span>
+      <div class="layers"></div>
+      <a class="map-link" target="_blank" rel="noopener noreferrer">Ver no mapa</a>
+    </div>
+    <div class="actions">
+      <button class="approve">Aprovar</button>
+      <select class="reason-select" aria-label="Motivo">
+        <option value="not_a_real_place">Não é um lugar real</option>
+        <option value="duplicate">Já existe no app</option>
+        <option value="outside_area">Fora de Curitiba e região</option>
+        <option value="type_not_accepted">Tipo de lugar não aceito</option>
+        <option value="inappropriate">Conteúdo impróprio</option>
+        <option value="other">Outro</option>
+      </select>
+      <button class="reject">Reprovar</button>
     </div>
   </article>
 </template>

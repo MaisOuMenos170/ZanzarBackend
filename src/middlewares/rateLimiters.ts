@@ -85,6 +85,31 @@ export const photoUploadLimiter = rateLimit({
     handler: rateLimitHandler("photoUpload"),
 });
 
+/**
+ * Place search goes to OpenStreetMap, which allows about one request per second for the whole server.
+ * Per authenticated user (mounted after `validateAuthToken`).
+ */
+export const placeSearchLimiter = rateLimit({
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    windowMs: 60 * 1000,
+    limit: 10,
+    keyGenerator: (req) => `user:${String(req.user?.id)}`,
+    handler: rateLimitHandler("placeSearch"),
+});
+
+/** Anti-abuse cap on place suggestions, per authenticated user. */
+export const placeSuggestionLimiter = rateLimit({
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    windowMs: 24 * 60 * 60 * 1000,
+    limit: 5,
+    // Invalid or failed requests (400, 503) do not use up the day's allowance.
+    skipFailedRequests: true,
+    keyGenerator: (req) => `user:${String(req.user?.id)}`,
+    handler: rateLimitHandler("placeSuggestion"),
+});
+
 /** Google photo proxy calls (one per image on screen) are exempt from the global limiter. */
 export const isPlacePhotoRequest = (req: Request): boolean =>
     req.method === "GET" && getRequestPath(req) === "/places/photo";

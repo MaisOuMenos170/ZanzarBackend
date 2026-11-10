@@ -182,7 +182,9 @@ function syncPlaces(dbx, rawPlaces) {
     throw new Error('Sync aborted: catalog is empty — refusing to delete all places');
   }
 
-  const currentCount = dbx.places.countDocuments();
+  // Lugares criados a partir de sugestões aprovadas (source: 'community') não vêm do catálogo: ficam de fora.
+  const catalogFilter = { source: { $ne: 'community' } };
+  const currentCount = dbx.places.countDocuments(catalogFilter);
   if (currentCount > 0) {
     const minimumCatalogSize = Math.max(1, Math.floor(currentCount * 0.8));
     if (catalogIds.length < minimumCatalogSize) {
@@ -194,7 +196,7 @@ function syncPlaces(dbx, rawPlaces) {
 
   const orphans = dbx.places
     .find(
-      { place_id: { $nin: catalogIds } },
+      { place_id: { $nin: catalogIds }, ...catalogFilter },
       { place_id: 1, name: 1, 'zanzar.checkInCount': 1, _id: 0 },
     )
     .toArray();
