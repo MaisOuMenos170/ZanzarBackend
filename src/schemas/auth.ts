@@ -48,6 +48,34 @@ export const refreshTokenPayloadSchema = z.object({
   tokenVersion: z.number().int().nonnegative(),
 });
 
-export type RegisterBody = z.infer<typeof registerBodySchema>;
+/** POST /password/forgot: always 202, whether or not the email belongs to an account. */
+export const forgotPasswordBodySchema = z.object({
+  email: z.string().trim().email().toLowerCase(),
+});
+
+/** POST /password/verify: consumes the 6-digit code from the email. */
+export const verifyResetCodeBodySchema = z.object({
+  email: z.string().trim().email().toLowerCase(),
+  code: z.string().regex(/^\d{6}$/),
+});
+
+/** Response of POST /password/verify; the token lasts 10 minutes and works once. */
+export const resetTokenResponseSchema = z.object({
+  resetToken: z.string(),
+});
+
+/** POST /password/reset: 204, and every session of the user is revoked. */
+export const resetPasswordBodySchema = z.object({
+  resetToken: z.string().min(1),
+  newPassword: z
+    .string()
+    .min(PASSWORD_MIN_LENGTH, `Senha: mínimo ${PASSWORD_MIN_LENGTH} caracteres`)
+    .regex(PASSWORD_PATTERN, 'Senha: pelo menos 1 letra e 1 número'),
+});
+
+export type ForgotPasswordBody = z.infer<typeof forgotPasswordBodySchema>;
+export type VerifyResetCodeBody = z.infer<typeof verifyResetCodeBodySchema>;
+export type ResetPasswordBody = z.infer<typeof resetPasswordBodySchema>;
+export type RegisterBody =z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
 export type RefreshBody = z.infer<typeof refreshBodySchema>;

@@ -495,6 +495,29 @@ export const userRepository = {
         }
     },
 
+    /**
+     * Sets the new password and bumps tokenVersion in one write, so every session (and the reset token)
+     * is revoked. Only applies while tokenVersion still matches, which makes a reset token single use.
+     */
+    async updatePasswordAndRevokeTokens(userId: string, expectedTokenVersion: number, password: string): Promise<boolean> {
+        log.debug({ userId }, "Updating password");
+        try {
+            const passwordHash = await hashPassword(password);
+            const versionFilter = expectedTokenVersion === 0
+                ? { $in: [0, null] }
+                : expectedTokenVersion;
+            const result = await UserModel.updateOne(
+                { _id: userId, tokenVersion: versionFilter },
+                { $set: { passwordHash }, $inc: { tokenVersion: 1 } },
+            );
+            log.debug({ userId, updated: result.modifiedCount === 1 }, "Updated password");
+            return result.modifiedCount === 1;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to update password");
+            throw err;
+        }
+    },
+
     async incrementTokenVersion(userId: string): Promise<void> {
         log.debug({ userId }, "Incrementing token version");
         try {

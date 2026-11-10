@@ -5,6 +5,7 @@ import { userRepository } from "./user.repository.js";
 import { checkInRepository } from "../checkin/checkin.repository.js";
 import { ratingRepository } from "../rating/rating.repository.js";
 import { syncMutationRepository } from "../sync/sync-mutation.repository.js";
+import { passwordResetRepository } from "../auth/password-reset.repository.js";
 import { placeRepository } from "../places/place.repository.js";
 import { itineraryRepository } from "../itineraries/itinerary.repository.js";
 import { Types } from "mongoose";
@@ -28,6 +29,7 @@ describe("userService.deleteAccount", () => {
         vi.spyOn(userPhotoCommunityRepository, "deleteAllOfUser").mockResolvedValue(0);
         vi.spyOn(userRepository, "listCompletedTemplateIds").mockResolvedValue([]);
         vi.spyOn(itineraryRepository, "removeCompleter").mockResolvedValue(undefined);
+        vi.spyOn(passwordResetRepository, "deleteByUserId").mockResolvedValue(0);
     });
 
     it("deletes the user's photos with the account and their files once the transaction committed", async () => {
@@ -77,6 +79,7 @@ describe("userService.deleteAccount", () => {
         expect(deleteCheckIns).toHaveBeenCalledWith(USER_ID, session);
         expect(deleteRatings).toHaveBeenCalledWith(USER_ID, session);
         expect(deleteSync).toHaveBeenCalledWith(USER_ID, session);
+        expect(passwordResetRepository.deleteByUserId).toHaveBeenCalledWith(USER_ID, session);
         expect(deleteUser).toHaveBeenCalledWith(USER_ID, session);
         expect(decrement).toHaveBeenCalledWith(
             {

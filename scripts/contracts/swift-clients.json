@@ -20,7 +20,8 @@
   ],
   "src/schemas/auth.ts": [
     "LoginService.swift",
-    "SignUpService.swift"
+    "SignUpService.swift",
+    "PasswordResetService.swift"
   ],
   "src/schemas/place-suggestion.ts": [
     "PlaceSuggestionService.swift"
