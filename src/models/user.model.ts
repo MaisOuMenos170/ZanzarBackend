@@ -136,6 +136,12 @@ const userSchema = new Schema(
         photoTerms: { type: photoTermsAcceptanceSchema },
         ageDeclaration: { type: ageDeclarationSchema },
         blockedUsers: { type: [blockedUserSchema], default: undefined },
+        // APNs device token for push notifications (re-engagement: inactivity, unfinished itineraries, streaks).
+        deviceToken: { type: String },
+        // Denormalized timestamp of the user's most recent check-in, used by inactivity nudges.
+        lastCheckInAt: { type: Date },
+        // When the last re-engagement push was sent to this user, to respect the cooldown window.
+        lastPushNudgeAt: { type: Date },
     },
     { timestamps: true, collection: "users" },
 );

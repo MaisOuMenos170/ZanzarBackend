@@ -88,6 +88,9 @@ export const userDocumentSchema = z.object({
   activeItinerary: userItineraryEmbedSchema.nullable().default(null),
   inactiveItineraries: z.array(userItineraryEmbedSchema).default([]),
   completedItineraries: z.array(completedItineraryEmbedSchema).default([]),
+  deviceToken: z.string().min(1).optional(),
+  lastCheckInAt: isoDateTimeSchema.optional(),
+  lastPushNudgeAt: isoDateTimeSchema.optional(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 });
@@ -129,3 +132,8 @@ export type GetProfileQuery = z.infer<typeof getProfileQuerySchema>;
 export type ProfileSummary = z.infer<typeof profileSummarySchema>;
 export type RecentCheckIn = z.infer<typeof recentCheckInSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
+
+export const registerDeviceTokenBodySchema = z.object({
+  deviceToken: z.string().min(1),
+});
+export type RegisterDeviceTokenBody = z.infer<typeof registerDeviceTokenBodySchema>;

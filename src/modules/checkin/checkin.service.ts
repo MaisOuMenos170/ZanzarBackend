@@ -301,6 +301,7 @@ async function applyCheckinInTransaction(
         {
             $set: {
                 checkInCount: userDoc.checkInCount,
+                lastCheckInAt: now,
                 stamps: userDoc.stamps,
                 activeItinerary: userDoc.activeItinerary,
                 completedItineraries: userDoc.completedItineraries,

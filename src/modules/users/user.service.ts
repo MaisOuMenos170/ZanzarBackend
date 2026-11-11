@@ -153,6 +153,12 @@ export const userService = {
         log.info({ userId }, "Removed avatar successfully");
     },
 
+    async setDeviceToken(userId: string, deviceToken: string): Promise<void> {
+        log.info({ userId }, "Setting device token");
+        await userRepository.setDeviceToken(userId, deviceToken);
+        log.info({ userId }, "Device token set successfully");
+    },
+
     /**
      * Permanently deletes the user and everything tied to them (check-ins, ratings, sync mutations and the
      * embedded stamps/saved places/itineraries) in one transaction, rolling place aggregate counters back.

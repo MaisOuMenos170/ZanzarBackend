@@ -23,6 +23,7 @@ import { userPhotoCommunityRouter, userPhotoPublicRouter } from "./modules/user-
 import { devPhotoFilesRouter } from "./modules/user-photos/dev-photo-files.routes";
 import { moderationWorker } from "./modules/user-photos/moderation/moderation.service";
 import { userPhotoCommunityService } from "./modules/user-photos/user-photo-community.service";
+import { pushWorker } from "./utils/push-worker";
 
 // Middlewares import
 import { errorHandler } from "./middlewares/errorHandler";
@@ -135,6 +136,9 @@ connectDatabase()
     setInterval(() => {
       userPhotoCommunityService.purgeExpiredRejected().catch((err) => logger.error({ err }, "Photo retention job failed"));
     }, 60 * 60 * 1000).unref();
+
+    // Push notification worker: sends inactivity and unfinished-itinerary nudges hourly.
+    pushWorker.start();
 
     for (const signal of ["SIGTERM", "SIGINT"] as const) {
       process.once(signal, () => {

@@ -512,6 +512,35 @@ export const userRepository = {
         }
     },
 
+    async setDeviceToken(userId: string, deviceToken: string): Promise<void> {
+        log.debug({ userId }, "Setting device token");
+        try {
+            const result = await UserModel.updateOne(
+                { _id: userId },
+                { $set: { deviceToken } },
+            );
+            if (result.matchedCount === 0) {
+                throw new AppError("User not found", 404);
+            }
+            log.debug({ userId }, "Device token set");
+        } catch (err) {
+            if (err instanceof AppError) throw err;
+            log.error({ err, userId }, "Failed to set device token");
+            throw err;
+        }
+    },
+
+    async deleteDeviceToken(userId: string): Promise<void> {
+        log.debug({ userId }, "Deleting device token");
+        try {
+            const result = await UserModel.updateOne({ _id: userId }, { $unset: { deviceToken: "" } });
+            log.debug({ userId, modifiedCount: result.modifiedCount }, "Deleted device token");
+        } catch (err) {
+            log.error({ err, userId }, "Failed to delete device token");
+            throw err;
+        }
+    },
+
     async deleteById(userId: string, session?: ClientSession): Promise<boolean> {
         log.debug({ userId }, "Deleting user");
         try {
