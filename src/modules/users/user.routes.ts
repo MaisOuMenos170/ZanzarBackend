@@ -11,13 +11,14 @@ import {
     removeAvatar,
     removeSavedPlace,
     savePlace,
+    setDeviceToken,
     updateAvatar,
 } from "./user.controller";
 import { deleteAccountLimiter } from "../../middlewares/rateLimiters";
 import { requireOwnershipFromParams } from "../../middlewares/requireOwnership";
 import { validateGetProfileQuery } from "../../middlewares/validateGetProfileQuery";
 import { validateSchema } from "../../middlewares/validateSchema";
-import { createAvatarBodySchema, savePlaceBodySchema, updateAvatarBodySchema } from "../../schemas/user";
+import { createAvatarBodySchema, registerDeviceTokenBodySchema, savePlaceBodySchema, updateAvatarBodySchema } from "../../schemas/user";
 
 export const userRouter: Router = express.Router();
 
@@ -49,3 +50,9 @@ userRouter.patch(
     updateAvatar,
 );
 userRouter.delete("/user/:id/avatar", requireOwnershipFromParams("id"), removeAvatar);
+userRouter.post(
+    "/user/:id/device-token",
+    requireOwnershipFromParams("id"),
+    validateSchema(registerDeviceTokenBodySchema),
+    setDeviceToken,
+);
