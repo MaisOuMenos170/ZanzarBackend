@@ -119,6 +119,14 @@ export async function sendUnfinishedItineraryNudges(): Promise<void> {
         const result = await pushService.sendToDevice(deviceToken, {
             title: "Seu roteiro está esperando",
             body: `Você ainda tem ${placeName}. Que tal continuar hoje?`,
+        const remaining = user.activeItinerary?.places.filter((place) => !place.isCompleted).length ?? 0;
+        if (remaining === 0) continue;
+
+        const stops = remaining === 1 ? "1 parada" : `${remaining} paradas`;
+
+        const result = await pushService.sendToDevice(deviceToken, {
+            title: "Seu roteiro está esperando",
+            body: `Faltam ${stops} no seu roteiro. Que tal continuar hoje?`,
             sound: "default",
         });
 

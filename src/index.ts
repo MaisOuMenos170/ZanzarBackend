@@ -139,6 +139,9 @@ connectDatabase()
       userPhotoCommunityService.purgeExpiredRejected().catch((err) => logger.error({ err }, "Photo retention job failed"));
     }, 60 * 60 * 1000).unref();
 
+    // Push notification worker: sends inactivity and unfinished-itinerary nudges hourly.
+    pushWorker.start();
+
     for (const signal of ["SIGTERM", "SIGINT"] as const) {
       process.once(signal, () => {
         logger.info({ signal }, "Shutting down: finishing in-flight requests, then closing MongoDB");
