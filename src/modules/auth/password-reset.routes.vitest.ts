@@ -71,6 +71,54 @@ describe("POST /password/verify", () => {
     });
 });
 
+describe("POST /password/verify with the link token", () => {
+    it("verifies the token instead of email and code", async () => {
+        const token = "Ab_-".repeat(10) + "xyz";
+        const verifyLink = vi.spyOn(passwordResetService, "verifyLinkToken").mockResolvedValue("reset-token");
+        const verifyCode = vi.spyOn(passwordResetService, "verifyCode");
+
+        const res = await request(createApp()).post("/password/verify").send({ token });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ resetToken: "reset-token" });
+        expect(verifyLink).toHaveBeenCalledWith(token);
+        expect(verifyCode).not.toHaveBeenCalled();
+    });
+
+    it("rejects a malformed token without calling the service", async () => {
+        const verifyLink = vi.spyOn(passwordResetService, "verifyLinkToken");
+
+        const res = await request(createApp()).post("/password/verify").send({ token: "short" });
+
+        expect(res.status).toBe(400);
+        expect(verifyLink).not.toHaveBeenCalled();
+    });
+});
+
+describe("GET /reset-password", () => {
+    it("hands the token to the app via lero:// without consuming it", async () => {
+        const token = "a".repeat(43);
+        const verifyLink = vi.spyOn(passwordResetService, "verifyLinkToken");
+
+        const res = await request(createApp()).get(`/reset-password?token=${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.headers["content-type"]).toContain("text/html");
+        expect(res.headers["cache-control"]).toBe("no-store");
+        expect(res.text).toContain(`href="lero://reset-password?token=${token}"`);
+        expect(res.text).toContain(`content="0;url=lero://reset-password?token=${token}"`);
+        expect(verifyLink).not.toHaveBeenCalled();
+    });
+
+    it("shows an error page and no app link for a malformed token", async () => {
+        const res = await request(createApp()).get('/reset-password?token="><script>');
+
+        expect(res.status).toBe(400);
+        expect(res.text).not.toContain("lero://");
+        expect(res.text).not.toContain("<script>");
+    });
+});
+
 describe("POST /password/reset", () => {
     it("answers 204", async () => {
         const reset = vi.spyOn(passwordResetService, "resetPassword").mockResolvedValue();

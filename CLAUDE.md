@@ -52,9 +52,10 @@ npm run build && npm start
 ```
 
 - Estado em 2026-10-29: `typecheck` limpo e `vitest` 9 arquivos / 18 testes passando. O `test:legacy` não foi executado.
-- Variáveis (só nomes): `NODE_ENV`, `PORT`, `MONGODB_URI`, `MONGODB_URI_STANDARD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CHECKIN_RADIUS_METERS`, `GOOGLE_PLACES_API_KEY`, `SIGNUP_ENABLED`, `LOG_LEVEL`, `RESEND_API_KEY`, `EMAIL_FROM` (e-mail do código de redefinição de senha; sem eles `POST /password/forgot` responde 503). Obrigatórias na subida: `JWT_SECRET` e `MONGODB_URI`.
+- Variáveis (só nomes): `NODE_ENV`, `PORT`, `MONGODB_URI`, `MONGODB_URI_STANDARD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CHECKIN_RADIUS_METERS`, `GOOGLE_PLACES_API_KEY`, `SIGNUP_ENABLED`, `LOG_LEVEL`, `RESEND_API_KEY`, `EMAIL_FROM` (e-mail do código de redefinição de senha; sem eles `POST /password/forgot` responde 503), o link do e-mail usa `RAILWAY_PUBLIC_DOMAIN`, que o Railway define sozinho. Obrigatórias na subida: `JWT_SECRET`, `JWT_REFRESH_SECRET`, e `MONGODB_URI`.
 - A porta padrão no código é 8000, mas README e app assumem 3000. Defina `PORT=3000` no `.env` local.
 - Banco: `npm run db:init` (collections + seed), `npm run db:validate:dry` antes de `db:validate`.
+- Link de redefinição de senha: o e-mail aponta para `GET /reset-password?token=…`, que abre o app por `lero://reset-password?token=…`; o app troca o token em `POST /password/verify` (`{ token }`). A página não consome o token (scanners de e-mail abrem links).
 - Check-in usa transação MongoDB: precisa de replica set (Atlas serve).
 
 ## Convenções

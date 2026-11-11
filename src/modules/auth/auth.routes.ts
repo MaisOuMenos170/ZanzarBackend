@@ -10,6 +10,8 @@ import {
     resetPassword,
     verifyResetCode,
 } from "./auth.controller";
+import { resetPasswordLinkPage } from "./password-reset-page";
+import { RESET_PASSWORD_PATH } from "./password-reset-link";
 import { forgotPasswordSchema, resetPasswordSchema, verifyResetCodeSchema } from "./schema/passwordResetSchemas";
 import { validateSchema } from "../../middlewares/validateSchema";
 import { createUserSchema } from "../users/schema/createUserSchema";
@@ -39,3 +41,4 @@ authRouter.post("/logout", logoutLimiter, validateAuthToken, logoutUser);
 authRouter.post("/password/forgot", forgotPasswordLimiter, validateSchema(forgotPasswordSchema), forgotPassword);
 authRouter.post("/password/verify", verifyResetCodeLimiter, validateSchema(verifyResetCodeSchema), verifyResetCode);
 authRouter.post("/password/reset", resetPasswordLimiter, validateSchema(resetPasswordSchema), resetPassword);
+authRouter.get(RESET_PASSWORD_PATH, resetPasswordLinkPage);

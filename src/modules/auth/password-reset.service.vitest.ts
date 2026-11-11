@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+    hashLinkToken,
     hashResetCode,
     PASSWORD_RESET_MAX_ATTEMPTS,
     passwordResetService,
@@ -34,6 +35,10 @@ async function expectStatus(promise: Promise<unknown>, status: number) {
 
 beforeEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("PORT", "3000");
+    vi.stubEnv("RAILWAY_PUBLIC_DOMAIN", "");
     vi.spyOn(mailer, "assertMailerConfigured").mockReturnValue();
 });
 
@@ -46,15 +51,19 @@ describe("passwordResetService.requestCode", () => {
 
         await passwordResetService.requestCode(user.email, NOW);
 
-        const code = send.mock.calls[0][1];
+        const [, code, , link] = send.mock.calls[0];
         expect(code).toMatch(/^\d{6}$/);
-        expect(send).toHaveBeenCalledWith(user.email, code, 15);
+        const linkToken = new URL(link as string).searchParams.get("token") as string;
+        expect(linkToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+        expect(send).toHaveBeenCalledWith(user.email, code, 15, `http://127.0.0.1:3000/reset-password?token=${linkToken}`);
         expect(upsert).toHaveBeenCalledWith(USER_ID, {
             codeHash: hashResetCode(USER_ID, code),
+            linkTokenHash: hashLinkToken(linkToken),
             expiresAt: new Date(NOW.getTime() + 15 * 60 * 1000),
             lastSentAt: NOW,
         });
         expect(JSON.stringify(upsert.mock.calls)).not.toContain(`"${code}"`);
+        expect(JSON.stringify(upsert.mock.calls)).not.toContain(linkToken);
     });
 
     it("sends nothing for an unknown email and does not throw", async () => {
@@ -186,6 +195,37 @@ describe("passwordResetService.verifyCode", () => {
         vi.spyOn(userRepository, "findByEmail").mockResolvedValue(null);
 
         await expectStatus(passwordResetService.verifyCode("nobody@example.com", "123456", NOW), 400);
+    });
+});
+
+describe("passwordResetService.verifyLinkToken", () => {
+    const LINK_TOKEN = "a".repeat(43);
+
+    it("consumes the pending reset of the link and returns a reset token", async () => {
+        const consume = vi
+            .spyOn(passwordResetRepository, "consumeByLinkTokenHash")
+            .mockResolvedValue(pending({ linkTokenHash: hashLinkToken(LINK_TOKEN) }));
+        vi.spyOn(userRepository, "findTokenVersionById").mockResolvedValue(3);
+
+        const resetToken = await passwordResetService.verifyLinkToken(LINK_TOKEN, NOW);
+
+        expect(consume).toHaveBeenCalledWith(hashLinkToken(LINK_TOKEN), NOW);
+        expect(decodePasswordResetToken(resetToken)).toEqual({ id: USER_ID, tokenVersion: 3 });
+    });
+
+    it("rejects an unknown, used or expired link with the code's error", async () => {
+        vi.spyOn(passwordResetRepository, "consumeByLinkTokenHash").mockResolvedValue(null);
+        const findVersion = vi.spyOn(userRepository, "findTokenVersionById");
+
+        await expectStatus(passwordResetService.verifyLinkToken(LINK_TOKEN, NOW), 400);
+        expect(findVersion).not.toHaveBeenCalled();
+    });
+
+    it("rejects a link whose account was deleted", async () => {
+        vi.spyOn(passwordResetRepository, "consumeByLinkTokenHash").mockResolvedValue(pending());
+        vi.spyOn(userRepository, "findTokenVersionById").mockResolvedValue(null);
+
+        await expectStatus(passwordResetService.verifyLinkToken(LINK_TOKEN, NOW), 400);
     });
 });
 
