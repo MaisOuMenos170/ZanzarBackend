@@ -132,6 +132,8 @@ connectDatabase()
       );
     });
     moderationWorker.start();
+    // Push notification worker: sends inactivity and unfinished-itinerary nudges hourly.
+    pushWorker.start();
     // Retention of rejected photos' files (docs/fotos-de-usuario-decisao.md): checked hourly.
     setInterval(() => {
       userPhotoCommunityService.purgeExpiredRejected().catch((err) => logger.error({ err }, "Photo retention job failed"));

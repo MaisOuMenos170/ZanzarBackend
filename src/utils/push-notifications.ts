@@ -34,6 +34,25 @@ function loadConfig(): APNsConfig | null {
   const teamId = process.env.APNS_TEAM_ID;
   const bundleId = process.env.APNS_BUNDLE_ID;
   const keyPath = process.env.APNS_AUTH_KEY_PATH;
+  const privateKeyEnv = process.env.APNS_AUTH_KEY;
+
+  if (!keyId || !teamId || !bundleId) {
+    return null;
+  }
+
+  let privateKey: string | undefined;
+
+  // Prefer the raw key content from the env var (works on Railway without a file).
+  if (privateKeyEnv) {
+    privateKey = privateKeyEnv;
+  } else if (keyPath) {
+    try {
+      privateKey = readFileSync(keyPath, "utf8");
+    } catch (err) {
+      log.error({ err, keyPath }, "Failed to read APNs private key");
+      return null;
+    }
+  } else {
 
   if (!keyId || !teamId || !bundleId || !keyPath) {
     return null;
@@ -178,6 +197,13 @@ async function sendToAPNs(
  * Sends a push notification via APNs using HTTP/2 + JWT authentication.
  *
  * Requires these environment variables:
+ *   APNS_AUTH_KEY      the raw contents of the .p8 file (recommended for Railway)
+ *   APNS_AUTH_KEY_PATH OR path to the .p8 key file from Apple Developer (alternative)
+ *   APNS_KEY_ID        the 10-character key ID from Apple Developer
+ *   APNS_TEAM_ID       your 10-character Apple Team ID
+ *   APNS_BUNDLE_ID     the app's bundle identifier
+ *
+ * In development (NODE_ENV != production), routes to the Apple Sandbox gateway.
  *   APNS_AUTH_KEY_PATH  path to the .p8 key file from Apple Developer
  *   APNS_KEY_ID         the 10-character key ID from Apple Developer
  *   APNS_TEAM_ID        your 10-character Apple Team ID
