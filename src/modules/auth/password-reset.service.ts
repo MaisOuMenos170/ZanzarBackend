@@ -5,7 +5,6 @@ import { passwordResetRepository } from "./password-reset.repository";
 import { assertMailerConfigured, sendPasswordResetCode } from "../../utils/mailer";
 import { decodePasswordResetToken, signPasswordResetToken } from "../../utils/jwt";
 import { logger } from "../../utils/logger";
-import { buildResetLinkUrl, generateLinkToken } from "./password-reset-link";
 
 const log = logger.child({ module: "auth", layer: "service", flow: "passwordReset" });
 
@@ -18,10 +17,6 @@ const INVALID_RESET_TOKEN = "Invalid or expired reset token";
 
 export function hashResetCode(userId: string, code: string): string {
     return createHmac("sha256", process.env.JWT_SECRET as string).update(`password_reset:${userId}:${code}`).digest("hex");
-}
-
-export function hashLinkToken(token: string): string {
-    return createHmac("sha256", process.env.JWT_SECRET as string).update(`password_reset_link:${token}`).digest("hex");
 }
 
 function sameHash(a: string, b: string): boolean {
@@ -54,18 +49,14 @@ export const passwordResetService = {
         }
 
         const code = generateCode();
-        const linkToken = generateLinkToken();
         await passwordResetRepository.upsertForUser(userId, {
             codeHash: hashResetCode(userId, code),
-            linkTokenHash: hashLinkToken(linkToken),
             expiresAt: new Date(now.getTime() + PASSWORD_RESET_CODE_TTL_MINUTES * 60 * 1000),
             lastSentAt: now,
         });
 
         try {
-            const link = buildResetLinkUrl(linkToken);
-            if (!link) log.warn({ userId }, "No public base URL, password reset email sent without a link");
-            await sendPasswordResetCode(user.email, code, PASSWORD_RESET_CODE_TTL_MINUTES, link);
+            await sendPasswordResetCode(user.email, code, PASSWORD_RESET_CODE_TTL_MINUTES);
             log.info({ userId }, "Password reset code sent");
         } catch (err) {
             // Answering with an error here would reveal that the account exists.
@@ -110,28 +101,6 @@ export const passwordResetService = {
 
         log.info({ userId }, "Password reset code verified");
         return signPasswordResetToken({ id: userId, tokenVersion: user.tokenVersion ?? 0 });
-    },
-
-    /**
-     * Same outcome as verifyCode, from the token in the email link (opened in the app via lero://).
-     * The token has 256 bits, so there is no attempt counter; consuming it also invalidates the code.
-     */
-    async verifyLinkToken(token: string, now = new Date()): Promise<string> {
-        const pending = await passwordResetRepository.consumeByLinkTokenHash(hashLinkToken(token), now);
-        if (!pending) {
-            log.warn({ reason: "unknown_or_expired_link" }, "Password reset link rejected");
-            throw new AppError(INVALID_CODE, 400);
-        }
-        const userId = String(pending.userId);
-
-        const tokenVersion = await userRepository.findTokenVersionById(userId);
-        if (tokenVersion === null) {
-            log.warn({ userId, reason: "user_not_found" }, "Password reset link rejected");
-            throw new AppError(INVALID_CODE, 400);
-        }
-
-        log.info({ userId }, "Password reset link verified");
-        return signPasswordResetToken({ id: userId, tokenVersion });
     },
 
     /** Sets the new password and revokes every session; the user signs in again with it. */

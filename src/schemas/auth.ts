@@ -53,19 +53,11 @@ export const forgotPasswordBodySchema = z.object({
   email: z.string().trim().email().toLowerCase(),
 });
 
-/**
- * POST /password/verify: consumes the 6-digit code from the email, or the token of the email link
- * (the app receives it as lero://reset-password?token=…). Either one also invalidates the other.
- */
-export const verifyResetCodeBodySchema = z.union([
-  z.object({
-    email: z.string().trim().email().toLowerCase(),
-    code: z.string().regex(/^\d{6}$/),
-  }),
-  z.object({
-    token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
-  }),
-]);
+/** POST /password/verify: consumes the 6-digit code from the email. */
+export const verifyResetCodeBodySchema = z.object({
+  email: z.string().trim().email().toLowerCase(),
+  code: z.string().regex(/^\d{6}$/),
+});
 
 /** Response of POST /password/verify; the token lasts 10 minutes and works once. */
 export const resetTokenResponseSchema = z.object({

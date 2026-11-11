@@ -15,10 +15,7 @@ export const passwordResetRepository = {
     },
 
     /** Replaces any pending code of the user, resetting the attempt counter. */
-    async upsertForUser(
-        userId: string,
-        data: { codeHash: string; linkTokenHash: string; expiresAt: Date; lastSentAt: Date },
-    ): Promise<void> {
+    async upsertForUser(userId: string, data: { codeHash: string; expiresAt: Date; lastSentAt: Date }): Promise<void> {
         try {
             await PasswordResetModel.updateOne(
                 { userId },
@@ -53,19 +50,6 @@ export const passwordResetRepository = {
             return result.deletedCount === 1;
         } catch (err) {
             log.error({ err, userId }, "Failed to consume password reset");
-            throw err;
-        }
-    },
-
-    /** Deletes the pending reset that the link token belongs to, if it has not expired; null otherwise. */
-    async consumeByLinkTokenHash(linkTokenHash: string, now: Date): Promise<PasswordReset | null> {
-        try {
-            return await PasswordResetModel.findOneAndDelete({
-                linkTokenHash,
-                expiresAt: { $gt: now },
-            }).lean<PasswordReset>();
-        } catch (err) {
-            log.error({ err }, "Failed to consume password reset link");
             throw err;
         }
     },

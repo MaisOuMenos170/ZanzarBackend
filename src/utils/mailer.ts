@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 import { AppError } from "../errors/appError";
 import { logger } from "./logger";
-import { escapeHtml } from "./html";
 
 const log = logger.child({ module: "mailer", layer: "util" });
 
@@ -23,44 +22,22 @@ export function assertMailerConfigured(): void {
     getMailConfig();
 }
 
-/** `link` opens the app (via the bridge page and lero://); the code stays as a fallback, e.g. on a computer. */
-export async function sendPasswordResetCode(
-    to: string,
-    code: string,
-    validMinutes: number,
-    link: string | null = null,
-): Promise<void> {
+export async function sendPasswordResetCode(to: string, code: string, validMinutes: number): Promise<void> {
     const { client, from } = getMailConfig();
     const subject = `Seu código para redefinir a senha: ${code}`;
     const text = [
         "Olá!",
         "",
-        ...(link
-            ? [
-                  "Toque no link abaixo no iPhone com o Lero instalado para redefinir sua senha:",
-                  "",
-                  link,
-                  "",
-                  `Ou use este código no app. O link e o código valem por ${validMinutes} minutos e só podem ser usados uma vez.`,
-              ]
-            : [
-                  `Use o código abaixo para redefinir sua senha no Lero. Ele vale por ${validMinutes} minutos e só pode ser usado uma vez.`,
-              ]),
+        `Use o código abaixo para redefinir sua senha no Lero. Ele vale por ${validMinutes} minutos e só pode ser usado uma vez.`,
         "",
         code,
         "",
         "Se você não pediu para redefinir a senha, ignore este e-mail. Sua senha continua a mesma.",
     ].join("\n");
-    const linkHtml = link
-        ? `
-  <p>Toque no botão abaixo no iPhone com o Lero instalado para redefinir sua senha.</p>
-  <p style="margin: 24px 0;"><a href="${escapeHtml(link)}" style="display: inline-block; background: #1a1a1a; color: #ffffff; text-decoration: none; font-weight: 600; padding: 14px 24px; border-radius: 12px;">Redefinir senha no app</a></p>
-  <p>Ou use este código no app. O link e o código valem por ${validMinutes} minutos e só podem ser usados uma vez.</p>`
-        : `
-  <p>Use o código abaixo para redefinir sua senha no Lero. Ele vale por ${validMinutes} minutos e só pode ser usado uma vez.</p>`;
     const html = `
 <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 480px;">
-  <p>Olá!</p>${linkHtml}
+  <p>Olá!</p>
+  <p>Use o código abaixo para redefinir sua senha no Lero. Ele vale por ${validMinutes} minutos e só pode ser usado uma vez.</p>
   <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; margin: 24px 0;">${code}</p>
   <p style="color: #666;">Se você não pediu para redefinir a senha, ignore este e-mail. Sua senha continua a mesma.</p>
 </div>`;

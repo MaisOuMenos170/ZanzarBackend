@@ -9,10 +9,7 @@ export const forgotPassword: RequestHandler = async (req, res) => {
 };
 
 export const verifyResetCode: RequestHandler = async (req, res) => {
-    const resetToken =
-        "token" in req.body
-            ? await passwordResetService.verifyLinkToken(req.body.token)
-            : await passwordResetService.verifyCode(req.body.email, req.body.code);
+    const resetToken = await passwordResetService.verifyCode(req.body.email, req.body.code);
     res.status(200).json({ resetToken });
 };
 
