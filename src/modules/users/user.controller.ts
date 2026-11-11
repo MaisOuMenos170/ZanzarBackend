@@ -3,6 +3,7 @@ import { AppError } from "../../errors/appError";
 import {
     savedPlaceParamsSchema,
     type CreateAvatarBody,
+    type RegisterDeviceTokenBody,
     type SavePlaceBody,
     type UpdateAvatarBody,
 } from "../../schemas/user";
@@ -68,5 +69,11 @@ export const updateAvatar: RequestHandler = async (req, res) => {
 
 export const removeAvatar: RequestHandler = async (req, res) => {
     await userService.removeAvatar(req.params.id as string);
+    res.status(204).send();
+};
+
+export const setDeviceToken: RequestHandler = async (req, res) => {
+    const { deviceToken } = req.body as RegisterDeviceTokenBody;
+    await userService.setDeviceToken(req.params.id as string, deviceToken);
     res.status(204).send();
 };
