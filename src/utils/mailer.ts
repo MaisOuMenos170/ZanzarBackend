@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { AppError } from "../errors/appError";
 import { logger } from "./logger";
+import { passwordResetSubject, renderPasswordResetHtml, renderPasswordResetText } from "./emailTemplates/passwordReset";
 
 const log = logger.child({ module: "mailer", layer: "util" });
 
@@ -24,23 +25,9 @@ export function assertMailerConfigured(): void {
 
 export async function sendPasswordResetCode(to: string, code: string, validMinutes: number): Promise<void> {
     const { client, from } = getMailConfig();
-    const subject = `Seu código para redefinir a senha: ${code}`;
-    const text = [
-        "Olá!",
-        "",
-        `Use o código abaixo para redefinir sua senha no Lero. Ele vale por ${validMinutes} minutos e só pode ser usado uma vez.`,
-        "",
-        code,
-        "",
-        "Se você não pediu para redefinir a senha, ignore este e-mail. Sua senha continua a mesma.",
-    ].join("\n");
-    const html = `
-<div style="font-family: -apple-system, Helvetica, Arial, sans-serif; color: #1a1a1a; max-width: 480px;">
-  <p>Olá!</p>
-  <p>Use o código abaixo para redefinir sua senha no Lero. Ele vale por ${validMinutes} minutos e só pode ser usado uma vez.</p>
-  <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; margin: 24px 0;">${code}</p>
-  <p style="color: #666;">Se você não pediu para redefinir a senha, ignore este e-mail. Sua senha continua a mesma.</p>
-</div>`;
+    const subject = passwordResetSubject(code);
+    const text = renderPasswordResetText(code, validMinutes);
+    const html = renderPasswordResetHtml(code, validMinutes);
 
     const { error } = await client.emails.send({ from, to, subject, text, html });
     if (error) {
