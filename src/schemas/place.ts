@@ -48,6 +48,26 @@ export const getPlacesQuerySchema = z.object({
   excludePlaceId: googlePlaceIdSchema.optional(),
 });
 
+/** `categories` chega como lista separada por vírgula (`bar,cafe`); vazio ou ausente = todas as categorias. */
+const categoriesQuerySchema = z
+  .string()
+  .optional()
+  .transform((value) =>
+    value
+      ?.split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0),
+  )
+  .pipe(z.array(z.enum(ZANZAR_CATEGORIES)).optional());
+
+export const searchPlacesQuerySchema = z.object({
+  q: z.string().trim().min(2).max(80),
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+  categories: categoriesQuerySchema,
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
 export const placeDocumentSchema = z.object({
   place_id: z.string().min(1),
   name: z.string().min(1),
@@ -98,4 +118,5 @@ export type PlaceNearbyDocument = z.infer<typeof placeNearbySchema>;
 export type ImpressionAvatars = z.infer<typeof impressionAvatarsSchema>;
 export type PlaceUserContext =z.infer<typeof placeUserContextSchema>;
 export type GetPlacesQuery = z.infer<typeof getPlacesQuerySchema>;
+export type SearchPlacesQuery = z.infer<typeof searchPlacesQuerySchema>;
 export type ZanzarExtension = z.infer<typeof zanzarExtensionSchema>;

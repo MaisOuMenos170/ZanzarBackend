@@ -17,6 +17,12 @@ export const getPlaces: RequestHandler = async (req, res) => {
     res.json(places);
 };
 
+export const searchPlaces: RequestHandler = async (req, res) => {
+    const userId = resolveAuthenticatedUserId(req);
+    const places = await placeService.search(res.locals.searchPlacesQuery!, userId);
+    res.json(places);
+};
+
 export const getPlacePhoto: RequestHandler = async (req, res) => {
     const { body, contentType } = await placePhotoService.fetchPhoto(
         typeof req.query.ref === "string" ? req.query.ref : undefined,
