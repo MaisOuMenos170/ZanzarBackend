@@ -16,7 +16,7 @@ import type {
     PlaceDocument,
     PlaceNearbyDocument,
     PlaceUserContext,
-    SearchPlacesQuery,
+    PlacesSearchQuery,
 } from "../../schemas/place";
 
 const log = logger.child({ module: "places", layer: "service" });
@@ -87,7 +87,7 @@ export const placeService = {
      * `findNearby` já devolve tudo ordenado por distância; o texto é comparado aqui porque o Mongo não ignora
      * acento em regex. O catálogo é de centenas de lugares; se crescer para milhares, trocar por índice de texto.
      */
-    async search(query: SearchPlacesQuery, userId?: string): Promise<PlaceNearbyDocument[]> {
+    async search(query: PlacesSearchQuery, userId?: string): Promise<PlaceNearbyDocument[]> {
         // The text typed and the coordinates are user data, so they are deliberately not logged.
         log.info({ limit: query.limit, categories: query.categories }, "Searching places");
         const needle = foldText(query.q);

@@ -53,16 +53,6 @@ function loadConfig(): APNsConfig | null {
       return null;
     }
   } else {
-
-  if (!keyId || !teamId || !bundleId || !keyPath) {
-    return null;
-  }
-
-  let privateKey: string;
-  try {
-    privateKey = readFileSync(keyPath, "utf8");
-  } catch (err) {
-    log.error({ err, keyPath }, "Failed to read APNs private key");
     return null;
   }
 
@@ -204,12 +194,6 @@ async function sendToAPNs(
  *   APNS_BUNDLE_ID     the app's bundle identifier
  *
  * In development (NODE_ENV != production), routes to the Apple Sandbox gateway.
- *   APNS_AUTH_KEY_PATH  path to the .p8 key file from Apple Developer
- *   APNS_KEY_ID         the 10-character key ID from Apple Developer
- *   APNS_TEAM_ID        your 10-character Apple Team ID
- *   APNS_BUNDLE_ID      the app's bundle identifier
- *
- * In development, NODE_ENV != production routes to the Apple Sandbox gateway.
  * In production, set NODE_ENV=production for the production gateway.
  */
 export class PushService {

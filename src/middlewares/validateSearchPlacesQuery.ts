@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express";
 import { z } from "zod";
-import { searchPlacesQuerySchema, type SearchPlacesQuery } from "../schemas/place";
+import { placesSearchQuerySchema, type PlacesSearchQuery } from "../schemas/place";
 import { logger } from "../utils/logger";
 import { getRequestPath, summarizeIssues } from "../utils/httpLog";
 
@@ -8,12 +8,12 @@ const log = logger.child({ module: "validation", layer: "middleware" });
 
 declare module "express-serve-static-core" {
     interface Locals {
-        searchPlacesQuery?: SearchPlacesQuery;
+        searchPlacesQuery?: PlacesSearchQuery;
     }
 }
 
 export const validateSearchPlacesQuery: RequestHandler = (req, res, next) => {
-    const result = searchPlacesQuerySchema.safeParse(req.query);
+    const result = placesSearchQuerySchema.safeParse(req.query);
     if (!result.success) {
         log.warn(
             {

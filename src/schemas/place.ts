@@ -60,7 +60,7 @@ const categoriesQuerySchema = z
   )
   .pipe(z.array(z.enum(ZANZAR_CATEGORIES)).optional());
 
-export const searchPlacesQuerySchema = z.object({
+export const placesSearchQuerySchema = z.object({
   q: z.string().trim().min(2).max(80),
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
@@ -118,5 +118,5 @@ export type PlaceNearbyDocument = z.infer<typeof placeNearbySchema>;
 export type ImpressionAvatars = z.infer<typeof impressionAvatarsSchema>;
 export type PlaceUserContext =z.infer<typeof placeUserContextSchema>;
 export type GetPlacesQuery = z.infer<typeof getPlacesQuerySchema>;
-export type SearchPlacesQuery = z.infer<typeof searchPlacesQuerySchema>;
+export type PlacesSearchQuery = z.infer<typeof placesSearchQuerySchema>;
 export type ZanzarExtension = z.infer<typeof zanzarExtensionSchema>;
