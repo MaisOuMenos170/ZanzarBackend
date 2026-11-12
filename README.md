@@ -80,6 +80,7 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 | POST | `/refresh` | — | Troca um refresh token por um novo par (rate limit) |
 | POST | `/logout` | Bearer | Invalida sessão (`tokenVersion`) |
 | GET | `/places` | opcional | Lista lugares (`lat`, `lng`, `radius`, …) |
+| GET | `/places/search?q=&lat=&lng=&categories=&limit=` | opcional | Busca por nome, apelido ou endereço (sem acento, sem diferenciar caixa), mais perto primeiro; `q` 2–80, `limit` 1–50 (padrão 20) |
 | GET | `/places/photo?ref=&maxwidth=` | — | Proxy foto Google (sem rate limit; `GOOGLE_PLACES_API_KEY`) |
 | GET | `/places/:placeId` | opcional | Detalhe do lugar |
 | GET | `/itineraries` | Bearer | Roteiros curados |

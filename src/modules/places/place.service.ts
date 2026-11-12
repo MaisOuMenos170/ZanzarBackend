@@ -16,6 +16,7 @@ import type {
     PlaceDocument,
     PlaceNearbyDocument,
     PlaceUserContext,
+    PlacesSearchQuery,
 } from "../../schemas/place";
 
 const log = logger.child({ module: "places", layer: "service" });
@@ -38,6 +39,33 @@ async function loadImpressionAvatars(placeId: string, viewerId?: string): Promis
     );
 }
 
+/** Minúsculas e sem acento, para "cafe" achar "Café" e "sao" achar "São". */
+function foldText(value: string): string {
+    return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
+
+async function withUserContext(
+    places: PlaceNearbyDocument[],
+    userId?: string,
+): Promise<PlaceNearbyDocument[]> {
+    if (!userId) {
+        return places.map((place) => ({ ...place, userContext: null }));
+    }
+
+    const placeIds = places.map((place) => place.place_id);
+    const [checkedInPlaceIds, itineraryContext] = await Promise.all([
+        checkInRepository.listPlaceIdsByUser(userId, placeIds),
+        userRepository.findActiveItineraryPlaceContext(userId),
+    ]);
+
+    const checkedInSet = new Set(checkedInPlaceIds);
+
+    return places.map((place) => ({
+        ...place,
+        userContext: buildUserContext(place, checkedInSet, itineraryContext),
+    }));
+}
+
 export const placeService = {
     async getNearby(query: GetPlacesQuery, userId?: string): Promise<PlaceNearbyDocument[]> {
         // Coordinates are user location data, so they are deliberately not logged.
@@ -49,26 +77,35 @@ export const placeService = {
             query.excludePlaceId,
         );
 
-        if (!userId) {
-            const anonymous = places.map((place) => ({ ...place, userContext: null }));
-            log.info({ count: anonymous.length }, "Fetched nearby places successfully");
-            return anonymous;
-        }
+        const result = await withUserContext(places, userId);
+        log.info({ count: result.length }, "Fetched nearby places successfully");
+        return result;
+    },
 
-        const placeIds = places.map((place) => place.place_id);
-        const [checkedInPlaceIds, itineraryContext] = await Promise.all([
-            checkInRepository.listPlaceIdsByUser(userId, placeIds),
-            userRepository.findActiveItineraryPlaceContext(userId),
-        ]);
+    /**
+     * Busca por nome, apelido ou endereço entre todos os lugares, mais perto primeiro.
+     * `findNearby` já devolve tudo ordenado por distância; o texto é comparado aqui porque o Mongo não ignora
+     * acento em regex. O catálogo é de centenas de lugares; se crescer para milhares, trocar por índice de texto.
+     */
+    async search(query: PlacesSearchQuery, userId?: string): Promise<PlaceNearbyDocument[]> {
+        // The text typed and the coordinates are user data, so they are deliberately not logged.
+        log.info({ limit: query.limit, categories: query.categories }, "Searching places");
+        const needle = foldText(query.q);
+        const categories = query.categories?.length ? new Set<string>(query.categories) : null;
 
-        const checkedInSet = new Set(checkedInPlaceIds);
+        const nearby = await placeRepository.findNearby(query.lat, query.lng);
+        const matches = nearby
+            .filter((place) => !categories || categories.has(place.zanzar.category))
+            .filter((place) =>
+                [place.name, place.nickname, place.formatted_address].some(
+                    (field) => field != null && foldText(field).includes(needle),
+                ),
+            )
+            .slice(0, query.limit);
 
-        const enriched = places.map((place) => ({
-            ...place,
-            userContext: buildUserContext(place, checkedInSet, itineraryContext),
-        }));
-        log.info({ count: enriched.length }, "Fetched nearby places successfully");
-        return enriched;
+        const result = await withUserContext(matches, userId);
+        log.info({ count: result.length }, "Searched places successfully");
+        return result;
     },
 
     async getByPlaceId(placeId: string, userId?: string): Promise<PlaceWithUserContext> {
