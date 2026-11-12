@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import jwt, { type JwtPayload, type VerifyCallback } from "jsonwebtoken";
 import { JWT_EXPIRATION, JWT_REFRESH_EXPIRATION } from "../constants/auth";
 
@@ -29,6 +30,41 @@ export function decodeRefreshTokenPayload(token: string): JwtPayload | undefined
             JWT_VERIFY_OPTIONS,
         );
         return typeof decoded === "string" ? undefined : decoded;
+    } catch {
+        return undefined;
+    }
+}
+
+export const PASSWORD_RESET_TOKEN_PURPOSE = "password_reset";
+export const PASSWORD_RESET_TOKEN_EXPIRATION = "10m";
+
+/**
+ * Derived from JWT_SECRET, so a reset token never verifies as an access token (and an access token
+ * is never accepted to reset a password) without adding another environment variable.
+ */
+function passwordResetSecret(): string {
+    return createHmac("sha256", process.env.JWT_SECRET as string).update(PASSWORD_RESET_TOKEN_PURPOSE).digest("hex");
+}
+
+export function signPasswordResetToken(claims: TokenClaims): string {
+    return jwt.sign({ ...claims, purpose: PASSWORD_RESET_TOKEN_PURPOSE }, passwordResetSecret(), {
+        algorithm: "HS256",
+        expiresIn: PASSWORD_RESET_TOKEN_EXPIRATION,
+    });
+}
+
+export function decodePasswordResetToken(token: string): TokenClaims | undefined {
+    try {
+        const decoded = jwt.verify(token, passwordResetSecret(), JWT_VERIFY_OPTIONS) as JwtPayload | string;
+        if (
+            typeof decoded === "string" ||
+            decoded.purpose !== PASSWORD_RESET_TOKEN_PURPOSE ||
+            typeof decoded.id !== "string" ||
+            typeof decoded.tokenVersion !== "number"
+        ) {
+            return undefined;
+        }
+        return { id: decoded.id, tokenVersion: decoded.tokenVersion };
     } catch {
         return undefined;
     }

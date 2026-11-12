@@ -37,7 +37,7 @@ data/lugares.json       seed de lugares (Google Places + extensão `zanzar`)
 data/place-images.json  fotos dos lugares (URL + crédito), mescladas no seed; ver scripts/seed/README.md
 ```
 
-Collections: `users`, `places`, `stamp_catalog`, `itineraries`, `checkins`, `rating`, `sync_mutations`. Roteiros do usuário ficam embutidos em `users`.
+Collections: `users`, `places`, `stamp_catalog`, `itineraries`, `checkins`, `rating`, `sync_mutations`, `password_resets` (códigos de redefinição de senha, com TTL). Roteiros do usuário ficam embutidos em `users`.
 
 ## Rodar e testar
 
@@ -52,7 +52,7 @@ npm run build && npm start
 ```
 
 - Estado em 2026-10-29: `typecheck` limpo e `vitest` 9 arquivos / 18 testes passando. O `test:legacy` não foi executado.
-- Variáveis (só nomes): `NODE_ENV`, `PORT`, `MONGODB_URI`, `MONGODB_URI_STANDARD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CHECKIN_RADIUS_METERS`, `GOOGLE_PLACES_API_KEY`, `SIGNUP_ENABLED`, `LOG_LEVEL`. Obrigatórias na subida: `JWT_SECRET` e `MONGODB_URI`.
+- Variáveis (só nomes): `NODE_ENV`, `PORT`, `MONGODB_URI`, `MONGODB_URI_STANDARD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CHECKIN_RADIUS_METERS`, `GOOGLE_PLACES_API_KEY`, `SIGNUP_ENABLED`, `LOG_LEVEL`, `RESEND_API_KEY`, `EMAIL_FROM` (e-mail do código de redefinição de senha; sem eles `POST /password/forgot` responde 503). Obrigatórias na subida: `JWT_SECRET`, `JWT_REFRESH_SECRET`, e `MONGODB_URI`.
 - A porta padrão no código é 8000, mas README e app assumem 3000. Defina `PORT=3000` no `.env` local.
 - Banco: `npm run db:init` (collections + seed), `npm run db:validate:dry` antes de `db:validate`.
 - Check-in usa transação MongoDB: precisa de replica set (Atlas serve).

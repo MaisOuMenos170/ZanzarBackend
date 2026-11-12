@@ -7,6 +7,7 @@ import { AppError } from "../../errors/appError";
 import { logger } from "../../utils/logger";
 import { userRepository } from "./user.repository";
 import { syncMutationRepository } from "../sync/sync-mutation.repository";
+import { passwordResetRepository } from "../auth/password-reset.repository";
 import { checkInRepository } from "../checkin/checkin.repository";
 import { placeRepository } from "../places/place.repository";
 import { itineraryRepository } from "../itineraries/itinerary.repository";
@@ -193,6 +194,7 @@ export const userService = {
                 const deletedCheckIns = await checkInRepository.deleteByUserId(userId, session);
                 const deletedRatings = await ratingRepository.deleteByUserId(userId, session);
                 const deletedSyncMutations = await syncMutationRepository.deleteByUserId(userId, session);
+                await passwordResetRepository.deleteByUserId(userId, session);
 
                 await placeRepository.decrementCounters(
                     { checkIns, impressions: [...impressionsByKey.values()] },

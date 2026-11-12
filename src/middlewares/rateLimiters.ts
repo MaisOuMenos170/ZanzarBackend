@@ -64,6 +64,31 @@ export const logoutLimiter = rateLimit({
     handler: rateLimitHandler("logout"),
 });
 
+/** Each request may send an email, so it is capped per IP (on top of the 60 s per-account cooldown). */
+export const forgotPasswordLimiter = rateLimit({
+    ...authLimiterBase,
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+    handler: rateLimitHandler("forgotPassword"),
+});
+
+/** Guessing codes across accounts: only failed attempts count (each code also allows 5 attempts). */
+export const verifyResetCodeLimiter = rateLimit({
+    ...authLimiterBase,
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    skipSuccessfulRequests: true,
+    handler: rateLimitHandler("verifyResetCode"),
+});
+
+/** Each attempt runs bcrypt, so it is capped per IP. */
+export const resetPasswordLimiter = rateLimit({
+    ...authLimiterBase,
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    handler: rateLimitHandler("resetPassword"),
+});
+
 /** Account deletion is destructive and runs a multi-collection transaction, so it is capped per IP. */
 export const deleteAccountLimiter = rateLimit({
     ...authLimiterBase,
