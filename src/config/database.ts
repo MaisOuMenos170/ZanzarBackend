@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { resolveMongoUri } from "./resolve-mongo-uri";
+import { resolveMongoUri, redactMongoUri } from "./resolveMongoUri";
 import { logger } from "../utils/logger";
 
 const log = logger.child({ module: "database" });
@@ -26,14 +26,13 @@ export async function disconnectDatabase() {
 }
 
 export async function connectDatabase() {
-    const rawUri = process.env.MONGODB_URI || "mongodb:";
+    const rawUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/Zanzardb";
     const uri = resolveMongoUri(rawUri);
 
     registerConnectionListeners();
-    // The URI is never logged: for Atlas it contains the credentials.
-    log.info("Connecting to MongoDB");
-    if (rawUri.startsWith("mongodb+srv://") && uri !== rawUri) {
-        log.info("Using MONGODB_URI_STANDARD (avoids querySrv EBADRESP on local DNS)");
+
+    if (rawUri.startsWith("mongodb+srv://") && uri.startsWith("mongodb://")) {
+        log.info("Using standard MongoDB URI (bypasses DNS SRV lookup)");
     }
 
     try {
@@ -43,7 +42,7 @@ export async function connectDatabase() {
             "MongoDB connected",
         );
     } catch (error) {
-        log.error({ err: error }, "MongoDB wasn't able to connect");
+        log.error({ err: error, uri: redactMongoUri(uri) }, "MongoDB wasn't able to connect");
         throw error;
     }
 }
