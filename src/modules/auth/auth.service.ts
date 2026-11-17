@@ -121,6 +121,8 @@ export const authService = {
     async logout(userId: string): Promise<void> {
         log.info({ userId }, "Logout");
         await userRepository.incrementTokenVersion(userId);
+        // The device stops receiving this account's pushes; the next sign-in registers it again.
+        await userRepository.deleteDeviceToken(userId);
         log.info({ userId }, "Logout succeeded, tokens revoked");
     }
 };

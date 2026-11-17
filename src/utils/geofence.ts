@@ -43,19 +43,12 @@ export function resolvePlaceCoordinates(
     return null;
 }
 
-/**
- * Valida geofence quando o cliente envia coordinates.
- * Sem coordinates no body, não valida (compatibilidade com app atual).
- */
+/** Rejeita (422) o check-in de quem está fora do raio do lugar. */
 export function assertWithinCheckinRadius(
     place: Pick<PlaceDocument, "geometry" | "geoLocation">,
-    coordinates: Coordinates | undefined,
+    coordinates: Coordinates,
     radiusMeters: number,
 ): void {
-    if (!coordinates) {
-        return;
-    }
-
     const placeCoords = resolvePlaceCoordinates(place);
     if (!placeCoords) {
         throw new AppError(

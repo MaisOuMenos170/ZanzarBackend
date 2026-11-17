@@ -8,6 +8,10 @@ import { CheckinModel } from "../../models/checkin.model";
 import { UserModel } from "../../models/user.model";
 import { itineraryRepository } from "../itineraries/itinerary.repository.js";
 
+// Same spot as the mocked places, so the check-in radius passes.
+const here = { lat: -25.43, lng: -49.27 };
+const placeGeometry = { location: here };
+
 describe("checkInService.checkIn", () => {
     beforeEach(() => {
         vi.restoreAllMocks();
@@ -33,6 +37,7 @@ describe("checkInService.checkIn", () => {
             placeId: "ChIJ1",
             datetime: new Date("2026-10-05T18:30:00.000Z"),
             clientMutationId: "mutation-1",
+            coordinates: here,
         });
 
         expect(result).toEqual(cachedResponse);
@@ -49,6 +54,7 @@ describe("checkInService.checkIn", () => {
         vi.spyOn(placeRepository, "findByPlaceId").mockResolvedValue({
             place_id: "ChIJ1",
             name: "Parque Sao Lourenco",
+            geometry: placeGeometry,
             zanzar: { stampId: "stamp_park", category: "park" },
         } as any);
         vi.spyOn(checkInRepository, "getCheckInByUserAndPlace").mockResolvedValue(null);
@@ -94,6 +100,7 @@ describe("checkInService.checkIn", () => {
             placeId: "ChIJ1",
             datetime,
             clientMutationId: "mutation-2",
+            coordinates: here,
         });
 
         const update = updateSpy.mock.calls[0][1] as any;
@@ -121,6 +128,7 @@ describe("checkInService.checkIn itinerary completion counters", () => {
         vi.spyOn(placeRepository, "findByPlaceId").mockResolvedValue({
             place_id: "ChIJ1",
             name: "Parque",
+            geometry: placeGeometry,
             zanzar: { stampId: "stamp_park", category: "park" },
         } as any);
         vi.spyOn(checkInRepository, "getCheckInByUserAndPlace").mockResolvedValue(null);
@@ -155,7 +163,7 @@ describe("checkInService.checkIn itinerary completion counters", () => {
         const templateId = new Types.ObjectId();
         const record = arrange(false, templateId);
 
-        const result = await checkInService.checkIn("user-1", { placeId: "ChIJ1", datetime, clientMutationId: "m-1" });
+        const result = await checkInService.checkIn("user-1", { placeId: "ChIJ1", datetime, clientMutationId: "m-1", coordinates: here });
 
         expect(result.isItineraryCompleted).toBe(true);
         expect(record).toHaveBeenCalledOnce();
@@ -165,7 +173,7 @@ describe("checkInService.checkIn itinerary completion counters", () => {
     it("does not count the same user twice when a completed itinerary is finished again", async () => {
         const record = arrange(true, new Types.ObjectId());
 
-        const result = await checkInService.checkIn("user-1", { placeId: "ChIJ1", datetime, clientMutationId: "m-2" });
+        const result = await checkInService.checkIn("user-1", { placeId: "ChIJ1", datetime, clientMutationId: "m-2", coordinates: here });
 
         expect(result.isItineraryCompleted).toBe(true);
         expect(record).not.toHaveBeenCalled();
