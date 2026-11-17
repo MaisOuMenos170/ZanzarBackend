@@ -144,3 +144,42 @@ describe("itineraryService.getBySlug recentCompleters", () => {
         expect(find).not.toHaveBeenCalled();
     });
 });
+
+describe("itineraryService themes", () => {
+    const base = {
+        _id: new Types.ObjectId(),
+        slug: "centro-historico",
+        name: "Bora passear no centro histórico?",
+        description: "",
+        category: "historic",
+        routeType: "fixed",
+        objectives: [],
+        placeIds: ["p1"],
+        completedCount: 20,
+    };
+
+    beforeEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it("lists the themes of each itinerary, and none for an old one", async () => {
+        vi.spyOn(itineraryRepository, "listPublished").mockResolvedValue([
+            { ...base, themes: ["center", "walking"] },
+            { ...base, slug: "antigo" },
+        ] as any);
+
+        const items = await itineraryService.list();
+
+        expect(items.map((item) => item.themes)).toEqual([["center", "walking"], []]);
+    });
+
+    it("returns the themes in the detail", async () => {
+        vi.spyOn(itineraryRepository, "findPublishedBySlug").mockResolvedValue({ ...base, themes: ["center"] } as any);
+        vi.spyOn(placeRepository, "findLocationsByPlaceIds").mockResolvedValue([]);
+        vi.spyOn(userRepository, "findAvatarsByIds").mockResolvedValue(new Map());
+
+        const detail = await itineraryService.getBySlug("centro-historico");
+
+        expect(detail.themes).toEqual(["center"]);
+    });
+});

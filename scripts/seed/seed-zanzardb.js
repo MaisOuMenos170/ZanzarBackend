@@ -20,6 +20,7 @@ const stampCatalog = [
   { stampId: 'stamp_historic', stampType: 'historic', label: 'Histórico', imageUrl: '/assets/stamps/historic.png', sortOrder: 7, isActive: true },
   { stampId: 'stamp_curiosity', stampType: 'curiosity', label: 'Curiosidade', imageUrl: '/assets/stamps/curiosity.png', sortOrder: 8, isActive: true },
   { stampId: 'stamp_party', stampType: 'party', label: 'Festas', imageUrl: '/assets/stamps/party.png', sortOrder: 9, isActive: true },
+  { stampId: 'stamp_center', stampType: 'center', label: 'Centro', imageUrl: '/assets/stamps/center.png', sortOrder: 10, isActive: true },
 ];
 
 const stampResults = stampCatalog.map((stamp) =>
@@ -68,6 +69,7 @@ const itineraryTemplates = [
     targetCategory: 'park',
     targetCount: 4,
     objectives: ['Parque', 'Rota livre'],
+    themes: ['parks'],
     placeIds: [
       requirePlaceId('Parque Barigui', 'Cândido Hartmann'),
       requirePlaceId('Parque Tanguá'),
@@ -93,9 +95,10 @@ const itineraryTemplates = [
     name: 'Bora passear no centro histórico?',
     description:
       'Que tal um roteiro prático para aproveitar o fim de semana com atividades diferentes durante o passeio? Nesse roteiro você conhece um pouco mais do centro histórico de Curitiba, e encerra o dia com um cafézinho.',
-    category: 'historic',
+    category: 'center',
     routeType: 'fixed',
     objectives: ['Histórico', 'Museu', 'Café'],
+    themes: ['center', 'walking'],
     placeIds: [
       requirePlaceId('Ruínas de São Francisco'),
       requirePlaceId('Cavalo Babão'),
@@ -109,7 +112,11 @@ const itineraryTemplates = [
 
 const itineraryNow = new Date();
 const itineraryResults = itineraryTemplates.map((template) => {
-  const { completedCount, ...published } = template;
+  // Sem desestruturação com rest: em alguns mongosh o campo continuava em `published` e o upsert falhava
+  // com "Updating the path 'completedCount' would create a conflict".
+  const published = { ...template };
+  const completedCount = published.completedCount;
+  delete published.completedCount;
   return dbx.itineraries.updateOne(
     { slug: template.slug },
     {

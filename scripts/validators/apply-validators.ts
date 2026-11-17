@@ -1,7 +1,7 @@
 import "dotenv/config";
 import mongoose, { Model } from "mongoose";
 import * as models from "../../src/models";
-import { resolveMongoUri } from "../../src/config/resolve-mongo-uri";
+import { resolveMongoUri } from "../../src/config/resolveMongoUri";
 import { schemaToJsonSchema } from "../../src/db/mongoose-to-jsonschema";
 
 /**

@@ -13,6 +13,7 @@ describe("stampIdForCategory", () => {
     it("maps every Zanzar category to its stamp", () => {
         expect(stampIdForCategory("cafe")).toBe("stamp_cafe");
         expect(stampIdForCategory("historic")).toBe("stamp_historic");
+        expect(stampIdForCategory("center")).toBe("stamp_center");
     });
 
     it("refuses a category that does not exist", () => {
