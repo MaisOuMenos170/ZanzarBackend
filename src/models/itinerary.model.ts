@@ -1,5 +1,6 @@
 import { Schema, model, InferSchemaType, Types, type HydratedDocument } from "mongoose";
 import { ITINERARY_ROUTE_TYPES } from "../constants/itinerary-route-type";
+import { ITINERARY_THEMES } from "../constants/itinerary-themes";
 import { ZANZAR_CATEGORIES } from "../constants/zanzar-categories";
 import { nonEmptyArray } from "./helpers";
 
@@ -24,6 +25,8 @@ const itinerarySchema = new Schema(
         /** Nº de check-ins necessários em rota livre. */
         targetCount: { type: Number, min: 1 },
         objectives: { type: [String], required: true, default: [] },
+        /** Temas para os filtros do app; roteiros antigos não têm. */
+        themes: { type: [{ type: String, enum: ITINERARY_THEMES }], default: [] },
         placeIds: { type: [String], required: true, default: [] },
         completedCount: { type: Number, required: true, min: 0, default: 0 },
         /** Últimos RECENT_COMPLETERS_STORED usuários que completaram, do mais antigo ao mais recente. */

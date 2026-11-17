@@ -2,9 +2,11 @@ import { z } from 'zod';
 import { objectIdSchema, isoDateTimeSchema, slugSchema, googlePlaceIdSchema, coordinatesSchema } from './common.js';
 import { avatarSchema } from './avatar.js';
 import { ITINERARY_ROUTE_TYPES } from '../constants/itinerary-route-type.js';
+import { ITINERARY_THEMES } from '../constants/itinerary-themes.js';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 
 export const itineraryRouteTypeSchema = z.enum(ITINERARY_ROUTE_TYPES);
+export const itineraryThemeSchema = z.enum(ITINERARY_THEMES);
 
 const itineraryBaseSchema = z.object({
   _id: objectIdSchema.optional(),
@@ -13,6 +15,7 @@ const itineraryBaseSchema = z.object({
   description: z.string().default(''),
   category: z.string().min(1),
   objectives: z.array(z.string()).default([]),
+  themes: z.array(itineraryThemeSchema).default([]),
   completedCount: z.number().int().nonnegative().default(0),
   coverImageUrl: z.string().url().optional(),
   isPublished: z.boolean().default(false),
@@ -45,6 +48,7 @@ export const itineraryListItemSchema = z.object({
   name: z.string(),
   category: z.string(),
   routeType: itineraryRouteTypeSchema,
+  themes: z.array(itineraryThemeSchema),
   placesCount: z.number().int().positive(),
   completedCount: z.number().int().nonnegative(),
   coverImageUrl: z.string().optional(),
@@ -64,6 +68,7 @@ export const itineraryDetailSchema = z.object({
   category: z.string(),
   routeType: itineraryRouteTypeSchema,
   objectives: z.array(z.string()),
+  themes: z.array(itineraryThemeSchema),
   targetCategory: z.enum(ZANZAR_CATEGORIES).optional(),
   targetCount: z.number().int().min(1).optional(),
   placesCount: z.number().int().positive(),
