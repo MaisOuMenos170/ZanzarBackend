@@ -9,6 +9,7 @@ export const ZANZAR_CATEGORIES = [
   'historic',
   'curiosity',
   'party',
+  'center',
 ] as const;
 
 export type ZanzarCategory = (typeof ZANZAR_CATEGORIES)[number];
@@ -23,6 +24,7 @@ export const STAMP_IDS = [
   'stamp_historic',
   'stamp_curiosity',
   'stamp_party',
+  'stamp_center',
 ] as const;
 
 export type StampId = (typeof STAMP_IDS)[number];

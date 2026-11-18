@@ -17,6 +17,8 @@ const cases = [
   ['curiosidade', 'curiosity', 'stamp_curiosity'],
   ['festa', 'party', 'stamp_party'],
   ['Festa', 'party', 'stamp_party'],
+  ['centro', 'center', 'stamp_center'],
+  ['Centro', 'center', 'stamp_center'],
 ];
 
 for (const [tag, category, stampId] of cases) {

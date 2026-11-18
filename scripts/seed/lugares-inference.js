@@ -16,6 +16,7 @@ const tagCategoryMap = {
   historico: { category: 'historic', stampId: 'stamp_historic' },
   curiosidade: { category: 'curiosity', stampId: 'stamp_curiosity' },
   festa: { category: 'party', stampId: 'stamp_party' },
+  centro: { category: 'center', stampId: 'stamp_center' },
 };
 
 const typeCategoryRules = [
