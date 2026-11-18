@@ -6,6 +6,7 @@ import {
     type RegisterDeviceTokenBody,
     type SavePlaceBody,
     type UpdateAvatarBody,
+    type UpdateUsernameBody,
 } from "../../schemas/user";
 import { itineraryService } from "../itineraries/itinerary.service";
 import { userService } from "./user.service";
@@ -24,6 +25,18 @@ export const deleteUser: RequestHandler = async (req, res) => {
 export const getUserProfile: RequestHandler = async (req, res) => {
     const profile = await userService.getProfile(req.params.id as string, res.locals.profileQuery!.limit);
     res.json(profile);
+};
+
+export const listUserCheckIns: RequestHandler = async (req, res) => {
+    const { limit, before } = res.locals.checkInsQuery!;
+    const page = await userService.getCheckInsPage(req.params.id as string, limit, before);
+    res.json(page);
+};
+
+export const updateUsername: RequestHandler = async (req, res) => {
+    const { username } = req.body as UpdateUsernameBody;
+    const updated = await userService.updateUsername(req.params.id as string, username);
+    res.status(200).json(updated);
 };
 
 export const getUserItinerary: RequestHandler = async (req, res) => {

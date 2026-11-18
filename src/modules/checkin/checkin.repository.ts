@@ -69,6 +69,27 @@ export const checkInRepository = {
         }
     },
 
+    /** Check-ins do usuário do mais recente para o mais antigo; com `before`, só os anteriores a esse instante. */
+    async listPageByUser(
+        userId: string,
+        limit: number,
+        before?: Date,
+    ): Promise<{ placeId: string; datetime: Date }[]> {
+        log.debug({ userId, limit, hasCursor: before !== undefined }, "Listing a page of check-ins for user");
+        try {
+            const checkins = await CheckinModel.find({ userId, ...(before ? { datetime: { $lt: before } } : {}) })
+                .sort({ datetime: -1 })
+                .limit(limit)
+                .select("placeId datetime")
+                .lean();
+            log.debug({ userId, count: checkins.length }, "Listed a page of check-ins for user");
+            return checkins.map(({ placeId, datetime }) => ({ placeId, datetime }));
+        } catch (err) {
+            log.error({ err, userId }, "Failed to list a page of check-ins for user");
+            throw err;
+        }
+    },
+
     async listPlaceIdsForUser(userId: string, session?: ClientSession): Promise<string[]> {
         log.debug({ userId }, "Listing all check-in place ids for user");
         try {

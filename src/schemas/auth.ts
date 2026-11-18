@@ -6,16 +6,19 @@ import {
   USERNAME_MIN_LENGTH,
 } from '../constants/auth.js';
 
+/** Regra do nome de usuário, no cadastro e na troca de nome (`PATCH /user/:id`). */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .min(USERNAME_MIN_LENGTH)
+  .max(USERNAME_MAX_LENGTH)
+  .regex(
+    /^[a-zA-Z0-9_]+$/,
+    'Username: apenas letras, números e underscore',
+  );
+
 export const registerBodySchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .min(USERNAME_MIN_LENGTH)
-    .max(USERNAME_MAX_LENGTH)
-    .regex(
-      /^[a-zA-Z0-9_]+$/,
-      'Username: apenas letras, números e underscore',
-    ),
+  username: usernameSchema,
   email: z.string().trim().email().toLowerCase(),
   password: z
     .string()

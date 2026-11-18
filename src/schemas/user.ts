@@ -6,6 +6,7 @@ import { itineraryRouteTypeSchema } from './itinerary.js';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
 import { MAX_SAVED_PLACES } from '../constants/saved-places.js';
 import { avatarSchema, type Avatar } from './avatar.js';
+import { usernameSchema } from './auth.js';
 
 // O schema do avatar mora em avatar.ts (itinerary.ts e place.ts o usam sem ciclo com user.ts).
 export { avatarSchema };
@@ -119,6 +120,24 @@ export const userProfileSchema = profileSummarySchema.extend({
   recentCheckIns: z.array(recentCheckInSchema),
 });
 
+/** Body de `PATCH /user/:id`: o nome novo segue a mesma regra do cadastro. */
+export const updateUsernameBodySchema = z.object({
+  username: usernameSchema,
+});
+
+/** Query de `GET /user/:id/check-ins`: uma página por vez, do mais recente para o mais antigo. */
+export const listCheckInsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  /** Cursor: `nextCursor` da página anterior. Só vêm check-ins mais antigos que ele. */
+  before: z.coerce.date().optional(),
+});
+
+export const userCheckInsPageSchema = z.object({
+  checkIns: z.array(recentCheckInSchema),
+  /** Passe como `before` para pedir a página seguinte; `null` quando não há mais. */
+  nextCursor: isoDateTimeSchema.nullable(),
+});
+
 export type UserDocument = z.infer<typeof userDocumentSchema>;
 export type UserStamp = z.infer<typeof userStampSchema>;
 export type UserSavedPlace = z.infer<typeof userSavedPlaceSchema>;
@@ -132,6 +151,9 @@ export type GetProfileQuery = z.infer<typeof getProfileQuerySchema>;
 export type ProfileSummary = z.infer<typeof profileSummarySchema>;
 export type RecentCheckIn = z.infer<typeof recentCheckInSchema>;
 export type UserProfile = z.infer<typeof userProfileSchema>;
+export type UpdateUsernameBody = z.infer<typeof updateUsernameBodySchema>;
+export type ListCheckInsQuery = z.infer<typeof listCheckInsQuerySchema>;
+export type UserCheckInsPage = z.infer<typeof userCheckInsPageSchema>;
 
 export const registerDeviceTokenBodySchema = z.object({
   deviceToken: z.string().min(1),
