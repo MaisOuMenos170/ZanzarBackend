@@ -16,7 +16,15 @@ import { stampsRepository } from "../stamps/stamps.repository";
 import { impressionTagFieldSchema } from "../../schemas/impression-tag";
 import { MAX_SAVED_PLACES } from "../../constants/saved-places";
 import type { PlaceSummaryDocument } from "../places/place.repository";
-import type { Avatar, CreateAvatarBody, RecentCheckIn, SavedPlace, UpdateAvatarBody, UserProfile } from "../../schemas/user";
+import type {
+    Avatar,
+    CreateAvatarBody,
+    RecentCheckIn,
+    SavedPlace,
+    UpdateAvatarBody,
+    UserCheckInsPage,
+    UserProfile,
+} from "../../schemas/user";
 
 const log = logger.child({ module: "users", layer: "service" });
 
@@ -55,6 +63,36 @@ async function removeDeletedAccountPhotoFiles(photos: UserPhoto[]) {
             log.error({ err, photoId: photo._id.toString() }, "Failed to delete the files of a deleted account's photo");
         }
     }
+}
+
+/** Junta lugar, selo e impressão a cada check-in, como o perfil e a lista de check-ins mostram. */
+async function toRecentCheckIns(
+    userId: string,
+    checkIns: { placeId: string; datetime: Date }[],
+): Promise<RecentCheckIn[]> {
+    const places = await placeRepository.findByPlaceIds(checkIns.map((checkIn) => checkIn.placeId));
+    const placesById = new Map(places.map((place) => [place.place_id, place]));
+
+    const stampIds = [...new Set(places.flatMap((place) => (place.zanzar ? [place.zanzar.stampId] : [])))];
+    const stamps = await stampsRepository.findByStampIds(stampIds);
+    const stampsById = new Map(stamps.map((stamp) => [stamp.stampId, stamp]));
+
+    const placeIds = checkIns.map((checkIn) => checkIn.placeId);
+    const ratings = await ratingRepository.findByUserAndPlaceIds(userId, placeIds);
+    const impressionTagsByPlaceId = new Map(ratings.map((rating) => [rating.placeId, rating.impressionTag]));
+
+    return checkIns.map(({ placeId, datetime }) => {
+        const place = placesById.get(placeId);
+        const stamp = place?.zanzar ? stampsById.get(place.zanzar.stampId) : undefined;
+        return {
+            placeId,
+            placeName: place?.name ?? null,
+            datetime,
+            imageUrl: place?.images?.[0]?.url ?? null,
+            stamp: stamp ? { stampId: stamp.stampId, imageUrl: stamp.imageUrl } : null,
+            impressionTag: parseImpressionTag(impressionTagsByPlaceId.get(placeId)),
+        };
+    });
 }
 
 export const userService = {
@@ -226,31 +264,40 @@ export const userService = {
         if (!summary) throw new AppError("User not found", 404);
 
         const checkIns = await checkInRepository.listLatestByUser(userId, limit);
-        const places = await placeRepository.findByPlaceIds(checkIns.map((checkIn) => checkIn.placeId));
-        const placesById = new Map(places.map((place) => [place.place_id, place]));
-
-        const stampIds = [...new Set(places.flatMap((place) => (place.zanzar ? [place.zanzar.stampId] : [])))];
-        const stamps = await stampsRepository.findByStampIds(stampIds);
-        const stampsById = new Map(stamps.map((stamp) => [stamp.stampId, stamp]));
-
-        const placeIds = checkIns.map((checkIn) => checkIn.placeId);
-        const ratings = await ratingRepository.findByUserAndPlaceIds(userId, placeIds);
-        const impressionTagsByPlaceId = new Map(ratings.map((rating) => [rating.placeId, rating.impressionTag]));
-
-        const recentCheckIns: RecentCheckIn[] = checkIns.map(({ placeId, datetime }) => {
-            const place = placesById.get(placeId);
-            const stamp = place?.zanzar ? stampsById.get(place.zanzar.stampId) : undefined;
-            return {
-                placeId,
-                placeName: place?.name ?? null,
-                datetime,
-                imageUrl: place?.images?.[0]?.url ?? null,
-                stamp: stamp ? { stampId: stamp.stampId, imageUrl: stamp.imageUrl } : null,
-                impressionTag: parseImpressionTag(impressionTagsByPlaceId.get(placeId)),
-            };
-        });
+        const recentCheckIns = await toRecentCheckIns(userId, checkIns);
 
         log.info({ userId, recentCheckInCount: recentCheckIns.length }, "Fetched user profile successfully");
         return { ...summary, recentCheckIns };
+    },
+
+    /** Uma página dos check-ins, do mais recente ao mais antigo, para as telas "todos os check-ins" e "todos os selos". */
+    async getCheckInsPage(userId: string, limit: number, before?: Date): Promise<UserCheckInsPage> {
+        log.info({ userId, limit, hasCursor: before !== undefined }, "Fetching a page of user check-ins");
+        // Uma a mais que o pedido diz se há próxima página sem outra consulta.
+        const rows = await checkInRepository.listPageByUser(userId, limit + 1, before);
+        const page = rows.slice(0, limit);
+        const checkIns = await toRecentCheckIns(userId, page);
+        const last = page.at(-1);
+        const nextCursor = rows.length > limit && last ? last.datetime : null;
+
+        log.info({ userId, count: checkIns.length, hasMore: nextCursor !== null }, "Fetched a page of user check-ins");
+        return { checkIns, nextCursor };
+    },
+
+    /** Troca o nome de usuário. Um nome já em uso (índice único) responde 409. */
+    async updateUsername(userId: string, username: string): Promise<{ username: string }> {
+        log.info({ userId }, "Updating username");
+        try {
+            const updated = await userRepository.updateUsername(userId, username);
+            if (!updated) throw new AppError("User not found", 404);
+            log.info({ userId }, "Updated username successfully");
+            return { username: updated };
+        } catch (err) {
+            if ((err as { code?: number })?.code === 11000) {
+                log.warn({ userId }, "Username change rejected: name already in use");
+                throw new AppError("Username already in use", 409);
+            }
+            throw err;
+        }
     },
 };

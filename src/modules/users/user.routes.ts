@@ -8,23 +8,34 @@ import {
     getUserItinerary,
     getUserProfile,
     listSavedPlaces,
+    listUserCheckIns,
     removeAvatar,
     removeSavedPlace,
     savePlace,
     setDeviceToken,
     updateAvatar,
+    updateUsername,
 } from "./user.controller";
 import { deleteAccountLimiter } from "../../middlewares/rateLimiters";
 import { requireOwnershipFromParams } from "../../middlewares/requireOwnership";
 import { validateGetProfileQuery } from "../../middlewares/validateGetProfileQuery";
+import { validateListCheckInsQuery } from "../../middlewares/validateListCheckInsQuery";
 import { validateSchema } from "../../middlewares/validateSchema";
-import { createAvatarBodySchema, registerDeviceTokenBodySchema, savePlaceBodySchema, updateAvatarBodySchema } from "../../schemas/user";
+import {
+    createAvatarBodySchema,
+    registerDeviceTokenBodySchema,
+    savePlaceBodySchema,
+    updateAvatarBodySchema,
+    updateUsernameBodySchema,
+} from "../../schemas/user";
 
 export const userRouter: Router = express.Router();
 
 userRouter.get("/user/:id", requireOwnershipFromParams("id"), getUser);
+userRouter.patch("/user/:id", requireOwnershipFromParams("id"), validateSchema(updateUsernameBodySchema), updateUsername);
 userRouter.delete("/user/:id", deleteAccountLimiter, requireOwnershipFromParams("id"), deleteUser);
 userRouter.get("/user/:id/profile", requireOwnershipFromParams("id"), validateGetProfileQuery, getUserProfile);
+userRouter.get("/user/:id/check-ins", requireOwnershipFromParams("id"), validateListCheckInsQuery, listUserCheckIns);
 userRouter.get("/user/:id/itinerary", requireOwnershipFromParams("id"), getUserItinerary);
 userRouter.get("/user/:id/saved-places", requireOwnershipFromParams("id"), listSavedPlaces);
 userRouter.post(

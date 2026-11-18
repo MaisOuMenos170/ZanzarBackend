@@ -456,6 +456,21 @@ export const userRepository = {
         }
     },
 
+    /** Troca o nome de usuário. `null` quando o usuário não existe; um nome em uso lança o erro 11000 do índice único. */
+    async updateUsername(userId: string, username: string): Promise<string | null> {
+        log.debug({ userId }, "Updating username");
+        try {
+            const user = await UserModel.findOneAndUpdate({ _id: userId }, { $set: { username } }, { new: true })
+                .select("username")
+                .lean<Pick<User, "username">>();
+            log.debug({ userId, updated: !!user }, "Updated username");
+            return user?.username ?? null;
+        } catch (err) {
+            log.error({ err, userId }, "Failed to update username");
+            throw err;
+        }
+    },
+
     async updateAvatar(userId: string, layers: UpdateAvatarBody): Promise<Avatar | null> {
         log.debug({ userId, layers: Object.keys(layers) }, "Updating avatar");
         try {
