@@ -20,6 +20,45 @@ const INACTIVITY_COOLDOWN_DAYS = Number(process.env.PUSH_INACTIVITY_COOLDOWN_DAY
 
 const NOW = () => new Date();
 
+/** Nudges only go out from 09:00 to 20:59 in the users' time zone (Curitiba). */
+const NUDGE_TIME_ZONE = "America/Sao_Paulo";
+const NUDGE_FIRST_HOUR = 9;
+const NUDGE_END_HOUR = 21;
+const hourInNudgeZone = new Intl.DateTimeFormat("en-GB", {
+    hour: "numeric",
+    hourCycle: "h23",
+    timeZone: NUDGE_TIME_ZONE,
+});
+
+export function isQuietHour(date: Date): boolean {
+    const hour = Number(hourInNudgeZone.format(date));
+    return hour < NUDGE_FIRST_HOUR || hour >= NUDGE_END_HOUR;
+}
+
+/**
+ * Takes the nudge slot of `userId` before the push is sent, in one atomic update. A second process (e.g. the old
+ * container during a deploy) finds the cooldown running and skips the user. Returns the previous value so a
+ * failed send can give the slot back, or `null` when someone else already took it.
+ */
+async function claimNudge(userId: string, cooldownCutoff: Date, now: Date): Promise<{ previous?: Date } | null> {
+    const before = await UserModel.findOneAndUpdate(
+        {
+            _id: userId,
+            $or: [{ lastPushNudgeAt: { $exists: false } }, { lastPushNudgeAt: { $lt: cooldownCutoff } }],
+        },
+        { $set: { lastPushNudgeAt: now } },
+        { new: false, projection: { lastPushNudgeAt: 1 } },
+    ).lean();
+    return before ? { previous: before.lastPushNudgeAt ?? undefined } : null;
+}
+
+async function releaseNudge(userId: string, previous?: Date): Promise<void> {
+    await UserModel.updateOne(
+        { _id: userId },
+        previous ? { $set: { lastPushNudgeAt: previous } } : { $unset: { lastPushNudgeAt: "" } },
+    );
+}
+
 /**
  * Finds users with a device token who haven't checked in in `INACTIVITY_DAYS` days
  * and haven't been nudged in `INACTIVITY_COOLDOWN_DAYS` days, then sends them a push.
@@ -62,6 +101,10 @@ export async function sendInactivityNudges(): Promise<void> {
             continue; // user checked in recently, skip
         }
 
+        // The claim records the nudge time, so it is not repeated during the cooldown window.
+        const claim = await claimNudge(userId, cooldownCutoff, now);
+        if (!claim) continue;
+
         const result = await pushService.sendToDevice(deviceToken, {
             title: "Sinta falta de algum lugar?",
             body: "Você não faz check-in há alguns dias. Tem lugares novos perto de você esperando.",
@@ -69,10 +112,12 @@ export async function sendInactivityNudges(): Promise<void> {
         });
 
         if (result.sent) {
-            // Record the nudge time so we don't repeat it during the cooldown window.
-            await UserModel.updateOne({ _id: userId }, { $set: { lastPushNudgeAt: now } });
             log.info({ userId }, "Inactivity nudge sent");
-        } else if (result.error === "device_token_invalid") {
+            continue;
+        }
+
+        await releaseNudge(userId, claim.previous);
+        if (result.error === "device_token_invalid") {
             // APNs says the device token is dead: remove it so we stop pushing.
             await userRepository.deleteDeviceToken(userId);
             log.info({ userId }, "Removed invalid device token");
@@ -111,6 +156,9 @@ export async function sendUnfinishedItineraryNudges(): Promise<void> {
 
         const stops = remaining === 1 ? "1 parada" : `${remaining} paradas`;
 
+        const claim = await claimNudge(userId, cooldownCutoff, now);
+        if (!claim) continue;
+
         const result = await pushService.sendToDevice(deviceToken, {
             title: "Seu roteiro está esperando",
             body: `Faltam ${stops} no seu roteiro. Que tal continuar hoje?`,
@@ -118,9 +166,12 @@ export async function sendUnfinishedItineraryNudges(): Promise<void> {
         });
 
         if (result.sent) {
-            await UserModel.updateOne({ _id: userId }, { $set: { lastPushNudgeAt: now } });
             log.info({ userId }, "Unfinished itinerary nudge sent");
-        } else if (result.error === "device_token_invalid") {
+            continue;
+        }
+
+        await releaseNudge(userId, claim.previous);
+        if (result.error === "device_token_invalid") {
             await userRepository.deleteDeviceToken(userId);
             log.info({ userId }, "Removed invalid device token");
         } else {
@@ -148,6 +199,10 @@ export const pushWorker = {
 
     async tick() {
         if (this.running) return;
+        if (isQuietHour(NOW())) {
+            log.info("Quiet hours, skipping nudges");
+            return;
+        }
         this.running = true;
         try {
             await sendInactivityNudges();

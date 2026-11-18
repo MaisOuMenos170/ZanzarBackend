@@ -270,3 +270,19 @@ describe("authService.loginWithApple", () => {
         await expectUnauthorized(authService.login({ email: appleUser.email, password: "secret12" }));
     });
 });
+
+describe("authService.logout", () => {
+    beforeEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it("revokes the tokens and drops the device token, so the phone stops getting this account's pushes", async () => {
+        const bump = vi.spyOn(userRepository, "incrementTokenVersion").mockResolvedValue(undefined as never);
+        const dropToken = vi.spyOn(userRepository, "deleteDeviceToken").mockResolvedValue(undefined);
+
+        await authService.logout("user-1");
+
+        expect(bump).toHaveBeenCalledWith("user-1");
+        expect(dropToken).toHaveBeenCalledWith("user-1");
+    });
+});

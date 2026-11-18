@@ -19,12 +19,12 @@ export const checkinDocumentSchema = z.object({
   coordinates: coordinatesSchema.optional(),
 });
 
-/** POST /checkins e payload de sync offline. GPS validado no cliente (MVP). */
+/** POST /checkIn e payload de sync offline. As coordenadas são obrigatórias: o servidor confere o raio do check-in. */
 export const createCheckinBodySchema = z.object({
   placeId: googlePlaceIdSchema,
   datetime: isoDateTimeSchema,
   clientMutationId: uuidSchema,
-  coordinates: coordinatesSchema.optional(),
+  coordinates: coordinatesSchema,
 });
 
 export const itineraryProgressSchema = z.object({

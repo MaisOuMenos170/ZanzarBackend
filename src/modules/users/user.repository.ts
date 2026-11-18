@@ -538,6 +538,12 @@ export const userRepository = {
     async setDeviceToken(userId: string, deviceToken: string): Promise<void> {
         log.debug({ userId }, "Setting device token");
         try {
+            // A device token belongs to one account: a phone handed to someone else must not keep
+            // delivering the previous owner's pushes.
+            await UserModel.updateMany(
+                { deviceToken, _id: { $ne: userId } },
+                { $unset: { deviceToken: "" } },
+            );
             const result = await UserModel.updateOne(
                 { _id: userId },
                 { $set: { deviceToken } },

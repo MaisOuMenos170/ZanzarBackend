@@ -40,14 +40,14 @@ Schema oficial: `schema-proposto.md` (ZanzarProjetinho / docs banco-de-dados);
 
 O `POST /checkIn` aplica **todos os efeitos na mesma requisição** (transação MongoDB):
 
-- insert em `checkins` (+ `serverReceivedAt`, `coordinates` opcional, `stampIdGranted`)
+- insert em `checkins` (+ `serverReceivedAt`, `coordinates`, `stampIdGranted`)
 - `users.checkInCount +1`, push em `users.stamps`
 - `places.zanzar.checkInCount +1`
 - progresso do `activeItinerary` (rota fixa e livre)
 
 Resposta `201` traz o selo e o progresso para o app exibir o alert imediatamente.
 
-**Geofence:** se o body incluir `coordinates`, a distância ao lugar é validada contra `CHECKIN_RADIUS_METERS` (padrão 150 m); fora do raio → `422`. Sem `coordinates`, a validação é ignorada (compatibilidade com builds antigos do app).
+**Geofence:** `coordinates` é obrigatório (sem elas → `400`). A distância ao lugar é validada contra `CHECKIN_RADIUS_METERS` (padrão 150 m); fora do raio → `422`.
 
 **Atlas trigger legado:** após o deploy do E2, **desative manualmente** o Database Trigger de `checkins` INSERT no Atlas App Services — o MCP do MongoDB não faz isso. Passo a passo + checklist: [`scripts/triggers/README.md`](scripts/triggers/README.md). Se trigger e API rodarem juntos, contadores e selos duplicam.
 
@@ -98,7 +98,7 @@ Base URL: `http://127.0.0.1:3000` (ou `PORT` / túnel). Prefixo comum: JSON, exc
 | POST | `/user/:id/avatar` | Bearer (owner) | Cria o avatar (todas as camadas); `201`, `400` ID fora do intervalo da camada, `409` já existe |
 | PATCH | `/user/:id/avatar` | Bearer (owner) | Altera só as camadas enviadas e devolve o avatar completo (`200`; `404` se não tem avatar) |
 | DELETE | `/user/:id/avatar` | Bearer (owner) | Remove o avatar (`204`; `404` se não tem) |
-| POST | `/checkIn` | Bearer | Check-in síncrono (idempotente, geofence opcional) |
+| POST | `/checkIn` | Bearer | Check-in síncrono (idempotente, `coordinates` obrigatório) |
 | GET | `/checkIn?placeId=` | Bearer | Check-in existente usuário+lugar |
 | POST | `/rating` | Bearer | Reação pós-visita |
 | GET | `/rating?placeId=` | Bearer | Reação existente |
@@ -217,7 +217,7 @@ Body:
 }
 ```
 
-`coordinates` é opcional. Resposta `201`:
+`coordinates` é obrigatório (`400` sem elas; `422` fora do raio). Resposta `201`:
 
 ```json
 {
