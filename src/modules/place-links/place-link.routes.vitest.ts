@@ -2,7 +2,13 @@ import express from "express";
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { placeRepository } from "../places/place.repository.js";
-import { buildAppAssociation, escapeHtml, placeLinkRouter, renderPlacePage } from "./place-link.routes.js";
+import {
+    buildAppAssociation,
+    escapeHtml,
+    placeLinkRouter,
+    readPlacePageApp,
+    renderPlacePage,
+} from "./place-link.routes.js";
 
 function createApp() {
     const app = express();
@@ -14,6 +20,7 @@ describe("place links", () => {
     afterEach(() => {
         vi.restoreAllMocks();
         delete process.env.APP_DOWNLOAD_URL;
+        delete process.env.APP_STORE_ID;
     });
 
     it("serves the apple-app-site-association file as JSON for /p/* links", async () => {
@@ -62,11 +69,40 @@ describe("place links", () => {
     });
 
     it("escapes what it prints, so a place name cannot inject markup", () => {
-        const html = renderPlacePage(`<script>alert("x")</script>`, `a"b`, null);
+        const html = renderPlacePage(`<script>alert("x")</script>`, `a"b`, { appStoreId: null, downloadUrl: null });
 
         expect(html).not.toContain("<script>");
         expect(html).toContain("&lt;script&gt;");
         expect(html).toContain("lero://place/a%22b");
         expect(escapeHtml(`&<>"'`)).toBe("&amp;&lt;&gt;&quot;&#39;");
+    });
+
+    it("adds Safari's Smart App Banner that opens the place, when the App Store id is set", async () => {
+        process.env.APP_STORE_ID = "id1234567890";
+        vi.spyOn(placeRepository, "findByPlaceId").mockResolvedValue({ name: "Museu" } as never);
+
+        const response = await request(createApp()).get("/p/ChIJabc");
+
+        expect(response.text).toContain(
+            '<meta name="apple-itunes-app" content="app-id=1234567890, app-argument=lero://place/ChIJabc">',
+        );
+        expect(response.text).toContain('href="https://apps.apple.com/app/id1234567890"');
+        expect(response.text).not.toContain("<script");
+    });
+
+    it("has no banner without an App Store id", async () => {
+        vi.spyOn(placeRepository, "findByPlaceId").mockResolvedValue({ name: "Museu" } as never);
+
+        const response = await request(createApp()).get("/p/ChIJabc");
+
+        expect(response.text).not.toContain("apple-itunes-app");
+    });
+
+    it("reads the store settings: a bad id is ignored and APP_DOWNLOAD_URL wins over the derived link", () => {
+        expect(readPlacePageApp({ APP_STORE_ID: "abc" })).toEqual({ appStoreId: null, downloadUrl: null });
+        expect(readPlacePageApp({ APP_STORE_ID: "42", APP_DOWNLOAD_URL: "https://testflight.apple.com/join/x" })).toEqual({
+            appStoreId: "42",
+            downloadUrl: "https://testflight.apple.com/join/x",
+        });
     });
 });

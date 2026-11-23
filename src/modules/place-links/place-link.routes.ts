@@ -40,19 +40,41 @@ export function buildAppAssociation(env: NodeJS.ProcessEnv = process.env) {
     };
 }
 
-/** Page shown when the link opens in a browser. `downloadUrl` (TestFlight or App Store) is optional. */
-export function renderPlacePage(placeName: string, placeId: string, downloadUrl: string | null): string {
+export interface PlacePageApp {
+    /** Numeric App Store id of the app (the `123456789` of `id123456789`); enables Safari's Smart App Banner. */
+    appStoreId: string | null;
+    /** Where to download the app (App Store or TestFlight). Derived from `appStoreId` when not set. */
+    downloadUrl: string | null;
+}
+
+/** The app's store settings from the environment: `APP_STORE_ID` and `APP_DOWNLOAD_URL`, both optional. */
+export function readPlacePageApp(env: NodeJS.ProcessEnv = process.env): PlacePageApp {
+    const rawId = env.APP_STORE_ID?.trim().replace(/^id/i, "") ?? "";
+    const appStoreId = /^\d+$/.test(rawId) ? rawId : null;
+    const downloadUrl = env.APP_DOWNLOAD_URL?.trim() || (appStoreId ? `https://apps.apple.com/app/id${appStoreId}` : null);
+    return { appStoreId, downloadUrl };
+}
+
+/**
+ * Page shown when the link opens in a browser. iOS does not let a page open an app by itself, so it gives the
+ * person two ways: Safari's Smart App Banner (ABRIR when the app is installed, VER on the App Store when not)
+ * and two buttons.
+ */
+export function renderPlacePage(placeName: string, placeId: string, app: PlacePageApp): string {
     const name = escapeHtml(placeName);
-    const appUrl = escapeHtml(`${APP_URL_SCHEME}://place/${encodeURIComponent(placeId)}`);
-    const download = downloadUrl
-        ? `<p><a class="secondary" href="${escapeHtml(downloadUrl)}">Baixar o app</a></p>`
+    const appUrl = `${APP_URL_SCHEME}://place/${encodeURIComponent(placeId)}`;
+    const banner = app.appStoreId
+        ? `<meta name="apple-itunes-app" content="app-id=${app.appStoreId}, app-argument=${escapeHtml(appUrl)}">\n`
+        : "";
+    const download = app.downloadUrl
+        ? `<p><a class="secondary" href="${escapeHtml(app.downloadUrl)}">Baixar o app</a></p>`
         : "";
     return `<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${name} · O Lero</title>
+${banner}<title>${name} · O Lero</title>
 <style>
 body{font-family:-apple-system,system-ui,sans-serif;background:#f2f7ff;color:#1f1d73;margin:0;padding:48px 24px;text-align:center}
 h1{font-size:24px;margin:0 0 8px}
@@ -64,7 +86,7 @@ a.secondary{background:none;color:#6365ef}
 <body>
 <h1>${name}</h1>
 <p>Alguém compartilhou este lugar de Curitiba com você no O Lero.</p>
-<p><a href="${appUrl}">Abrir no app</a></p>
+<p><a href="${escapeHtml(appUrl)}">Abrir no app</a></p>
 ${download}
 </body>
 </html>
@@ -85,8 +107,7 @@ placeLinkRouter.get(`${PLACE_LINK_PATH}/:placeId`, async (req, res, next) => {
             res.status(404).type("text/plain").send("Lugar não encontrado.");
             return;
         }
-        const downloadUrl = process.env.APP_DOWNLOAD_URL?.trim() || null;
-        res.status(200).type("text/html; charset=utf-8").send(renderPlacePage(place.name, placeId, downloadUrl));
+        res.status(200).type("text/html; charset=utf-8").send(renderPlacePage(place.name, placeId, readPlacePageApp()));
     } catch (err) {
         next(err);
     }
