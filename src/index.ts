@@ -13,6 +13,7 @@ import { healthRouter } from "./modules/health/health.routes";
 import { userRouter } from "./modules/users/user.routes";
 import { authRouter } from "./modules/auth/auth.routes";
 import { placeRouter } from "./modules/places/place.routes";
+import { placeLinkRouter } from "./modules/place-links/place-link.routes";
 import { checkInRouter } from "./modules/checkin/checkin.routes";
 import { ratingRouter } from "./modules/rating/rating.routes";
 import { placeSuggestionRouter } from "./modules/place-suggestions/place-suggestion.routes";
@@ -105,6 +106,8 @@ app.use(helmet())
 app.use(healthRouter);
 app.use(authRouter);
 app.use(placeRouter);
+// Public, like places: the link must open for someone who has no account yet.
+app.use(placeLinkRouter);
 app.use(devPhotoFilesRouter);
 app.use(userPhotoPublicRouter);
 app.use(validateAuthToken, userPhotoRouter);
