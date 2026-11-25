@@ -116,6 +116,27 @@ describe("NominatimClient", () => {
         expect(url).toContain("viewbox=");
     });
 
+    it("searches by name inside a square around a point, without the other kinds of filtering", async () => {
+        const fetchFn = vi.fn(async () => jsonResponse([cafe]));
+
+        const places = await client(fetchFn as never).searchNear("Café Z", { lat: -25.43, lng: -49.27 }, 500);
+
+        expect(places.map((place) => place.id)).toEqual([123]);
+        const [url] = fetchFn.mock.calls[0] as unknown as [string];
+        const params = new URL(url).searchParams;
+        expect(params.get("q")).toBe("Café Z");
+        expect(params.get("bounded")).toBe("1");
+        const [left, top, right, bottom] = params.get("viewbox")!.split(",").map(Number) as [number, number, number, number];
+        expect(top - bottom).toBeCloseTo(2 * 500 / 111_320, 4);
+        expect(left).toBeLessThan(-49.27);
+        expect(right).toBeGreaterThan(-49.27);
+    });
+
+    it("throws when OpenStreetMap fails during a confirmation", async () => {
+        const fetchFn = vi.fn(async () => jsonResponse({}, 503));
+        await expect(client(fetchFn as never).searchNear("Café Z", { lat: -25.43, lng: -49.27 }, 500)).rejects.toThrow();
+    });
+
     it("looks an object up by its OpenStreetMap id", async () => {
         const fetchFn = vi.fn(async () => jsonResponse([cafe]));
 

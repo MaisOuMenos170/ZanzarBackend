@@ -14,6 +14,13 @@ export const SERVICE_AREA = { lonMin: -49.55, latMax: -25.15, lonMax: -49.0, lat
 /** A place closer than this to a suggestion, with a similar name, is the same place. */
 export const DUPLICATE_RADIUS_METERS = 50;
 
+/** Parks and the like are drawn as areas, so OpenStreetMap's centre can be far from another source's point. */
+export const LARGE_AREA_DUPLICATE_RADIUS_METERS = 400;
+export const LARGE_AREA_CATEGORIES = ["park", "historic", "tourist"] as const;
+
+/** How far from the point the app sends we look for the place in OpenStreetMap (parks are big). */
+export const OSM_CONFIRMATION_RADIUS_METERS = 500;
+
 /** Accounts younger than this have their suggestions looked at by a human. */
 export const NEW_ACCOUNT_DAYS = 7;
 /** An author with this many refused suggestions goes to review from then on. */

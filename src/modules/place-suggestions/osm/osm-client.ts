@@ -28,6 +28,8 @@ export interface OsmClient {
     search(query: string, near?: NearPoint): Promise<OsmPlace[]>;
     /** Null when OpenStreetMap has no such object. Throws when OpenStreetMap could not be reached. */
     lookup(type: OsmType, id: number): Promise<OsmPlace | null>;
+    /** Objects called `name` inside a square of about `radiusMeters` around `near`. Throws when OpenStreetMap could not be reached. */
+    searchNear(name: string, near: NearPoint, radiusMeters: number): Promise<OsmPlace[]>;
 }
 
 export function isInsideServiceArea(latitude: number, longitude: number): boolean {
@@ -53,6 +55,7 @@ interface NominatimResult {
 const OSM_TYPES_BY_NAME: Record<string, OsmType> = { node: "node", way: "way", relation: "relation" };
 const LOOKUP_PREFIX: Record<OsmType, string> = { node: "N", way: "W", relation: "R" };
 const MAX_ADDRESS_LENGTH = 300;
+const METERS_PER_DEGREE = 111_320;
 
 export function placeFromNominatim(raw: NominatimResult): OsmPlace | null {
     const type = raw.osm_type ? OSM_TYPES_BY_NAME[raw.osm_type] : undefined;
@@ -142,6 +145,22 @@ export class NominatimClient implements OsmClient {
         const accepted = inArea.filter((place) => place.category !== null);
         const others = inArea.filter((place) => place.category === null);
         return [...accepted, ...others].slice(0, MAX_SEARCH_RESULTS);
+    }
+
+    async searchNear(name: string, near: NearPoint, radiusMeters: number): Promise<OsmPlace[]> {
+        const dLat = radiusMeters / METERS_PER_DEGREE;
+        const dLng = radiusMeters / (METERS_PER_DEGREE * Math.cos((near.lat * Math.PI) / 180));
+        const params = new URLSearchParams({
+            q: name,
+            format: "jsonv2",
+            limit: "10",
+            countrycodes: "br",
+            "accept-language": "pt-BR",
+            viewbox: `${near.lng - dLng},${near.lat + dLat},${near.lng + dLng},${near.lat - dLat}`,
+            bounded: "1",
+        });
+        const results = await this.get<NominatimResult[]>(`/search?${params.toString()}`);
+        return results.map(placeFromNominatim).filter((place): place is OsmPlace => place !== null);
     }
 
     async lookup(type: OsmType, id: number): Promise<OsmPlace | null> {

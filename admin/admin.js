@@ -15,7 +15,7 @@ const reasonLabels = {
   not_the_place: "Não mostra o lugar", possible_duplicate: "Parece repetida", low_trust: "Autor novo ou com histórico",
   layer_unavailable: "Uma checagem falhou", low_quality: "Qualidade ruim", reported: "Denunciada", other: "Outro",
   outside_area: "Fora de Curitiba e região", type_not_accepted: "Tipo de lugar não aceito", duplicate: "Já existe",
-  manual_entry: "Digitado à mão (sem checagem automática)", not_a_real_place: "Não é um lugar real", inappropriate: "Conteúdo impróprio",
+  manual_entry: "Digitado à mão (sem checagem automática)", not_confirmed: "Não encontrado no OpenStreetMap", not_a_real_place: "Não é um lugar real", inappropriate: "Conteúdo impróprio",
 };
 
 const photoStatuses = [["needs_review", "Precisam de revisão"], ["pending", "Em processamento"], ["approved", "Publicadas"], ["rejected", "Reprovadas"], ["removed", "Removidas"]];
