@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ZANZAR_CATEGORIES } from '../constants/zanzar-categories.js';
+import { PLACE_ACCESSIBILITY_FEATURES } from '../constants/place-accessibility.js';
 import { stampIdSchema } from './stamp-id.js';
 import { impressionTagFieldSchema } from './impression-tag.js';
 import { googlePlaceIdSchema, isoDateTimeSchema } from './common.js';
@@ -34,6 +35,13 @@ export const placeImageSchema = z.object({
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
   credit: placeImageCreditSchema,
+});
+
+/** Recursos de acessibilidade confirmados por uma fonte. Sem este campo o lugar ainda não foi verificado. */
+export const placeAccessibilitySchema = z.object({
+  features: z.array(z.enum(PLACE_ACCESSIBILITY_FEATURES)).min(1),
+  source: z.object({ label: z.string().min(1), url: httpsUrlSchema }),
+  checkedAt: z.iso.date(),
 });
 
 export const geoPointSchema = z.object({
@@ -93,6 +101,7 @@ export const placeDocumentSchema = z.object({
   price_level: z.number().int().min(0).max(4).optional(),
   photos: z.array(placePhotoSchema).default([]),
   images: z.array(placeImageSchema).default([]),
+  accessibility: placeAccessibilitySchema.optional(),
   zanzar: zanzarExtensionSchema,
   geoLocation: geoPointSchema.optional(),
   added_at: isoDateTimeSchema,
@@ -113,6 +122,7 @@ export const placeNearbySchema =placeDocumentSchema.extend({
 });
 
 export type PlaceImage = z.infer<typeof placeImageSchema>;
+export type PlaceAccessibility = z.infer<typeof placeAccessibilitySchema>;
 export type PlaceDocument = z.infer<typeof placeDocumentSchema>;
 export type PlaceNearbyDocument = z.infer<typeof placeNearbySchema>;
 export type ImpressionAvatars = z.infer<typeof impressionAvatarsSchema>;

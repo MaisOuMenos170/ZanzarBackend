@@ -27,9 +27,12 @@ const stampResults = stampCatalog.map((stamp) =>
   dbx.stamp_catalog.updateOne({ stampId: stamp.stampId }, { $set: stamp }, { upsert: true }),
 );
 
-const rawPlaces = mergePlaceImages(
-  JSON.parse(fs.readFileSync(`${rootDir}/data/lugares.json`, 'utf8')),
-  readPlaceImages(`${rootDir}/data/place-images.json`),
+const rawPlaces = mergePlaceAccessibility(
+  mergePlaceImages(
+    JSON.parse(fs.readFileSync(`${rootDir}/data/lugares.json`, 'utf8')),
+    readPlaceImages(`${rootDir}/data/place-images.json`),
+  ),
+  readPlaceAccessibility(`${rootDir}/data/place-accessibility.json`),
 );
 const placeResults = upsertPlaces(dbx, rawPlaces);
 
