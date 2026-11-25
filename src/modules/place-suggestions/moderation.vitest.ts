@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-    areaLayer, contextLayer, decide, duplicateLayer, namesAreSimilar, runLayerSafely, typeLayer,
+    areaLayer, contextLayer, decide, duplicateLayer, namesAreSimilar, pickConfirmedPlace, runLayerSafely, typeLayer,
     type LayerResult, type ModerationDependencies,
 } from "./moderation";
 import type { OsmPlace } from "./osm/osm-client";
@@ -131,5 +131,46 @@ describe("runLayerSafely", () => {
     it("turns an exception into an error verdict", async () => {
         const result = await runLayerSafely("duplicate", vi.fn().mockRejectedValue(new Error("db down")));
         expect(result).toMatchObject({ layer: "duplicate", verdict: "error", reason: "layer_unavailable" });
+    });
+});
+
+describe("pickConfirmedPlace", () => {
+    const near = { lat: -25.43, lng: -49.27 };
+
+    it("takes the closest object whose name matches", () => {
+        const far = { ...place, id: 1, latitude: -25.432 };
+        const close = { ...place, id: 2, latitude: -25.4301 };
+        expect(pickConfirmedPlace("Cafe Z", near, [far, close])?.id).toBe(2);
+    });
+
+    it("ignores objects with another name", () => {
+        expect(pickConfirmedPlace("Cafe Z", near, [{ ...place, name: "Padaria Outra" }])).toBeNull();
+    });
+
+    it("returns null when there are no candidates", () => {
+        expect(pickConfirmedPlace("Cafe Z", near, [])).toBeNull();
+    });
+});
+
+describe("duplicateLayer for large areas", () => {
+    const park: OsmPlace = { ...place, id: 7, name: "Parque Barigui", category: "park", osmCategory: "leisure", osmPlaceType: "park" };
+
+    it("looks for a same-name place in a wider radius for a park", async () => {
+        const radii: number[] = [];
+        const result = await duplicateLayer(park, "osm:way/7", deps({
+            findNearbyPlaces: async (_lat, _lng, radius) => {
+                radii.push(radius);
+                return radius > 50 ? [{ place_id: "ChIJseed", name: "Parque Barigüi" }] : [];
+            },
+        }));
+
+        expect(result).toMatchObject({ verdict: "fail", reason: "duplicate", existingPlaceId: "ChIJseed" });
+        expect(radii).toContain(400);
+    });
+
+    it("does not widen the radius for a cafe", async () => {
+        const radii: number[] = [];
+        await duplicateLayer(place, "osm:node/123", deps({ findNearbyPlaces: async (_lat, _lng, radius) => { radii.push(radius); return []; } }));
+        expect(radii).toEqual([50]);
     });
 });

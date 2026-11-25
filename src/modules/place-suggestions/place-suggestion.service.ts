@@ -1,7 +1,8 @@
-import { osmPlaceId, type PlaceSuggestionStatus } from "../../constants/place-suggestions";
+import { OSM_CONFIRMATION_RADIUS_METERS, osmPlaceId, type PlaceSuggestionStatus } from "../../constants/place-suggestions";
 import type { PlaceSuggestion } from "../../models/place-suggestion.model";
 import { AppError } from "../../errors/appError";
 import type {
+    CreateAppleSuggestionBody,
     CreateManualPlaceSuggestionBody,
     CreateOsmPlaceSuggestionBody,
     CreatePlaceSuggestionBody,
@@ -16,12 +17,13 @@ import {
     contextLayer,
     decide,
     duplicateLayer,
+    pickConfirmedPlace,
     runLayerSafely,
     typeLayer,
     type LayerResult,
     type ModerationDependencies,
 } from "./moderation";
-import { getOsmClient, type OsmPlace } from "./osm/osm-client";
+import { getOsmClient, isInsideServiceArea, type OsmPlace } from "./osm/osm-client";
 import { zanzarCategoryFromOsm } from "./osm/osm-category";
 import { promoteToPlace } from "./place-promotion";
 import { placeSuggestionRepository, type NewPlaceSuggestion } from "./place-suggestion.repository";
@@ -81,6 +83,10 @@ function isOsmBody(body: CreatePlaceSuggestionBody): body is CreateOsmPlaceSugge
     return "osmId" in body;
 }
 
+function isAppleBody(body: CreatePlaceSuggestionBody): body is CreateAppleSuggestionBody {
+    return "name" in body;
+}
+
 export const placeSuggestionService = {
     async searchPlaces(query: SearchPlacesQuery): Promise<OsmPlaceResult[]> {
         const near = query.lat !== undefined && query.lng !== undefined ? { lat: query.lat, lng: query.lng } : undefined;
@@ -94,10 +100,13 @@ export const placeSuggestionService = {
     },
 
     async createSuggestion(userId: string, body: CreatePlaceSuggestionBody): Promise<PlaceSuggestionResponse> {
-        log.info({ userId, kind: isOsmBody(body) ? "osm" : "manual" }, "Creating place suggestion");
+        const kind = isOsmBody(body) ? "osm" : isAppleBody(body) ? "apple" : "manual";
+        log.info({ userId, kind }, "Creating place suggestion");
         const suggestion = isOsmBody(body)
             ? await this.createFromOsm(userId, body)
-            : await this.createManual(userId, body);
+            : isAppleBody(body)
+              ? await this.createFromApple(userId, body)
+              : await this.createManual(userId, body);
         log.info({ userId, suggestionId: suggestion._id, status: suggestion.status }, "Place suggestion created");
         return suggestion;
     },
@@ -128,50 +137,45 @@ export const placeSuggestionService = {
         }
         if (!place) throw new AppError("Place not found", 404, "place_not_found");
 
-        const deps = moderationDependencies();
-        const placeId = osmPlaceId(place.type, place.id);
-        const [area, type, duplicate, context] = await Promise.all([
-            runLayerSafely("area", () => areaLayer(place)),
-            runLayerSafely("type", () => typeLayer(place)),
-            runLayerSafely("duplicate", () => duplicateLayer(place, placeId, deps)),
-            runLayerSafely("context", () => contextLayer(userId, deps)),
-        ]);
-        const results: LayerResult[] = [area, type, duplicate, context];
-        const decision = decide(results);
-        const checkedAt = deps.now();
+        return moderateOsmPlace(userId, place, body.note);
+    },
 
-        const base: NewPlaceSuggestion = {
-            userId,
-            coordinates: { latitude: place.latitude, longitude: place.longitude },
-            address: place.address,
-            note: body.note,
-            status: decision.status,
-            name: place.name,
-            osm: { type: place.type, id: place.id, name: place.name, category: place.osmCategory, placeType: place.osmPlaceType },
-            moderation: results.map(({ layer, verdict, reason, scores }) => ({ layer, verdict, reason, scores, checkedAt })),
-        };
+    /**
+     * The app sends what the user picked in Apple Maps. That is only a hint: the place has to be found in
+     * OpenStreetMap, and OpenStreetMap's data is what is checked and stored. No match means a person decides.
+     */
+    async createFromApple(userId: string, body: CreateAppleSuggestionBody): Promise<PlaceSuggestionResponse> {
+        const { latitude, longitude } = body.coordinates;
+        const unconfirmed = (reason: "not_confirmed" | "layer_unavailable") =>
+            this.createUnconfirmed(userId, body, reason);
 
-        if (decision.status === "approved") {
-            try {
-                const createdPlaceId = await promoteToPlace(promotableFrom(place));
-                const created = await placeSuggestionRepository.create({
-                    ...base, decidedBy: "system", decidedAt: checkedAt, placeId: createdPlaceId,
-                });
-                return toResponse(created);
-            } catch (err) {
-                // A place that could not be created is never lost: a person looks at it.
-                log.error({ err, placeId }, "Could not create the place for an approved suggestion; sending to review");
-                const created = await placeSuggestionRepository.create({ ...base, status: "needs_review", decisionReason: "layer_unavailable" });
-                return toResponse(created);
-            }
+        if (!isInsideServiceArea(latitude, longitude)) {
+            const created = await placeSuggestionRepository.create({
+                userId, name: body.name, coordinates: body.coordinates, address: body.address, note: body.note,
+                status: "rejected", decisionReason: "outside_area", decidedBy: "system", decidedAt: new Date(),
+                moderation: [{ layer: "area", verdict: "fail", reason: "outside_area", checkedAt: new Date() }],
+            });
+            return toResponse(created);
         }
 
-        const existingPlaceId = decision.reason === "duplicate" ? (duplicate.scores?.existingPlaceId as string | undefined) : undefined;
+        let candidates: OsmPlace[];
+        try {
+            candidates = await getOsmClient().searchNear(body.name, { lat: latitude, lng: longitude }, OSM_CONFIRMATION_RADIUS_METERS);
+        } catch (err) {
+            log.error({ err }, "OpenStreetMap confirmation failed; sending to review");
+            return unconfirmed("layer_unavailable");
+        }
+        const place = pickConfirmedPlace(body.name, { lat: latitude, lng: longitude }, candidates);
+        if (!place) return unconfirmed("not_confirmed");
+        return moderateOsmPlace(userId, place, body.note);
+    },
+
+    /** Nothing to check the suggestion against, so a person decides. Keeps the name the user chose. */
+    async createUnconfirmed(userId: string, body: CreateAppleSuggestionBody, reason: "not_confirmed" | "layer_unavailable"): Promise<PlaceSuggestionResponse> {
         const created = await placeSuggestionRepository.create({
-            ...base,
-            decisionReason: decision.reason,
-            ...(decision.status === "rejected" ? { decidedBy: "system" as const, decidedAt: checkedAt } : {}),
-            ...(existingPlaceId ? { placeId: existingPlaceId } : {}),
+            userId, name: body.name, coordinates: body.coordinates, address: body.address, note: body.note,
+            status: "needs_review", decisionReason: reason,
+            moderation: [{ layer: "osm", verdict: reason === "not_confirmed" ? "doubt" : "error", reason, checkedAt: new Date() }],
         });
         return toResponse(created);
     },
@@ -228,6 +232,56 @@ export const placeSuggestionService = {
         return toResponse(updated);
     },
 };
+
+/** Runs the moderation layers on a place OpenStreetMap knows, then approves it, refuses it or queues it for a person. */
+async function moderateOsmPlace(userId: string, place: OsmPlace, note: string | undefined): Promise<PlaceSuggestionResponse> {
+    const deps = moderationDependencies();
+    const placeId = osmPlaceId(place.type, place.id);
+    const [area, type, duplicate, context] = await Promise.all([
+        runLayerSafely("area", () => areaLayer(place)),
+        runLayerSafely("type", () => typeLayer(place)),
+        runLayerSafely("duplicate", () => duplicateLayer(place, placeId, deps)),
+        runLayerSafely("context", () => contextLayer(userId, deps)),
+    ]);
+    const results: LayerResult[] = [area, type, duplicate, context];
+    const decision = decide(results);
+    const checkedAt = deps.now();
+
+    const base: NewPlaceSuggestion = {
+        userId,
+        coordinates: { latitude: place.latitude, longitude: place.longitude },
+        address: place.address,
+        note,
+        status: decision.status,
+        name: place.name,
+        osm: { type: place.type, id: place.id, name: place.name, category: place.osmCategory, placeType: place.osmPlaceType },
+        moderation: results.map(({ layer, verdict, reason, scores }) => ({ layer, verdict, reason, scores, checkedAt })),
+    };
+
+    if (decision.status === "approved") {
+        try {
+            const createdPlaceId = await promoteToPlace(promotableFrom(place));
+            const created = await placeSuggestionRepository.create({
+                ...base, decidedBy: "system", decidedAt: checkedAt, placeId: createdPlaceId,
+            });
+            return toResponse(created);
+        } catch (err) {
+            // A place that could not be created is never lost: a person looks at it.
+            log.error({ err, placeId }, "Could not create the place for an approved suggestion; sending to review");
+            const created = await placeSuggestionRepository.create({ ...base, status: "needs_review", decisionReason: "layer_unavailable" });
+            return toResponse(created);
+        }
+    }
+
+    const existingPlaceId = decision.reason === "duplicate" ? (duplicate.scores?.existingPlaceId as string | undefined) : undefined;
+    const created = await placeSuggestionRepository.create({
+        ...base,
+        decisionReason: decision.reason,
+        ...(decision.status === "rejected" ? { decidedBy: "system" as const, decidedAt: checkedAt } : {}),
+        ...(existingPlaceId ? { placeId: existingPlaceId } : {}),
+    });
+    return toResponse(created);
+}
 
 function promotableFrom(place: OsmPlace) {
     return {

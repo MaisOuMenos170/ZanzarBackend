@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { placeSuggestionRouter } from "./place-suggestion.routes.js";
 import { placeSuggestionService } from "./place-suggestion.service.js";
 import { errorHandler } from "../../middlewares/errorHandler.js";
+import { createPlaceSuggestionBodySchema } from "../../schemas/place-suggestion.js";
 
 const USER_ID = "64b000000000000000000001";
 
@@ -112,5 +113,22 @@ describe("place suggestion routes", () => {
         const response = await request(createApp(null)).get("/place-suggestions");
 
         expect(response.status).toBe(401);
+    });
+});
+
+// Not through the route: the daily limiter would count these POSTs against the tests above.
+describe("createPlaceSuggestionBodySchema", () => {
+    it("keeps the name of a place picked in Apple Maps", () => {
+        const parsed = createPlaceSuggestionBodySchema.parse({ ...validBody, name: "  Parque Barigui " });
+        expect(parsed).toMatchObject({ name: "Parque Barigui", address: validBody.address });
+    });
+
+    it("treats a blank name as the older manual format, which a person reviews", () => {
+        const parsed = createPlaceSuggestionBodySchema.parse({ ...validBody, name: "  " });
+        expect(parsed).not.toHaveProperty("name");
+    });
+
+    it("still takes the older format without a name", () => {
+        expect(createPlaceSuggestionBodySchema.parse(validBody)).toEqual(validBody);
     });
 });

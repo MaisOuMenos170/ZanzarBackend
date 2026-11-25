@@ -38,8 +38,8 @@ function trustedDeps(overrides: Partial<ModerationDependencies> = {}): Moderatio
     };
 }
 
-function osm(lookup: OsmClient["lookup"]): OsmClient {
-    return { search: vi.fn(async () => [cafe]), lookup };
+function osm(lookup: OsmClient["lookup"], searchNear: OsmClient["searchNear"] = async () => [cafe]): OsmClient {
+    return { search: vi.fn(async () => [cafe]), lookup, searchNear: vi.fn(searchNear) };
 }
 
 const create = vi.mocked(placeSuggestionRepository.create);
@@ -140,6 +140,82 @@ describe("createSuggestion from an OpenStreetMap place", () => {
     });
 });
 
+describe("createSuggestion from an Apple Maps result", () => {
+    const body = { name: "Cafe Z", coordinates: { latitude: -25.4301, longitude: -49.2702 }, address: "Rua XV, 10, Curitiba", note: "ótimo café" };
+
+    it("confirms the place in OpenStreetMap, approves it and stores OpenStreetMap's data", async () => {
+        const response = await placeSuggestionService.createSuggestion(USER_ID, body);
+
+        expect(response).toMatchObject({ status: "approved", name: "Café Z", placeId: "osm:node/123" });
+        expect(promoteToPlace).toHaveBeenCalledWith(expect.objectContaining({ osmId: 123, name: "Café Z", category: "cafe" }));
+        expect(createdFrom()).toMatchObject({ address: "Café Z, Curitiba", coordinates: { latitude: -25.43, longitude: -49.27 }, note: "ótimo café", decidedBy: "system" });
+    });
+
+    it("looks for the name inside the confirmation radius around the point the app sent", async () => {
+        const searchNear = vi.fn(async () => [cafe]);
+        setOsmClient(osm(async () => cafe, searchNear));
+
+        await placeSuggestionService.createSuggestion(USER_ID, body);
+
+        expect(searchNear).toHaveBeenCalledWith("Cafe Z", { lat: -25.4301, lng: -49.2702 }, 500);
+    });
+
+    it("sends the suggestion to review, keeping the user's name, when OpenStreetMap does not know the place", async () => {
+        setOsmClient(osm(async () => cafe, async () => [{ ...cafe, name: "Padaria Outra" }]));
+
+        const response = await placeSuggestionService.createSuggestion(USER_ID, body);
+
+        expect(response).toMatchObject({ status: "needs_review", decisionReason: "not_confirmed", name: "Cafe Z", placeId: null });
+        expect(createdFrom()).toMatchObject({ address: "Rua XV, 10, Curitiba", coordinates: body.coordinates });
+        expect(promoteToPlace).not.toHaveBeenCalled();
+    });
+
+    it("sends the suggestion to review, never approves, when OpenStreetMap is unreachable", async () => {
+        setOsmClient(osm(async () => cafe, async () => { throw new Error("timeout"); }));
+
+        const response = await placeSuggestionService.createSuggestion(USER_ID, body);
+
+        expect(response).toMatchObject({ status: "needs_review", decisionReason: "layer_unavailable" });
+        expect(promoteToPlace).not.toHaveBeenCalled();
+    });
+
+    it("rejects a point outside the service area without asking OpenStreetMap", async () => {
+        const searchNear = vi.fn(async () => [cafe]);
+        setOsmClient(osm(async () => cafe, searchNear));
+
+        const response = await placeSuggestionService.createSuggestion(USER_ID, { ...body, coordinates: { latitude: -23.55, longitude: -46.63 } });
+
+        expect(response).toMatchObject({ status: "rejected", decisionReason: "outside_area" });
+        expect(searchNear).not.toHaveBeenCalled();
+    });
+
+    it("rejects a place that already exists, even one that came from the Google seed", async () => {
+        setModerationDependencies(() => trustedDeps({ findNearbyPlaces: async () => [{ place_id: "ChIJseed", name: "Café Z" }] }));
+
+        const response = await placeSuggestionService.createSuggestion(USER_ID, body);
+
+        expect(response).toMatchObject({ status: "rejected", decisionReason: "duplicate", placeId: "ChIJseed" });
+        expect(promoteToPlace).not.toHaveBeenCalled();
+    });
+
+    it("rejects a place of a kind we do not take", async () => {
+        setOsmClient(osm(async () => cafe, async () => [{ ...cafe, category: null, osmCategory: "amenity", osmPlaceType: "parking" }]));
+
+        const response = await placeSuggestionService.createSuggestion(USER_ID, body);
+
+        expect(response).toMatchObject({ status: "rejected", decisionReason: "type_not_accepted" });
+    });
+
+    it("sends a new account to review even when OpenStreetMap confirms the place", async () => {
+        setModerationDependencies(() => trustedDeps({ authorHistory: async () => ({ accountCreatedAt: new Date("2026-11-08T00:00:00Z"), rejectedSuggestions: 0 }) }));
+
+        const response = await placeSuggestionService.createSuggestion(USER_ID, body);
+
+        expect(response).toMatchObject({ status: "needs_review", decisionReason: "low_trust" });
+        expect(promoteToPlace).not.toHaveBeenCalled();
+    });
+});
+
 describe("createSuggestion typed by hand", () => {
     it("always goes to a person", async () => {
         const response = await placeSuggestionService.createSuggestion(USER_ID, {
@@ -158,7 +234,7 @@ describe("searchPlaces", () => {
     });
 
     it("answers 503 when OpenStreetMap fails", async () => {
-        setOsmClient({ search: vi.fn(async () => { throw new Error("down"); }), lookup: vi.fn() });
+        setOsmClient({ search: vi.fn(async () => { throw new Error("down"); }), lookup: vi.fn(), searchNear: vi.fn() });
         await expect(placeSuggestionService.searchPlaces({ q: "café" })).rejects.toBeInstanceOf(AppError);
     });
 });

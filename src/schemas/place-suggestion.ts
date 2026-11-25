@@ -34,6 +34,19 @@ export const createOsmPlaceSuggestionBodySchema = z.object({
   note: noteSchema,
 });
 
+export const PLACE_SUGGESTION_NAME_MAX_LENGTH = 100;
+
+/**
+ * Current app: the user picked an Apple Maps result. Only a hint of which place it is; the server confirms it in
+ * OpenStreetMap and stores OpenStreetMap's data. Must come before the manual schema, which would drop `name`.
+ */
+export const createAppleSuggestionBodySchema = z.object({
+  name: z.string().trim().min(1).max(PLACE_SUGGESTION_NAME_MAX_LENGTH),
+  coordinates: placeSuggestionCoordinatesSchema,
+  address: z.string().trim().min(1).max(PLACE_SUGGESTION_ADDRESS_MAX_LENGTH),
+  note: noteSchema,
+});
+
 /** Older app versions and the "I could not find it" path: free text, always reviewed by a person. */
 export const createManualPlaceSuggestionBodySchema = z.object({
   coordinates: placeSuggestionCoordinatesSchema,
@@ -43,6 +56,7 @@ export const createManualPlaceSuggestionBodySchema = z.object({
 
 export const createPlaceSuggestionBodySchema = z.union([
   createOsmPlaceSuggestionBodySchema,
+  createAppleSuggestionBodySchema,
   createManualPlaceSuggestionBodySchema,
 ]);
 
@@ -90,6 +104,7 @@ export const placeSuggestionDecisionBodySchema = z
 export type PlaceSuggestionDocument = z.infer<typeof placeSuggestionDocumentSchema>;
 export type CreatePlaceSuggestionBody = z.infer<typeof createPlaceSuggestionBodySchema>;
 export type CreateOsmPlaceSuggestionBody = z.infer<typeof createOsmPlaceSuggestionBodySchema>;
+export type CreateAppleSuggestionBody = z.infer<typeof createAppleSuggestionBodySchema>;
 export type CreateManualPlaceSuggestionBody = z.infer<typeof createManualPlaceSuggestionBodySchema>;
 export type SearchPlacesQuery = z.infer<typeof searchPlacesQuerySchema>;
 export type OsmPlaceResult = z.infer<typeof osmPlaceResultSchema>;

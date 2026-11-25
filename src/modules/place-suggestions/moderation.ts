@@ -1,10 +1,13 @@
 import {
     DUPLICATE_RADIUS_METERS,
+    LARGE_AREA_CATEGORIES,
+    LARGE_AREA_DUPLICATE_RADIUS_METERS,
     NEW_ACCOUNT_DAYS,
     REJECTED_SUGGESTIONS_FOR_REVIEW,
     type OsmType,
 } from "../../constants/place-suggestions";
-import { isInsideServiceArea, type OsmPlace } from "./osm/osm-client";
+import { haversineDistanceMeters } from "../../utils/geofence";
+import { isInsideServiceArea, type NearPoint, type OsmPlace } from "./osm/osm-client";
 
 export type LayerVerdict = "pass" | "fail" | "doubt" | "error";
 
@@ -18,6 +21,7 @@ export type SuggestionReason =
     | "possible_duplicate"
     | "low_trust"
     | "manual_entry"
+    | "not_confirmed"
     | "layer_unavailable";
 
 export interface LayerResult {
@@ -86,7 +90,18 @@ export function namesAreSimilar(a: string, b: string): boolean {
     return shared / new Set([...leftTokens, ...rightTokens]).size >= 0.6;
 }
 
-export function areaLayer(place: OsmPlace): LayerResult {
+/**
+ * Of what OpenStreetMap found around the point the app sent, the closest object whose name matches what the user
+ * picked. Null means OpenStreetMap does not confirm the place.
+ */
+export function pickConfirmedPlace(name: string, near: NearPoint, candidates: OsmPlace[]): OsmPlace | null {
+    const distance = (place: OsmPlace) => haversineDistanceMeters({ lat: near.lat, lng: near.lng }, { lat: place.latitude, lng: place.longitude });
+    return candidates
+        .filter((place) => namesAreSimilar(place.name, name))
+        .sort((a, b) => distance(a) - distance(b))[0] ?? null;
+}
+
+export function areaLayer(place: Pick<OsmPlace, "latitude" | "longitude">): LayerResult {
     const inside = isInsideServiceArea(place.latitude, place.longitude);
     return { layer: "area", verdict: inside ? "pass" : "fail", reason: inside ? undefined : "outside_area" };
 }
@@ -107,7 +122,12 @@ export async function duplicateLayer(place: OsmPlace, placeId: string, deps: Mod
     }
 
     const nearby = await deps.findNearbyPlaces(place.latitude, place.longitude, DUPLICATE_RADIUS_METERS);
-    const same = nearby.find((candidate) => namesAreSimilar(candidate.name, place.name));
+    // A park is an area: another source may put the same place's point hundreds of metres from OpenStreetMap's centre.
+    const isLargeArea = (LARGE_AREA_CATEGORIES as readonly (string | null)[]).includes(place.category);
+    const sameNameCandidates = isLargeArea
+        ? await deps.findNearbyPlaces(place.latitude, place.longitude, LARGE_AREA_DUPLICATE_RADIUS_METERS)
+        : nearby;
+    const same = sameNameCandidates.find((candidate) => namesAreSimilar(candidate.name, place.name));
     if (same) {
         return { layer: "duplicate", verdict: "fail", reason: "duplicate", scores: { existingPlaceId: same.place_id }, existingPlaceId: same.place_id };
     }

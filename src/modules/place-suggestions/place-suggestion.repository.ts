@@ -105,7 +105,7 @@ export const placeSuggestionRepository = {
             geoLocation: { $near: { $geometry: { type: "Point", coordinates: [longitude, latitude] }, $maxDistance: radiusMeters } },
         })
             .select("place_id name")
-            .limit(5)
+            .limit(20)
             .lean<NearbyPlace[]>();
     },
 };
