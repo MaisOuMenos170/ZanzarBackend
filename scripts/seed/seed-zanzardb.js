@@ -10,10 +10,17 @@ const dbName = 'Zanzardb';
 const dbx = db.getSiblingDB(dbName);
 const rootDir = process.env.SEED_ROOT_DIR || '.';
 
-// O erro do servidor sozinho não diz qual updateOne falhou: este helper mostra o passo e deixa o erro seguir.
+// O erro do servidor sozinho não diz qual updateOne falhou. Este helper imprime cada passo antes de rodar e,
+// se falhar, "FALHOU em: <passo>". No mongosh a chamada pode devolver uma promessa, e aí a falha chega depois
+// do try: por isso a rejeição também é capturada. O erro segue para quem chamou.
 function runStep(label, fn) {
+  print(`-> ${label}`);
   try {
-    return fn();
+    const result = fn();
+    if (result && typeof result.then === 'function') {
+      result.then(null, () => print(`FALHOU em: ${label}`));
+    }
+    return result;
   } catch (error) {
     print(`FALHOU em: ${label}`);
     throw error;
