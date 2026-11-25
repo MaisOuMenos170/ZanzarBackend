@@ -10,6 +10,16 @@ const dbName = 'Zanzardb';
 const dbx = db.getSiblingDB(dbName);
 const rootDir = process.env.SEED_ROOT_DIR || '.';
 
+// O erro do servidor sozinho não diz qual updateOne falhou: este helper mostra o passo e deixa o erro seguir.
+function runStep(label, fn) {
+  try {
+    return fn();
+  } catch (error) {
+    print(`FALHOU em: ${label}`);
+    throw error;
+  }
+}
+
 const stampCatalog = [
   { stampId: 'stamp_restaurant', stampType: 'restaurant', label: 'Restaurante', imageUrl: '/assets/stamps/restaurant.png', sortOrder: 1, isActive: true },
   { stampId: 'stamp_bar', stampType: 'bar', label: 'Bar', imageUrl: '/assets/stamps/bar.png', sortOrder: 2, isActive: true },
@@ -24,7 +34,9 @@ const stampCatalog = [
 ];
 
 const stampResults = stampCatalog.map((stamp) =>
-  dbx.stamp_catalog.updateOne({ stampId: stamp.stampId }, { $set: stamp }, { upsert: true }),
+  runStep(`selo "${stamp.stampId}"`, () =>
+    dbx.stamp_catalog.updateOne({ stampId: stamp.stampId }, { $set: stamp }, { upsert: true }),
+  ),
 );
 
 const rawPlaces = mergePlaceAccessibility(
@@ -34,7 +46,7 @@ const rawPlaces = mergePlaceAccessibility(
   ),
   readPlaceAccessibility(`${rootDir}/data/place-accessibility.json`),
 );
-const placeResults = upsertPlaces(dbx, rawPlaces);
+const placeResults = runStep('lugares (upsertPlaces)', () => upsertPlaces(dbx, rawPlaces));
 
 // Demo stats so nearby cards and place detail previews match design expectations.
 const demoZanzarStatsByPlaceId = {
@@ -120,18 +132,18 @@ const itineraryResults = itineraryTemplates.map((template) => {
   const published = { ...template };
   const completedCount = published.completedCount;
   delete published.completedCount;
-  return dbx.itineraries.updateOne(
-    { slug: template.slug },
-    {
-      $set: { ...published, updatedAt: itineraryNow },
-      $setOnInsert: { createdAt: itineraryNow, completedCount },
-    },
-    { upsert: true },
+  const update = {
+    $set: { ...published, updatedAt: itineraryNow },
+    $setOnInsert: { createdAt: itineraryNow, completedCount },
+  };
+  return runStep(
+    `roteiro "${template.slug}" ($set: ${Object.keys(update.$set).join(', ')} | $setOnInsert: ${Object.keys(update.$setOnInsert).join(', ')})`,
+    () => dbx.itineraries.updateOne({ slug: template.slug }, update, { upsert: true }),
   );
 });
 
 const demoStatsResults = Object.entries(demoZanzarStatsByPlaceId).map(([placeId, stats]) =>
-  dbx.places.updateOne(
+  runStep(`estatísticas de demonstração de ${placeId}`, () => dbx.places.updateOne(
     {
       place_id: placeId,
       $or: [
@@ -145,7 +157,7 @@ const demoStatsResults = Object.entries(demoZanzarStatsByPlaceId).map(([placeId,
         'zanzar.impressionCounts': stats.impressionCounts,
       },
     },
-  ),
+  )),
 );
 
 print(JSON.stringify({
