@@ -1,5 +1,6 @@
 import { Schema, model, InferSchemaType, Types, type HydratedDocument } from "mongoose";
 import { STAMP_IDS, ZANZAR_CATEGORIES } from "../constants/zanzar-categories";
+import { PLACE_ACCESSIBILITY_FEATURES } from "../constants/place-accessibility";
 
 function geoLocationFromLatLng(lat: number, lng: number) {
     return {
@@ -49,6 +50,30 @@ const imageSchema = new Schema(
     { _id: false },
 );
 
+/** Recursos de acessibilidade confirmados por uma fonte. Sem o campo, o lugar ainda não foi verificado. */
+const accessibilitySchema = new Schema(
+    {
+        features: {
+            type: [String],
+            enum: PLACE_ACCESSIBILITY_FEATURES,
+            required: true,
+            validate: { validator: (value: string[]) => value.length > 0, message: "features não pode ser vazio" },
+        },
+        source: {
+            type: new Schema(
+                {
+                    label: { type: String, required: true, minlength: 1 },
+                    url: { type: String, required: true, match: /^https:\/\// },
+                },
+                { _id: false },
+            ),
+            required: true,
+        },
+        checkedAt: { type: String, required: true, match: /^\d{4}-\d{2}-\d{2}$/ },
+    },
+    { _id: false },
+);
+
 const placeSchema = new Schema(
     {
         place_id: { type: String, required: true },
@@ -84,6 +109,7 @@ const placeSchema = new Schema(
         price_level: { type: Number, min: 0, max: 4 },
         photos: { type: [photoSchema], default: [] },
         images: { type: [imageSchema], default: [] },
+        accessibility: { type: accessibilitySchema },
         zanzar: { type: zanzarSchema, required: true },
         geoLocation: {
             type: {

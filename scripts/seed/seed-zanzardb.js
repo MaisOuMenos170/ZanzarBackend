@@ -10,6 +10,23 @@ const dbName = 'Zanzardb';
 const dbx = db.getSiblingDB(dbName);
 const rootDir = process.env.SEED_ROOT_DIR || '.';
 
+// O erro do servidor sozinho não diz qual updateOne falhou. Este helper imprime cada passo antes de rodar e,
+// se falhar, "FALHOU em: <passo>". No mongosh a chamada pode devolver uma promessa, e aí a falha chega depois
+// do try: por isso a rejeição também é capturada. O erro segue para quem chamou.
+function runStep(label, fn) {
+  print(`-> ${label}`);
+  try {
+    const result = fn();
+    if (result && typeof result.then === 'function') {
+      result.then(null, () => print(`FALHOU em: ${label}`));
+    }
+    return result;
+  } catch (error) {
+    print(`FALHOU em: ${label}`);
+    throw error;
+  }
+}
+
 const stampCatalog = [
   { stampId: 'stamp_restaurant', stampType: 'restaurant', label: 'Restaurante', imageUrl: '/assets/stamps/restaurant.png', sortOrder: 1, isActive: true },
   { stampId: 'stamp_bar', stampType: 'bar', label: 'Bar', imageUrl: '/assets/stamps/bar.png', sortOrder: 2, isActive: true },
@@ -24,14 +41,19 @@ const stampCatalog = [
 ];
 
 const stampResults = stampCatalog.map((stamp) =>
-  dbx.stamp_catalog.updateOne({ stampId: stamp.stampId }, { $set: stamp }, { upsert: true }),
+  runStep(`selo "${stamp.stampId}"`, () =>
+    dbx.stamp_catalog.updateOne({ stampId: stamp.stampId }, { $set: stamp }, { upsert: true }),
+  ),
 );
 
-const rawPlaces = mergePlaceImages(
-  JSON.parse(fs.readFileSync(`${rootDir}/data/lugares.json`, 'utf8')),
-  readPlaceImages(`${rootDir}/data/place-images.json`),
+const rawPlaces = mergePlaceAccessibility(
+  mergePlaceImages(
+    JSON.parse(fs.readFileSync(`${rootDir}/data/lugares.json`, 'utf8')),
+    readPlaceImages(`${rootDir}/data/place-images.json`),
+  ),
+  readPlaceAccessibility(`${rootDir}/data/place-accessibility.json`),
 );
-const placeResults = upsertPlaces(dbx, rawPlaces);
+const placeResults = runStep('lugares (upsertPlaces)', () => upsertPlaces(dbx, rawPlaces));
 
 // Demo stats so nearby cards and place detail previews match design expectations.
 const demoZanzarStatsByPlaceId = {
@@ -117,18 +139,18 @@ const itineraryResults = itineraryTemplates.map((template) => {
   const published = { ...template };
   const completedCount = published.completedCount;
   delete published.completedCount;
-  return dbx.itineraries.updateOne(
-    { slug: template.slug },
-    {
-      $set: { ...published, updatedAt: itineraryNow },
-      $setOnInsert: { createdAt: itineraryNow, completedCount },
-    },
-    { upsert: true },
+  const update = {
+    $set: { ...published, updatedAt: itineraryNow },
+    $setOnInsert: { createdAt: itineraryNow, completedCount },
+  };
+  return runStep(
+    `roteiro "${template.slug}" ($set: ${Object.keys(update.$set).join(', ')} | $setOnInsert: ${Object.keys(update.$setOnInsert).join(', ')})`,
+    () => dbx.itineraries.updateOne({ slug: template.slug }, update, { upsert: true }),
   );
 });
 
 const demoStatsResults = Object.entries(demoZanzarStatsByPlaceId).map(([placeId, stats]) =>
-  dbx.places.updateOne(
+  runStep(`estatísticas de demonstração de ${placeId}`, () => dbx.places.updateOne(
     {
       place_id: placeId,
       $or: [
@@ -142,7 +164,7 @@ const demoStatsResults = Object.entries(demoZanzarStatsByPlaceId).map(([placeId,
         'zanzar.impressionCounts': stats.impressionCounts,
       },
     },
-  ),
+  )),
 );
 
 print(JSON.stringify({

@@ -13,6 +13,9 @@ load(inferencePath);
 const placeImagesLibPath = inferencePath.replace(/lugares-inference\.js$/, 'place-images.js');
 load(placeImagesLibPath);
 
+const placeAccessibilityLibPath = inferencePath.replace(/lugares-inference\.js$/, 'place-accessibility.js');
+load(placeAccessibilityLibPath);
+
 const PLACE_FIELD_KEYS = [
   'place_id',
   'name',
@@ -32,6 +35,7 @@ const PLACE_FIELD_KEYS = [
   'price_level',
   'photos',
   'images',
+  'accessibility',
   'added_at',
   'updated_at',
 ];

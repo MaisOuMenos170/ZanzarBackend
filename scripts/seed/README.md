@@ -19,6 +19,14 @@ Se o seed falhar com `Document failed validation`, o validador da collection no 
 
 Variável opcional: `LUGARES_URL` (URL alternativa do JSON no sync).
 
+### Acessibilidade dos lugares (`accessibility`)
+
+`places.accessibility` diz que recursos de acessibilidade um lugar **tem, confirmados por uma fonte**: `{ features: [...], source: { label, url }, checkedAt }`. Os recursos possíveis estão em `src/constants/place-accessibility.ts` (rampa, elevador, banheiro adaptado, piso tátil, braille, audiodescrição, parquinho inclusivo etc.).
+
+Regra do campo: **sem `accessibility` o lugar está "ainda não verificado", nunca "não acessível"**. Só entra um recurso que a fonte afirma, com o link e a data da conferência. Vitrine para o usuário é só o que está confirmado.
+
+Os dados ficam em `data/place-accessibility.json` (`{ "<place_id>": { features, source, checkedAt } }`), pelo mesmo motivo das imagens: o `sync:lugares` sobrescreve o `lugares.json`. `npm run seed` e `npm run sync:lugares` mesclam o manifesto (`place-accessibility.js`), recusam recurso desconhecido, fonte sem https e data fora de `AAAA-MM-DD`, e nunca apagam dado de lugares que não estão no manifesto. Depois de mudar o schema: `npm run db:validate` (uma vez) e `npm run seed`.
+
 ### Fotos dos lugares (`images`)
 
 O app mostra `places.images[]`: URL `https` + crédito (autor, licença, link da fonte). As fotos do Google (`photos[]`) não são mais usadas pelo app: são pagas, vencem e a política do Google proíbe guardá-las.

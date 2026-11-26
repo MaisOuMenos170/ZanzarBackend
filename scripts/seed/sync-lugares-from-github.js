@@ -25,7 +25,10 @@ if (!Array.isArray(catalog)) {
 }
 
 // As imagens próprias ficam em data/place-images.json: o JSON do GitHub não as conhece.
-const rawPlaces = mergePlaceImages(catalog, readPlaceImages(process.env.PLACE_IMAGES_PATH));
+const rawPlaces = mergePlaceAccessibility(
+  mergePlaceImages(catalog, readPlaceImages(process.env.PLACE_IMAGES_PATH)),
+  readPlaceAccessibility(process.env.PLACE_ACCESSIBILITY_PATH),
+);
 
 const placeResults = syncPlaces(dbx, rawPlaces);
 

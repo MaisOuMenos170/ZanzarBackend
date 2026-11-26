@@ -1,0 +1,115 @@
+{
+  "ChIJFWlvqB_k3JQR7jsyAF9M8vU": {
+    "features": [
+      "elevator",
+      "accessible_restroom",
+      "accessible_parking",
+      "wheelchair_loan",
+      "tactile_floor",
+      "braille",
+      "audio_description",
+      "sensory_room",
+      "guide_dogs"
+    ],
+    "source": {
+      "label": "Museu Oscar Niemeyer, página de acessibilidade",
+      "url": "https://www.museuoscarniemeyer.org.br/en-us/faq/acessibilidade"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJNWbp1QDl3JQRVFbc_cVeLRo": {
+    "features": [
+      "ramp",
+      "accessible_restroom",
+      "accessible_paths"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, melhorias no Jardim Botânico",
+      "url": "https://www.curitiba.pr.gov.br/noticias/queridinho-dos-turistas-melhorias-deixam-mais-acessivel-o-jardim-botanico-de-curitiba/69125"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJxYnV2Qf73JQR0ASXvKNB7mA": {
+    "features": [
+      "accessible_paths"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, Bosque Alemão mais acessível",
+      "url": "https://www.curitiba.pr.gov.br/noticias/bosque-alemao-fica-mais-acessivel-apos-obras-da-prefeitura-de-curitiba-casa-encantada-e-reaberta-ao-publico/73440"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJQSAIRdTm3JQR3EBLwWaWlGk": {
+    "features": [
+      "accessible_restroom"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, banheiros do Parque Tanguá",
+      "url": "https://www.curitiba.pr.gov.br/noticias/banheiros-publicos-do-parque-tangua-ficam-mais-acessiveis-e-modernos/85346"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJp1_LiN_j3JQRUx7PRRpC7WQ": {
+    "features": [
+      "inclusive_playground",
+      "ramp"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, parquinho inclusivo no Barigui",
+      "url": "https://www.curitiba.pr.gov.br/noticias/barigui-fica-mais-acessivel-com-novo-parquinho-inclusivo-para-criancas/61163"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJcZ4sdtjj3JQRW71FjdK1KFY": {
+    "features": [
+      "inclusive_playground",
+      "ramp"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, parquinho inclusivo no Barigui",
+      "url": "https://www.curitiba.pr.gov.br/noticias/barigui-fica-mais-acessivel-com-novo-parquinho-inclusivo-para-criancas/61163"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJVbyydhTk3JQR3rEscng0WJ4": {
+    "features": [
+      "inclusive_playground"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, playground adaptado no Passeio Público",
+      "url": "https://www.curitiba.pr.gov.br/noticias/passeio-publico-recebe-primeiro-parque-de-curitiba-adaptado-para-criancas-com-deficiencia/37655"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJj6MAL_3n3JQR4iXBcCpsJTU": {
+    "features": [
+      "ramp",
+      "braille"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, capacitação para atender pessoas com deficiência",
+      "url": "https://www.curitiba.pr.gov.br/noticias/capacitacao-ajuda-a-melhorar-inclusao-de-pessoas-com-deficiencia/64726"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJtcLuEcLm3JQRnnLawWWhF-A": {
+    "features": [
+      "inclusive_playground"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, Lazer para Todos",
+      "url": "https://www.curitiba.pr.gov.br/noticias/lazer-para-todos-reforca-a-inclusao-de-pessoas-com-deficiencia-em-curitiba/65662"
+    },
+    "checkedAt": "2026-11-25"
+  },
+  "ChIJdfpFv8wC3ZQRKyqJ1TOimew": {
+    "features": [
+      "ramp"
+    ],
+    "source": {
+      "label": "Prefeitura de Curitiba, obras no Parque Passaúna",
+      "url": "https://www.curitiba.pr.gov.br/noticias/obras-no-parque-passauna-melhoram-a-acessibilidade-e-aumentam-a-seguranca/82933"
+    },
+    "checkedAt": "2026-11-25"
+  }
+}
